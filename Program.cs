@@ -1,5 +1,7 @@
 
 using Microsoft.OpenApi.Models;
+using PersonalWebApi.Entities;
+using PersonalWebApi.Seeder;
 
 namespace PersonalWebApi
 {
@@ -34,15 +36,32 @@ namespace PersonalWebApi
 
 
             var builder = WebApplication.CreateBuilder(args);
+
+            builder.Services.AddDbContext<PersonalWebApiDbContext>();
+
             // Add services to the container.
 
             builder.Services.AddControllers();
             builder.Services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "My API", Version = "v1" });
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "Personal API", Version = "v1" });
             });
 
+            // Register Seeder
+            builder.Services.AddScoped<RoleSeeder>();
+            builder.Services.AddScoped<UserSeeder>();            
+
+
             var app = builder.Build();
+
+            // Run seeders
+            using var scope = app.Services.CreateScope();
+
+            var roleSeeder = scope.ServiceProvider.GetRequiredService<RoleSeeder>();
+            roleSeeder.SeedBasic();
+            var userSeeder = scope.ServiceProvider.GetRequiredService<UserSeeder>();
+            userSeeder.SeedBasic();            
+
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
