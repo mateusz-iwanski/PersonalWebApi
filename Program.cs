@@ -1,7 +1,10 @@
 
+using Microsoft.AspNetCore.Identity;
 using Microsoft.OpenApi.Models;
 using PersonalWebApi.Entities;
 using PersonalWebApi.Seeder;
+using PersonalWebApi.Services;
+using System.Reflection;
 
 namespace PersonalWebApi
 {
@@ -44,12 +47,27 @@ namespace PersonalWebApi
             builder.Services.AddControllers();
             builder.Services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "Personal API", Version = "v1" });
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "PersonalWebApi", Version = "v1" });
+
+                // Set the comments path for the Swagger JSON and UI.
+                var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+                var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+                c.IncludeXmlComments(xmlPath);
             });
+
+            #region add services
 
             // Register Seeder
             builder.Services.AddScoped<RoleSeeder>();
-            builder.Services.AddScoped<UserSeeder>();            
+            builder.Services.AddScoped<UserSeeder>();
+
+            // Configure services for controllers
+            builder.Services.AddScoped<IAccountService, AccountService>();
+
+            // configure hash service
+            builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
+
+            #endregion
 
 
             var app = builder.Build();
