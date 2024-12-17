@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using PersonalWebApi.Entities;
+using PersonalWebApi.Entities.System;
 
 #nullable disable
 
