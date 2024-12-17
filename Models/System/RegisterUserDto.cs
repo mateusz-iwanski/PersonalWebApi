@@ -2,14 +2,14 @@
 using PersonalWebApi.Entities;
 using System.ComponentModel.DataAnnotations;
 
-namespace PersonalWebApi.Models
+namespace PersonalWebApi.Models.System
 {
     public class RegisterUserDto
     {
         [Required]
         [EmailAddress]
         public string Email { get; set; }
-        
+
         [Required]
         public string Name { get; set; }
 
