@@ -50,10 +50,6 @@ namespace PersonalWebApi.Controllers
         [HttpPost("register")]
         public async Task<ActionResult> RegisterUserAsync([FromBody] RegisterUserDto registerUserDto)
         {
-            // RoleId 1 == Administrator
-            if (registerUserDto.RoleId == 1)
-                return BadRequest("You can't add Administrator role for user");
-
             await _accountService.RegisterUserAsync(registerUserDto);
 
             return Ok();
