@@ -1,9 +1,12 @@
 
+using FluentValidation;
+using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.OpenApi.Models;
 using PersonalWebApi.Entities;
 using PersonalWebApi.Seeder;
 using PersonalWebApi.Services;
+using PersonalWebApi.Validations;
 using System.Reflection;
 
 namespace PersonalWebApi
@@ -55,6 +58,8 @@ namespace PersonalWebApi
                 c.IncludeXmlComments(xmlPath);
             });
 
+            
+
             #region add services
 
             // Register Seeder
@@ -69,6 +74,13 @@ namespace PersonalWebApi
 
             #endregion
 
+
+            #region add custom validator
+            
+            builder.Services.AddValidatorsFromAssemblyContaining<RegisterUserDtoValidator>();
+
+
+            #endregion
 
             var app = builder.Build();
 
