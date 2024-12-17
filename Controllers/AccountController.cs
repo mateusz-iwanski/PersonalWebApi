@@ -18,6 +18,20 @@ namespace PersonalWebApi.Controllers
             _accountService = accountService;
         }
 
+        [HttpPost("add-role")]
+        public async Task<ActionResult> AddRoleAsync([FromBody] RoleCreateDto role)
+        {
+            await _accountService.AddRolesAsync(role);
+            return Ok();
+        }
+
+        [HttpGet("roles")]
+        public async Task<ActionResult<IEnumerable<Role>>> GetAllRolesAsync()
+        {
+            var roles = await _accountService.GetAllRolesAsync();
+            return Ok(roles);
+        }
+
         [HttpDelete("delete-user/{id}")]
         public async Task<ActionResult> DeleteUserAsync([FromRoute] int id)
         {
@@ -31,7 +45,6 @@ namespace PersonalWebApi.Controllers
             return Ok();
         }
 
-        // get all users
         [HttpGet("users")]
         public async Task<ActionResult<IEnumerable<User>>> GetUsersAsync()
         {
