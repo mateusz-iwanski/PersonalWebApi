@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Identity;
-using PersonalWebApi.Entities;
+using PersonalWebApi.Entities.System;
 using PersonalWebApi.Exceptions;
 
-namespace PersonalWebApi.Seeder
+namespace PersonalWebApi.Seeder.System
 {
     public class UserSeeder
     {
@@ -38,7 +38,7 @@ namespace PersonalWebApi.Seeder
                                 throw new SettingsException("Can't read UserSettings:Administrator:PasswordHash settings from settings.json");
 
                 var roleId = _context.Roles.FirstOrDefault(a => a.Name == "Administrator").Id; // Role seeder should be run before user seeder
-                
+
                 var user = new User
                 {
                     Name = name,

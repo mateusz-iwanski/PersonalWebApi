@@ -1,6 +1,6 @@
-﻿using PersonalWebApi.Entities;
+﻿using PersonalWebApi.Entities.System;
 
-namespace PersonalWebApi.Seeder
+namespace PersonalWebApi.Seeder.System
 {
     public class RoleSeeder
     {
