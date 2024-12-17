@@ -2,7 +2,7 @@
 using Microsoft.Extensions.Configuration;
 using System.IO;
 
-namespace PersonalWebApi.Entities
+namespace PersonalWebApi.Entities.System
 {
     public class PersonalWebApiDbContext : DbContext
     {
