@@ -1,13 +1,14 @@
-
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.OpenApi.Models;
-using PersonalWebApi.Entities;
-using PersonalWebApi.Seeder;
-using PersonalWebApi.Services;
-using PersonalWebApi.Validations;
 using System.Reflection;
+using NLog.Web;
+using NLog;
+using PersonalWebApi.Entities.System;
+using PersonalWebApi.Seeder.System;
+using PersonalWebApi.Services.System;
+using PersonalWebApi.Validations.System;
 
 namespace PersonalWebApi
 {
@@ -15,101 +16,91 @@ namespace PersonalWebApi
     {
         public static void Main(string[] args)
         {
-            //var builder = WebApplication.CreateBuilder(args);
+            // Configure NLog
+            var logger = NLog.LogManager.Setup().LoadConfigurationFromAppSettings().GetCurrentClassLogger();
+            logger.Debug("init main");
 
-            //// Add services to the container.
-
-            //builder.Services.AddControllers();
-            //// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-            //builder.Services.AddOpenApi();
-
-            //var app = builder.Build();
-
-            //// Configure the HTTP request pipeline.
-            //if (app.Environment.IsDevelopment())
-            //{
-            //    app.MapOpenApi();
-            //}
-
-            //app.UseHttpsRedirection();
-
-            //app.UseAuthorization();
-
-
-            //app.MapControllers();
-
-            //app.Run();
-
-
-            var builder = WebApplication.CreateBuilder(args);
-
-            builder.Services.AddDbContext<PersonalWebApiDbContext>();
-
-            // Add services to the container.
-
-            builder.Services.AddControllers();
-            builder.Services.AddSwaggerGen(c =>
+            try
             {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "PersonalWebApi", Version = "v1" });
+                var builder = WebApplication.CreateBuilder(args);
 
-                // Set the comments path for the Swagger JSON and UI.
-                var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
-                var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-                c.IncludeXmlComments(xmlPath);
-            });
+                // Add NLog to ASP.NET Core
+                builder.Logging.ClearProviders();
+                builder.Logging.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Trace);
+                builder.Host.UseNLog();
 
-            
+                builder.Services.AddDbContext<PersonalWebApiDbContext>();
 
-            #region add services
-
-            // Register Seeder
-            builder.Services.AddScoped<RoleSeeder>();
-            builder.Services.AddScoped<UserSeeder>();
-
-            // Configure services for controllers
-            builder.Services.AddScoped<IAccountService, AccountService>();
-
-            // configure hash service
-            builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
-
-            #endregion
-
-
-            #region add custom validator
-            
-            builder.Services.AddValidatorsFromAssemblyContaining<RegisterUserDtoValidator>();
-
-
-            #endregion
-
-            var app = builder.Build();
-
-            // Run seeders
-            using var scope = app.Services.CreateScope();
-
-            var roleSeeder = scope.ServiceProvider.GetRequiredService<RoleSeeder>();
-            roleSeeder.SeedBasic();
-            var userSeeder = scope.ServiceProvider.GetRequiredService<UserSeeder>();
-            userSeeder.SeedBasic();            
-
-
-            // Configure the HTTP request pipeline.
-            if (app.Environment.IsDevelopment())
-            {
-                app.UseSwagger();
-                app.UseSwaggerUI(c =>
+                // Add services to the container.
+                builder.Services.AddControllers();
+                builder.Services.AddSwaggerGen(c =>
                 {
-                    c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
-                    c.RoutePrefix = "swagger";
+                    c.SwaggerDoc("v1", new OpenApiInfo { Title = "PersonalAPI", Version = "v1" });
+
+                    // Set the comments path for the Swagger JSON and UI.
+                    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+                    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+                    c.IncludeXmlComments(xmlPath);
                 });
+
+                #region add services
+
+                // Register Seeder
+                builder.Services.AddScoped<RoleSeeder>();
+                builder.Services.AddScoped<UserSeeder>();
+
+                // Configure services for controllers
+                builder.Services.AddScoped<IAccountService, AccountService>();
+
+                // configure hash service
+                builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
+
+                #endregion
+
+                #region add custom validator
+
+                builder.Services.AddFluentValidation(fv => fv.RegisterValidatorsFromAssemblyContaining<RegisterUserDtoValidator>());
+                builder.Services.AddFluentValidation(fv => fv.RegisterValidatorsFromAssemblyContaining<RoleCreateDtoValidator>());
+
+                #endregion
+
+                var app = builder.Build();
+
+                // Run seeders
+                using var scope = app.Services.CreateScope();
+
+                var roleSeeder = scope.ServiceProvider.GetRequiredService<RoleSeeder>();
+                roleSeeder.SeedBasic();
+                var userSeeder = scope.ServiceProvider.GetRequiredService<UserSeeder>();
+                userSeeder.SeedBasic();
+
+                // Configure the HTTP request pipeline.
+                if (app.Environment.IsDevelopment())
+                {
+                    app.UseSwagger();
+                    app.UseSwaggerUI(c =>
+                    {
+                        c.SwaggerEndpoint("/swagger/v1/swagger.json", "My PersonalAPI V1");
+                        c.RoutePrefix = "swagger";
+                    });
+                }
+
+                app.UseHttpsRedirection();
+                app.UseAuthorization();
+                app.MapControllers();
+
+                app.Run();
             }
-
-            app.UseHttpsRedirection();
-            app.UseAuthorization();
-            app.MapControllers();
-
-            app.Run();
-
+            catch (Exception ex)
+            {
+                // NLog: catch setup errors
+                logger.Error(ex, "Stopped program because of exception");
+                throw;
+            }
+            finally
+            {
+                NLog.LogManager.Shutdown();
+            }
         }
     }
 }
