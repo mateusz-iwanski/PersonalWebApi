@@ -1,4 +1,5 @@
-﻿using PersonalWebApi.Entities;
+﻿using Microsoft.AspNetCore.Identity;
+using PersonalWebApi.Entities;
 using PersonalWebApi.Exceptions;
 
 namespace PersonalWebApi.Seeder
@@ -6,10 +7,12 @@ namespace PersonalWebApi.Seeder
     public class UserSeeder
     {
         private readonly PersonalWebApiDbContext _context;
+        private readonly IPasswordHasher<User> _passwordHasher;
 
-        public UserSeeder(PersonalWebApiDbContext context)
+        public UserSeeder(PersonalWebApiDbContext context, IPasswordHasher<User> passwordHasher)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
+            _passwordHasher = passwordHasher ?? throw new ArgumentNullException(nameof(passwordHasher));
         }
 
         /// <summary>
@@ -35,17 +38,19 @@ namespace PersonalWebApi.Seeder
                                 throw new SettingsException("Can't read UserSettings:Administrator:PasswordHash settings from settings.json");
 
                 var roleId = _context.Roles.FirstOrDefault(a => a.Name == "Administrator").Id; // Role seeder should be run before user seeder
+                
+                var user = new User
+                {
+                    Name = name,
+                    Email = email,
+                    RoleId = roleId
+                };
+
+                var newPasswordHash = _passwordHasher.HashPassword(user, passwordHash);
+                user.PasswordHash = newPasswordHash;
 
                 if (_context.Users.FirstOrDefault(a => a.Name == "Administrator") == null)
-                    _context.Users.Add(
-                        new User
-                        {
-                            Name = name,
-                            Email = email,
-                            PasswordHash = passwordHash,
-                            RoleId = roleId
-                        }
-                    );
+                    _context.Users.Add(user);
 
                 _context.SaveChanges();
             }
