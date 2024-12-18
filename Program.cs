@@ -130,8 +130,9 @@ namespace PersonalWebApi
 
                 #region add custom validator
 
-                builder.Services.AddFluentValidation(fv => fv.RegisterValidatorsFromAssemblyContaining<RegisterUserDtoValidator>());
-                builder.Services.AddFluentValidation(fv => fv.RegisterValidatorsFromAssemblyContaining<RoleCreateDtoValidator>());
+                builder.Services.AddFluentValidationAutoValidation().AddFluentValidationClientsideAdapters();
+                builder.Services.AddValidatorsFromAssemblyContaining<RegisterUserDtoValidator>();
+                builder.Services.AddValidatorsFromAssemblyContaining<RoleCreateDtoValidator>();
 
                 #endregion
 
