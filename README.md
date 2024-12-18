@@ -50,4 +50,6 @@
 4. **Retrieve JWT Token**: Obtain the Bearer JWT token and include it in the Headers of your HTTP requests.
 5. **Token Expiry**: Check the token expiry duration in `appsettings.json`.
 
+## Template
 
+There is a branch called `TemplateAPI-branch` which is a template with the main API features without any additional functionality. After downloading the branch for your new API project, change the project name, solution name, namespaces, etc., and read the 'Getting Started' section from the branch `README.md`.
