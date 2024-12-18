@@ -1,9 +1,17 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using PersonalWebApi.Entities.System;
 using PersonalWebApi.Exceptions;
 using PersonalWebApi.Models.System;
+using PersonalWebApi.Settings.System;
+using System.IdentityModel.Tokens.Jwt;
+using System.Runtime;
+using System.Security.Claims;
+using System.Text;
+using PersonalWebApi.Exceptions;
+using static PersonalWebApi.Controllers.System.ApiSystemAccountController;
 
 namespace PersonalWebApi.Services.System
 {
@@ -14,16 +22,21 @@ namespace PersonalWebApi.Services.System
     {
         private readonly PersonalWebApiDbContext _context;
         private readonly IPasswordHasher<User> _passwordHasher;
+        private readonly AuthenticationSettings _authenticationSettings;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AccountService"/> class.
         /// </summary>
         /// <param name="context">The database context.</param>
         /// <param name="passwordHasher">The password hasher.</param>
-        public AccountService(PersonalWebApiDbContext context, IPasswordHasher<User> passwordHasher)
+        public AccountService(
+            PersonalWebApiDbContext context, 
+            IPasswordHasher<User> passwordHasher,
+            AuthenticationSettings authenticationSettings)
         {
             _context = context;
             _passwordHasher = passwordHasher;
+            _authenticationSettings = authenticationSettings;
         }
 
         /// <summary>
@@ -57,21 +70,24 @@ namespace PersonalWebApi.Services.System
         /// </summary>
         /// <param name="id">The ID of the role to be deleted.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a boolean indicating success or failure.</returns>
-        public async Task<bool> DeleteRoleAsync(int id)
+        public async Task DeleteRoleAsync(int id)
         {
             // check if exists
             var role = await _context.Roles.FirstOrDefaultAsync(r => r.Id == id);
+
             if (role == null)
-                return false;
+                throw new BadRequestException("Role not found.");
+
+            if (role.Name == "Administrator" || role.Name == "User")
+                throw new BadRequestException("Administrator and User are system roles and cannot be deleted.");
 
             // role can't be deleted if users have set this role
             var users = await _context.Users.FirstOrDefaultAsync(u => u.RoleId == id);
             if (users != null)
-                return false;
+                throw new BadRequestException("The role is assigned to a client. Cannot be deleted");
 
             _context.Roles.Remove(role);
             await _context.SaveChangesAsync();
-            return true;
         }
 
         /// <summary>
@@ -79,16 +95,20 @@ namespace PersonalWebApi.Services.System
         /// </summary>
         /// <param name="id">The ID of the user to be deleted.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a boolean indicating success or failure.</returns>
-        public async Task<bool> DeleteUserAsync(int id)
-        {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.id == id);
+        public async Task DeleteUserAsync(int id)
+        {            
+            var user = await _context.Users
+                .Include(u => u.Role)
+                .FirstOrDefaultAsync(u => u.id == id);
+
             if (user == null)
-                return false;
+                throw new BadRequestException("User not found.");
+
+            if (user.Role.Name == "Administrator")
+                throw new BadRequestException("You can't delete the admin user");
 
             _context.Users.Remove(user);
             await _context.SaveChangesAsync();
-
-            return true;
         }
 
         /// <summary>
@@ -127,17 +147,21 @@ namespace PersonalWebApi.Services.System
         /// <param name="userId">The ID of the user whose password is to be changed.</param>
         /// <param name="newPassword">The new password to be set.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a boolean indicating success or failure.</returns>
-        public async Task<bool> ChangeUserPasswordAsync(int userId, string newPassword)
+        public async Task ChangeUserPasswordAsync(int userId, string newPassword)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.id == userId);
+            var user = await _context.Users
+                .Include(u => u.Role)
+                .FirstOrDefaultAsync(u => u.id == userId);
+
             if (user == null)
-                return false;
+                throw new BadRequestException("User not found.");
+
+            if (user.Role.Name == "Administrator")
+                throw new BadRequestException("You can't change the admin password, use change-admin-passwords.");
 
             user.PasswordHash = _passwordHasher.HashPassword(user, newPassword);
 
             await _context.SaveChangesAsync();
-
-            return true;
         }
 
         /// <summary>
@@ -146,7 +170,7 @@ namespace PersonalWebApi.Services.System
         /// <param name="newPassword">The new password to be set.</param>
         /// <param name="passwordVerification">The password verification string from the settings.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a boolean indicating success or failure.</returns>
-        public async Task<bool> ChangeAdminPasswordAsync(string newPassword, string passwordVerification)
+        public async Task ChangeAdminPasswordAsync(string newPassword, string passwordVerification)
         {
             var configuration = new ConfigurationBuilder()
                     .SetBasePath(Directory.GetCurrentDirectory())
@@ -158,15 +182,56 @@ namespace PersonalWebApi.Services.System
                 throw new SettingsException("Can't read UserSettings:Administrator:PasswordVerification settings from settings.json");
 
             if (passVerification != passwordVerification)
-                return false;
+                throw new BadRequestException("Bad password verification. You will find the password in the application settings file.");
 
             var admin = await _context.Users.FirstOrDefaultAsync(u => u.Role.Name == "Administrator");
 
             admin.PasswordHash = _passwordHasher.HashPassword(admin, newPassword);
 
             await _context.SaveChangesAsync();
+        }
 
-            return true;
+        /// <summary>
+        /// JWT generation for the user authentication
+        /// </summary>
+        public string GenerateJwt(LoginDto loginDto)
+        {
+            var user = _context.Users
+                .Include(u => u.Role)
+                .FirstOrDefault(i => i.Email == loginDto.Email);
+
+            if (user == null) 
+                throw new BadRequestException("Invalid username or passowrd");
+
+            var result = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, loginDto.Password);
+
+            if (result == PasswordVerificationResult.Failed) 
+                throw new BadRequestException("Invalid username or passowrd");
+
+            // data for JWT token            
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.Name, user.Name),
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim(ClaimTypes.Role, user.Role.Name)
+            };
+
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_authenticationSettings.JwtKey));
+
+            var cred = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+            var expires = DateTime.Now.AddDays(Convert.ToDouble(_authenticationSettings.JwtExpireDays));
+
+            // create JWT token
+            var token = new JwtSecurityToken(
+                _authenticationSettings.JwtIssuer,
+                _authenticationSettings.JwtIssuer,
+                claims,
+                expires: expires,
+                signingCredentials: cred
+                );
+
+            var tokenHandler = new JwtSecurityTokenHandler();
+            return tokenHandler.WriteToken(token);
         }
     }
 }
