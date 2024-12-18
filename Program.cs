@@ -9,6 +9,11 @@ using PersonalWebApi.Entities.System;
 using PersonalWebApi.Seeder.System;
 using PersonalWebApi.Services.System;
 using PersonalWebApi.Validations.System;
+using PersonalWebApi.Settings.System;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using Microsoft.Extensions.Options;
+using PersonalWebApi.Middleware;
 
 namespace PersonalWebApi
 {
@@ -33,14 +38,44 @@ namespace PersonalWebApi
 
                 // Add services to the container.
                 builder.Services.AddControllers();
-                builder.Services.AddSwaggerGen(c =>
+                builder.Services.AddSwaggerGen(options =>
                 {
-                    c.SwaggerDoc("v1", new OpenApiInfo { Title = "PersonalAPI", Version = "v1" });
+                    options.SwaggerDoc("v1", new OpenApiInfo { Title = "PersonalAPI", Version = "v1" });
 
                     // Set the comments path for the Swagger JSON and UI.
                     var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
                     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-                    c.IncludeXmlComments(xmlPath);
+                    options.IncludeXmlComments(xmlPath);
+
+                    // Define the Bearer security scheme
+                    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                    {
+                        Description = "JWT Authorization header using the Bearer scheme. Get token from /api/system/account/login and write like this: \"Bearer copied_token\"",
+                        Name = "Authorization",
+                        In = ParameterLocation.Header,
+                        Type = SecuritySchemeType.ApiKey,
+                        Scheme = "Bearer",
+                    });
+
+                    // Use the Bearer scheme globally
+                    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+                    {
+                        {
+                            new OpenApiSecurityScheme
+                            {
+                                Reference = new OpenApiReference
+                                {
+                                    Type = ReferenceType.SecurityScheme,
+                                    Id = "Bearer"
+                                },
+                                Scheme = "oauth2",
+                                Name = "Bearer",
+                                BearerFormat = "JWT", // Set the default bearer format to JWT
+                                In = ParameterLocation.Header,
+                            },
+                            new List<string>()
+                        }
+                    });
                 });
 
                 #region add services
@@ -54,6 +89,40 @@ namespace PersonalWebApi
 
                 // configure hash service
                 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
+
+                // Authentication settings
+                var authenticationSettings = new AuthenticationSettings();
+                /// from appsettings.json
+                ConfigurationBinder.Bind(builder.Configuration.GetSection("Authentication"), authenticationSettings);
+                builder.Services.AddSingleton(authenticationSettings);
+                builder.Services.AddAuthentication(option =>
+                {
+                    option.DefaultAuthenticateScheme = "Bearer";
+                    option.DefaultChallengeScheme = "Bearer";
+                    option.DefaultChallengeScheme = "Bearer";
+                }).AddJwtBearer(cfg =>
+                {
+                    cfg.RequireHttpsMetadata = false;
+                    cfg.SaveToken = true;
+                    cfg.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidIssuer = authenticationSettings.JwtIssuer,
+                        ValidAudience = authenticationSettings.JwtIssuer,
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(authenticationSettings.JwtKey))
+                    };
+                });
+
+                //builder.Services.AddAuthorization(options =>
+                //{
+                //    options.AddPolicy("Administrator", policy => policy.RequireRole("Administrator"));
+                //});
+
+                #endregion
+
+                #region add Middlewares
+
+                // System middleware
+                builder.Services.AddScoped<ErrorHandlingMiddleware>();
 
                 #endregion
 
@@ -85,7 +154,16 @@ namespace PersonalWebApi
                     });
                 }
 
+                #region register middlewares
+
+                // System middleware
+                app.UseMiddleware<ErrorHandlingMiddleware>();
+
+                #endregion
+
+
                 app.UseHttpsRedirection();
+                app.UseAuthentication();
                 app.UseAuthorization();
                 app.MapControllers();
 
