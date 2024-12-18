@@ -41,7 +41,7 @@
 1. **Configure Settings**: First, set up the `appsettings.json` file and familiarize yourself with it.
 2. **Database Migration**: Run migrations and create the database if it does not exist. By default, the SQLite database is set.
 3. **Login**:
-   - Send a GET request to `/api/system/account/login`.
+   - Send a POST request to `/api/system/account/login`.
    - **Body**:
       {
        "email": "",
