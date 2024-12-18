@@ -38,7 +38,7 @@
 
 ## Getting Started
 
-1. **Configure Settings**: First, set up the `appsettings.json` file and familiarize yourself with it.
+1. **Configure Settings**: First, rename `appsettings_schema.json` to `appsettings.json`, then configure and familiarize yourself with the `appsettings.json` file.
 2. **Database Migration**: Run migrations and create the database if it does not exist. By default, the SQLite database is set.
 3. **Login**:
    - Send a POST request to `/api/system/account/login`.
