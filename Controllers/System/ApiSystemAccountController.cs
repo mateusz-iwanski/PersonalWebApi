@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using PersonalWebApi.Entities.System;
 using PersonalWebApi.Models.System;
 using PersonalWebApi.Services.System;
@@ -16,12 +17,26 @@ namespace PersonalWebApi.Controllers.System
     public class ApiSystemAccountController : ControllerBase
     {
         private readonly IAccountService _accountService;
-        public record AdminPasswordChange([MinLength(8)] string newPassword, [Required] string passwordVerification);
-        public record UserPasswordChange([Required] int userId, [MinLength(8)] string newPassword);
+        private readonly IConfiguration _configuration;
 
-        public ApiSystemAccountController(IAccountService accountService)
+        /// <summary>
+        /// Record for changing admin password.
+        /// </summary>
+        /// <param name="NewPassword">The new password.</param>
+        /// <param name="PasswordVerification">The password verification from appsettings.json.</param>
+        public record AdminPasswordChange([MinLength(8)] string NewPassword, [Required] string PasswordVerification);
+
+        /// <summary>
+        /// Record for changing user password.
+        /// </summary>
+        /// <param name="UserId">The user ID.</param>
+        /// <param name="NewPassword">The new password.</param>
+        public record UserPasswordChange([Required] int UserId, [MinLength(8)] string NewPassword);
+
+        public ApiSystemAccountController(IAccountService accountService, IConfiguration configuration)
         {
             _accountService = accountService;
+            _configuration = configuration;
         }
 
         /// <summary>
@@ -30,7 +45,7 @@ namespace PersonalWebApi.Controllers.System
         /// <param name="id">The ID of the role to delete.</param>
         /// <returns>An ActionResult indicating the result of the operation.</returns>
         [HttpDelete("delete-role/{id}")]
-        [Authorize(Roles = "Administrator")]
+        [DynamicRoleAuthorize("DeleteRoleAsync")]
         public async Task<ActionResult> DeleteRoleAsync([FromRoute] int id)
         {
             await _accountService.DeleteRoleAsync(id);
@@ -43,7 +58,7 @@ namespace PersonalWebApi.Controllers.System
         /// <param name="role">The role details.</param>
         /// <returns>An ActionResult indicating the result of the operation.</returns>
         [HttpPost("add-role")]
-        [Authorize(Roles = "Administrator")]
+        [DynamicRoleAuthorize("AddRoleAsync")]
         public async Task<ActionResult> AddRoleAsync([FromBody] RoleCreateDto role)
         {
             await _accountService.AddRolesAsync(role);
@@ -55,7 +70,7 @@ namespace PersonalWebApi.Controllers.System
         /// </summary>
         /// <returns>A list of roles.</returns>
         [HttpGet("roles")]
-        [Authorize]
+        [DynamicRoleAuthorize("GetAllRolesAsync")]
         public async Task<ActionResult<IEnumerable<Role>>> GetAllRolesAsync()
         {
             var roles = await _accountService.GetAllRolesAsync();
@@ -71,7 +86,7 @@ namespace PersonalWebApi.Controllers.System
         /// You can't delete the Administrator user (ID = 1).
         /// </remarks>
         [HttpDelete("delete-user/{id}")]
-        [Authorize(Roles = "Administrator")]
+        [DynamicRoleAuthorize("DeleteUserAsync")]
         public async Task<ActionResult> DeleteUserAsync([FromRoute] int id)
         {
             await _accountService.DeleteUserAsync(id);
@@ -83,7 +98,7 @@ namespace PersonalWebApi.Controllers.System
         /// </summary>
         /// <returns>A list of users.</returns>
         [HttpGet("users")]
-        [Authorize(Roles = "Administrator")]
+        [DynamicRoleAuthorize("GetUsersAsync")]
         public async Task<ActionResult<IEnumerable<User>>> GetUsersAsync()
         {
             var users = await _accountService.GetAllUsersAsync();
@@ -99,7 +114,7 @@ namespace PersonalWebApi.Controllers.System
         /// You can't add RoleId = 1 (Administrator) for user. Only admin user 
         /// </remarks>
         [HttpPost("register-user")]
-        [Authorize(Roles = "Administrator")]
+        [DynamicRoleAuthorize("RegisterUserAsync")]
         public async Task<ActionResult> RegisterUserAsync([FromBody] RegisterUserDto registerUserDto)
         {
             await _accountService.RegisterUserAsync(registerUserDto);
@@ -112,10 +127,10 @@ namespace PersonalWebApi.Controllers.System
         /// <param name="userPasswordChange">The user ID and new password details.</param>
         /// <returns>An ActionResult indicating the result of the operation.</returns>
         [HttpPost("change-user-password")]
-        [Authorize]
+        [DynamicRoleAuthorize("ChangeUserPassword")]
         public async Task<ActionResult> ChangeUserPassword([FromBody] UserPasswordChange userPasswordChange)
         {
-            await _accountService.ChangeUserPasswordAsync(userPasswordChange.userId, userPasswordChange.newPassword);
+            await _accountService.ChangeUserPasswordAsync(userPasswordChange.UserId, userPasswordChange.NewPassword);
             return Ok();
         }
 
@@ -125,17 +140,27 @@ namespace PersonalWebApi.Controllers.System
         /// <param name="passwordChange">The new password and its verification.</param>
         /// <returns>An ActionResult indicating the result of the operation.</returns>
         [HttpPost("change-admin-passwords")]
-        [Authorize(Roles = "Administrator")]
+        [DynamicRoleAuthorize("ChangeAdminPassword")]
         public async Task<ActionResult> ChangeAdminPassword([FromBody] AdminPasswordChange passwordChange)
         {
-            await _accountService.ChangeAdminPasswordAsync(passwordChange.newPassword, passwordChange.passwordVerification);
+            await _accountService.ChangeAdminPasswordAsync(passwordChange.NewPassword, passwordChange.PasswordVerification);
+            return Ok();
+        }
+
+        // change admin email
+        [HttpPost("change-admin-email")]
+        [DynamicRoleAuthorize("ChangeAdminEmail")]
+        public async Task<ActionResult> ChangeAdminEmail([FromBody] string newEmail)
+        {
+            await _accountService.ChangeAdminEmailAsync(newEmail);
             return Ok();
         }
 
         /// <summary>
         /// Login API user
         /// </summary>
-        [HttpPost("login")]        
+        [HttpPost("login")]
+        [AllowAnonymous]
         public ActionResult Login([FromBody] LoginDto loginDto)
         {
             string token = _accountService.GenerateJwt(loginDto);
