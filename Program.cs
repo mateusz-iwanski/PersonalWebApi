@@ -29,6 +29,8 @@ namespace PersonalWebApi
             {
                 var builder = WebApplication.CreateBuilder(args);
 
+                builder.Configuration.AddUserSecrets<Program>();
+
                 // Add NLog to ASP.NET Core
                 builder.Logging.ClearProviders();
                 builder.Logging.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Trace);
