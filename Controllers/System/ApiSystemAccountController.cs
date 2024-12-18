@@ -1,24 +1,25 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using PersonalWebApi.Entities.System;
 using PersonalWebApi.Models.System;
 using PersonalWebApi.Services.System;
 using System.ComponentModel.DataAnnotations;
-using static PersonalWebApi.Controllers.System.AccountController;
+using static PersonalWebApi.Controllers.System.ApiSystemAccountController;
 
 namespace PersonalWebApi.Controllers.System
 {
     /// <summary>
     /// Controller for managing accounts, roles, and users.
     /// </summary>
-    [Route("api/account")]
+    [Route("api/system/account")]
     [ApiController]
-    public class AccountController : ControllerBase
+    public class ApiSystemAccountController : ControllerBase
     {
         private readonly IAccountService _accountService;
         public record AdminPasswordChange([MinLength(8)] string newPassword, [Required] string passwordVerification);
         public record UserPasswordChange([Required] int userId, [MinLength(8)] string newPassword);
 
-        public AccountController(IAccountService accountService)
+        public ApiSystemAccountController(IAccountService accountService)
         {
             _accountService = accountService;
         }
@@ -29,11 +30,10 @@ namespace PersonalWebApi.Controllers.System
         /// <param name="id">The ID of the role to delete.</param>
         /// <returns>An ActionResult indicating the result of the operation.</returns>
         [HttpDelete("delete-role/{id}")]
+        [Authorize(Roles = "Administrator")]
         public async Task<ActionResult> DeleteRoleAsync([FromRoute] int id)
         {
-            var response = await _accountService.DeleteRoleAsync(id);
-            if (!response)
-                return BadRequest("The role was not found or there are users who have set this role.");
+            await _accountService.DeleteRoleAsync(id);
             return Ok();
         }
 
@@ -43,6 +43,7 @@ namespace PersonalWebApi.Controllers.System
         /// <param name="role">The role details.</param>
         /// <returns>An ActionResult indicating the result of the operation.</returns>
         [HttpPost("add-role")]
+        [Authorize(Roles = "Administrator")]
         public async Task<ActionResult> AddRoleAsync([FromBody] RoleCreateDto role)
         {
             await _accountService.AddRolesAsync(role);
@@ -54,6 +55,7 @@ namespace PersonalWebApi.Controllers.System
         /// </summary>
         /// <returns>A list of roles.</returns>
         [HttpGet("roles")]
+        [Authorize]
         public async Task<ActionResult<IEnumerable<Role>>> GetAllRolesAsync()
         {
             var roles = await _accountService.GetAllRolesAsync();
@@ -69,15 +71,10 @@ namespace PersonalWebApi.Controllers.System
         /// You can't delete the Administrator user (ID = 1).
         /// </remarks>
         [HttpDelete("delete-user/{id}")]
+        [Authorize(Roles = "Administrator")]
         public async Task<ActionResult> DeleteUserAsync([FromRoute] int id)
         {
-            if (id == 1)
-                return BadRequest("You can't delete the admin user");
-
-            var response = await _accountService.DeleteUserAsync(id);
-            if (!response)
-                return BadRequest("User not found.");
-
+            await _accountService.DeleteUserAsync(id);
             return Ok();
         }
 
@@ -86,6 +83,7 @@ namespace PersonalWebApi.Controllers.System
         /// </summary>
         /// <returns>A list of users.</returns>
         [HttpGet("users")]
+        [Authorize(Roles = "Administrator")]
         public async Task<ActionResult<IEnumerable<User>>> GetUsersAsync()
         {
             var users = await _accountService.GetAllUsersAsync();
@@ -101,24 +99,23 @@ namespace PersonalWebApi.Controllers.System
         /// You can't add RoleId = 1 (Administrator) for user. Only admin user 
         /// </remarks>
         [HttpPost("register-user")]
+        [Authorize(Roles = "Administrator")]
         public async Task<ActionResult> RegisterUserAsync([FromBody] RegisterUserDto registerUserDto)
         {
             await _accountService.RegisterUserAsync(registerUserDto);
-
             return Ok();
         }
 
-        // change user password
+        /// <summary>
+        /// Changes the password for a user.
+        /// </summary>
+        /// <param name="userPasswordChange">The user ID and new password details.</param>
+        /// <returns>An ActionResult indicating the result of the operation.</returns>
         [HttpPost("change-user-password")]
+        [Authorize]
         public async Task<ActionResult> ChangeUserPassword([FromBody] UserPasswordChange userPasswordChange)
         {
-            if (userPasswordChange.userId == 1)
-                return BadRequest("You can't change the admin password, use change-admin-passwords.");
-
-            var response = await _accountService.ChangeUserPasswordAsync(userPasswordChange.userId, userPasswordChange.newPassword);
-            // if the password verification failed
-            if (!response)
-                return BadRequest("User not found.");
+            await _accountService.ChangeUserPasswordAsync(userPasswordChange.userId, userPasswordChange.newPassword);
             return Ok();
         }
 
@@ -128,15 +125,21 @@ namespace PersonalWebApi.Controllers.System
         /// <param name="passwordChange">The new password and its verification.</param>
         /// <returns>An ActionResult indicating the result of the operation.</returns>
         [HttpPost("change-admin-passwords")]
+        [Authorize(Roles = "Administrator")]
         public async Task<ActionResult> ChangeAdminPassword([FromBody] AdminPasswordChange passwordChange)
         {
-            var response = await _accountService.ChangeAdminPasswordAsync(passwordChange.newPassword, passwordChange.passwordVerification);
-
-            // if the password verification failed
-            if (!response)
-                return BadRequest("Check password verification.");
-
+            await _accountService.ChangeAdminPasswordAsync(passwordChange.newPassword, passwordChange.passwordVerification);
             return Ok();
+        }
+
+        /// <summary>
+        /// Login API user
+        /// </summary>
+        [HttpPost("login")]        
+        public ActionResult Login([FromBody] LoginDto loginDto)
+        {
+            string token = _accountService.GenerateJwt(loginDto);
+            return Ok(token);
         }
     }
 }
