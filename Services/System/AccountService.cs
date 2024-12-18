@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using PersonalWebApi.Entities.System;
@@ -7,11 +6,9 @@ using PersonalWebApi.Exceptions;
 using PersonalWebApi.Models.System;
 using PersonalWebApi.Settings.System;
 using System.IdentityModel.Tokens.Jwt;
-using System.Runtime;
 using System.Security.Claims;
 using System.Text;
-using PersonalWebApi.Exceptions;
-using static PersonalWebApi.Controllers.System.ApiSystemAccountController;
+
 
 namespace PersonalWebApi.Services.System
 {
