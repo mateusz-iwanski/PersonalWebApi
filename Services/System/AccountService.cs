@@ -192,6 +192,18 @@ namespace PersonalWebApi.Services.System
         }
 
         /// <summary>
+        /// Changes the email of the administrator.
+        /// </summary>
+        /// <param name="newEmail">The new email to be set.</param>
+        /// <returns>A task that represents the asynchronous operation.</returns>
+        public async Task ChangeAdminEmailAsync(string newEmail)
+        {
+            var admin = await _context.Users.FirstOrDefaultAsync(u => u.Role.Name == "Administrator");
+            admin.Email = newEmail;
+            await _context.SaveChangesAsync();
+        }
+
+        /// <summary>
         /// JWT generation for the user authentication
         /// </summary>
         public string GenerateJwt(LoginDto loginDto)
