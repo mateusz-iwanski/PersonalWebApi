@@ -49,7 +49,9 @@ namespace PersonalWebApi.Seeder.System
                 var newPasswordHash = _passwordHasher.HashPassword(user, passwordHash);
                 user.PasswordHash = newPasswordHash;
 
-                if (_context.Users.FirstOrDefault(a => a.Name == "Administrator") == null)
+                var getUser = _context.Users.FirstOrDefault(a => a.Name == "Administrator");
+
+                if (getUser == null)
                     _context.Users.Add(user);
 
                 _context.SaveChanges();
