@@ -8,6 +8,6 @@ namespace PersonalWebApi.Entities.System
 
         [Required]
         [StringLength(100)]
-        public string Name { get; set; }
+        public string Name { get; set; } = string.Empty;
     }
 }

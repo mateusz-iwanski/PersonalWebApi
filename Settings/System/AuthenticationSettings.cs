@@ -8,7 +8,7 @@
         /// <summary>
         /// Gets or sets the JWT key used for signing tokens.
         /// </summary>
-        public string JwtKey { get; set; }
+        public string JwtKey { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the number of days until the JWT token expires.
@@ -18,6 +18,6 @@
         /// <summary>
         /// Gets or sets the issuer of the JWT token.
         /// </summary>
-        public string JwtIssuer { get; set; }
+        public string JwtIssuer { get; set; } = string.Empty;
     }
 }
