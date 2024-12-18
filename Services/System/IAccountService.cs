@@ -14,5 +14,6 @@ namespace PersonalWebApi.Services.System
         Task RegisterUserAsync(RegisterUserDto registerUserDto);
         Task ChangeAdminPasswordAsync(string newPassword, string passwordVerification);
         string GenerateJwt(LoginDto loginDto);
+        Task ChangeAdminEmailAsync(string newEmail);
     }
 }
