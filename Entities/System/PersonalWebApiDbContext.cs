@@ -6,19 +6,23 @@ namespace PersonalWebApi.Entities.System
 {
     public class PersonalWebApiDbContext : DbContext
     {
-        private readonly string _connectionString;
+        private readonly IConfiguration _configuration;
 
         public DbSet<User> Users { get; set; }
         public DbSet<Role> Roles { get; set; }
 
-        public PersonalWebApiDbContext()
+        public PersonalWebApiDbContext(IConfiguration configuration)
         {
-            var configuration = new ConfigurationBuilder()
-                .SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("appsettings.json")
-                .Build();
+            _configuration = configuration;
+        }
 
-            _connectionString = configuration.GetConnectionString("SQLiteConnection");
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            if (!optionsBuilder.IsConfigured)
+            {
+                var connectionString = _configuration.GetConnectionString("SQLiteConnection");
+                optionsBuilder.UseSqlite(connectionString);
+            }
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -37,11 +41,6 @@ namespace PersonalWebApi.Entities.System
                       .WithMany()
                       .HasForeignKey(u => u.RoleId);
             });
-        }
-
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            optionsBuilder.UseSqlite(_connectionString);
         }
     }
 }
