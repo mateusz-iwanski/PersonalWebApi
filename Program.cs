@@ -21,27 +21,31 @@ namespace PersonalWebApi
     {
         public static void Main(string[] args)
         {
+            var builder = WebApplication.CreateBuilder(args);
+
+            // Add configuration sources
+            builder.Configuration.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+                                 .AddJsonFile("nlogsettings.json", optional: true, reloadOnChange: true)
+                                 .AddUserSecrets<Program>()
+                                 .AddEnvironmentVariables();
+
             // Configure NLog
-            var logger = NLog.LogManager.Setup().LoadConfigurationFromAppSettings().GetCurrentClassLogger();
+            builder.Logging.ClearProviders();
+            builder.Logging.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Trace);
+            builder.Host.UseNLog();
+
+            // Load NLog configuration from nlogsettings.json
+            var nlogConfig = new NLog.Config.LoggingConfiguration();
+            nlogConfig = NLogBuilder.ConfigureNLog("nlogsettings.json").Configuration;
+
+            var logger = NLog.LogManager.GetCurrentClassLogger();
             logger.Debug("init main");
 
             try
             {
-                var builder = WebApplication.CreateBuilder(args);
-
-                // Add configuration sources
-                builder.Configuration.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
-                                     .AddUserSecrets<Program>()
-                                     .AddEnvironmentVariables();
-
-                // Add NLog to ASP.NET Core
-                builder.Logging.ClearProviders();
-                builder.Logging.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Trace);
-                builder.Host.UseNLog();
-
+                // Add services to the container
                 builder.Services.AddDbContext<PersonalWebApiDbContext>();
 
-                // Add services to the container.
                 builder.Services.AddControllers();
                 builder.Services.AddSwaggerGen(options =>
                 {
@@ -75,7 +79,7 @@ namespace PersonalWebApi
                                 },
                                 Scheme = "oauth2",
                                 Name = "Bearer",
-                                BearerFormat = "JWT", // Set the default bearer format to JWT
+                                BearerFormat = "JWT",
                                 In = ParameterLocation.Header,
                             },
                             new List<string>()
@@ -92,20 +96,20 @@ namespace PersonalWebApi
                 // Configure services for controllers
                 builder.Services.AddScoped<IAccountService, AccountService>();
 
-                // configure hash service
+                // Configure password hasher
                 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 
                 // Authentication settings
                 var authenticationSettings = new AuthenticationSettings();
-                /// from appsettings.json
-                ConfigurationBinder.Bind(builder.Configuration.GetSection("Authentication"), authenticationSettings);
+                builder.Configuration.GetSection("Authentication").Bind(authenticationSettings);
                 builder.Services.AddSingleton(authenticationSettings);
-                builder.Services.AddAuthentication(option =>
+
+                builder.Services.AddAuthentication(options =>
                 {
-                    option.DefaultAuthenticateScheme = "Bearer";
-                    option.DefaultChallengeScheme = "Bearer";
-                    option.DefaultChallengeScheme = "Bearer";
-                }).AddJwtBearer(cfg =>
+                    options.DefaultAuthenticateScheme = "Bearer";
+                    options.DefaultChallengeScheme = "Bearer";
+                })
+                .AddJwtBearer(cfg =>
                 {
                     cfg.RequireHttpsMetadata = false;
                     cfg.SaveToken = true;
@@ -116,11 +120,6 @@ namespace PersonalWebApi
                         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(authenticationSettings.JwtKey))
                     };
                 });
-
-                //builder.Services.AddAuthorization(options =>
-                //{
-                //    options.AddPolicy("Administrator", policy => policy.RequireRole("Administrator"));
-                //});
 
                 #endregion
 
@@ -133,7 +132,8 @@ namespace PersonalWebApi
 
                 #region add custom validator
 
-                builder.Services.AddFluentValidationAutoValidation().AddFluentValidationClientsideAdapters();
+                builder.Services.AddFluentValidationAutoValidation()
+                                .AddFluentValidationClientsideAdapters();
                 builder.Services.AddValidatorsFromAssemblyContaining<RegisterUserDtoValidator>();
                 builder.Services.AddValidatorsFromAssemblyContaining<RoleCreateDtoValidator>();
 
@@ -166,7 +166,6 @@ namespace PersonalWebApi
                 app.UseMiddleware<ErrorHandlingMiddleware>();
 
                 #endregion
-
 
                 app.UseHttpsRedirection();
                 app.UseAuthentication();
