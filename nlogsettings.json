@@ -1,0 +1,49 @@
+{
+  "NLog": {
+    "autoReload": true,
+    "internalLogLevel": "Info",
+    "internalLogFile": "${basedir}/logs/nlog-internal.log",
+    "extensions": [
+      {
+        "assembly": "NLog.Web.AspNetCore"
+      }
+    ],
+    "targets": {
+      "allFile": {
+        "type": "File",
+        "fileName": "${basedir}/Logs/nlog_all_${date:format=yyyyMMdd}.log",
+        "layout": "${aspnet-request-ip}|${longdate}|${uppercase:${level}}|${logger}|${message}",
+        "maxArchiveDays": 5
+      },
+      "exceptions": {
+        "type": "File",
+        "fileName": "${basedir}/Logs/nlog_exceptions_${date:format=yyyyMMdd}.log",
+        "layout": "${aspnet-request-ip}|${longdate}|${uppercase:${level}}|${logger}|${message}",
+        "maxArchiveDays": 7
+      },
+      "errors": {
+        "type": "File",
+        "fileName": "${basedir}/Logs/request-errors_${date:format=yyyyMMdd}.log",
+        "layout": "${aspnet-request-ip}|${longdate}|${uppercase:${level}}|${logger}|${message}",
+        "maxArchiveDays": 7
+      }
+    },
+    "rules": [
+      {
+        "logger": "*",
+        "minLevel": "Trace",
+        "writeTo": "allFile"
+      },
+      {
+        "logger": "PersonalWebApi.Middleware.ErrorHandlingMiddleware",
+        "minLevel": "Error",
+        "writeTo": "errors"
+      },
+      {
+        "logger": "PersonalWebApi.*",
+        "minLevel": "Error",
+        "writeTo": "exceptions"
+      }
+    ]
+  }
+}
