@@ -5,9 +5,6 @@
 
 # User-specific files
 appsettings.json
-PersonalWebApi.db
-PersonalWebApi.db-shm
-PersonalWebApi.db-wal
 
 *.rsuser
 *.suo
