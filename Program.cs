@@ -29,7 +29,10 @@ namespace PersonalWebApi
             {
                 var builder = WebApplication.CreateBuilder(args);
 
-                builder.Configuration.AddUserSecrets<Program>();
+                // Add configuration sources
+                builder.Configuration.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+                                     .AddUserSecrets<Program>()
+                                     .AddEnvironmentVariables();
 
                 // Add NLog to ASP.NET Core
                 builder.Logging.ClearProviders();
