@@ -8,6 +8,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{D352E2E4-A1B2-45E0-B7E3-509E12A4169F}"
 	ProjectSection(SolutionItems) = preProject
 		nlogsettings.json = nlogsettings.json
+		Startup.cs = Startup.cs
 	EndProjectSection
 EndProject
 Global
