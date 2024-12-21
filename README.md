@@ -60,9 +60,10 @@ Before deploying to Azure App Service, remove all directories and files except `
 The project is configured to use Azure Application Insights. To use it, follow the steps below:
 
 1. Rename `nlogsettings_azureinsightsapp_schema.json` to `nlogsettings_azureinsightsapp.json`.
+2. Change Program.cs to use `nlogsettings_azureinsightsapp.json` instead of `nlogsettings.json`.`
 2. Add the `instrumentationKey` and `EndpointAddress` from your insights application in the `nlogsettings_azureinsightsapp.json`.
 
 ## Template
 
-A branch called `TemplateAPI-branch` is available, which serves as a template with the main API features without any additional functionality. After downloading the branch for your new API project, change the project name, solution name, namespaces, etc., and read the 'Getting Started' section from the branch `README.md`.
-A brach called `TemaplateApi-Azure-AppServices-branch` is available, which serves as a template with the main API features without any additional functionality. After downloading the branch for your new API project, change the project name, solution name, namespaces, etc., and read the 'Getting Started' section from the branch `README.md`.
+1. **Local** A branch called `TemplateAPI-branch` is available, which serves as a template with the main API features without any additional functionality. After downloading the branch for your new API project, change the project name, solution name, namespaces, etc., and read the 'Getting Started' section from the branch `README.md`.
+2. **Azure** A brach called `TemaplateApi-Azure-AppServices-branch` is available. It is ready to be deployed to Azure as an App Service. It serves as a template with the main API features without any additional functionality. After downloading the branch for your new API project, change the project name, solution name, namespaces, etc., and read the 'Getting Started' section from the branch `README.md`.
