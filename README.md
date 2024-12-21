@@ -53,3 +53,9 @@
 ## Template
 
 There is a branch called `TemplateAPI-branch` which is a template with the main API features without any additional functionality. After downloading the branch for your new API project, change the project name, solution name, namespaces, etc., and read the 'Getting Started' section from the branch `README.md`.
+
+## Azure - App Services
+
+First add environment variables from appsettings.json to the Azure App Service. The best option is using the Azure CLI.
+For example:
+    - az webapp config appsettings set --resource-group PersonalWebApi_group --name PersonalWebApi --settings "Authentication:JwtKey= ...
