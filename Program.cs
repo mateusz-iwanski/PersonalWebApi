@@ -14,6 +14,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.Extensions.Options;
 using PersonalWebApi.Middleware;
+using Microsoft.EntityFrameworkCore;
 
 namespace PersonalWebApi
 {
@@ -36,7 +37,7 @@ namespace PersonalWebApi
 
             // Load NLog configuration from nlogsettings.json
             var logger = NLog.LogManager.Setup().LoadConfigurationFromFile("nlogsettings.json").GetCurrentClassLogger();
-            
+
             logger.Debug("init main");
 
             try
@@ -139,13 +140,17 @@ namespace PersonalWebApi
 
                 var app = builder.Build();
 
-                // Run seeders
-                using var scope = app.Services.CreateScope();
+                // Apply migrations and run seeders
+                using (var scope = app.Services.CreateScope())
+                {
+                    var dbContext = scope.ServiceProvider.GetRequiredService<PersonalWebApiDbContext>();
+                    dbContext.Database.Migrate();
 
-                var roleSeeder = scope.ServiceProvider.GetRequiredService<RoleSeeder>();
-                roleSeeder.SeedBasic();
-                var userSeeder = scope.ServiceProvider.GetRequiredService<UserSeeder>();
-                userSeeder.SeedBasic();
+                    var roleSeeder = scope.ServiceProvider.GetRequiredService<RoleSeeder>();
+                    roleSeeder.SeedBasic();
+                    var userSeeder = scope.ServiceProvider.GetRequiredService<UserSeeder>();
+                    userSeeder.SeedBasic();
+                }
 
                 // Configure the HTTP request pipeline.
                 if (app.Environment.IsDevelopment())
