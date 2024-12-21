@@ -153,15 +153,12 @@ namespace PersonalWebApi
                 }
 
                 // Configure the HTTP request pipeline.
-                if (app.Environment.IsDevelopment())
+                app.UseSwagger();
+                app.UseSwaggerUI(c =>
                 {
-                    app.UseSwagger();
-                    app.UseSwaggerUI(c =>
-                    {
-                        c.SwaggerEndpoint("/swagger/v1/swagger.json", "My PersonalAPI V1");
-                        c.RoutePrefix = "swagger";
-                    });
-                }
+                    c.SwaggerEndpoint("/swagger/v1/swagger.json", "My PersonalAPI V1");
+                    c.RoutePrefix = string.Empty; // Set Swagger UI at the app's root
+                });
 
                 #region register middlewares
 
@@ -174,6 +171,22 @@ namespace PersonalWebApi
                 app.UseAuthentication();
                 app.UseAuthorization();
                 app.MapControllers();
+
+                // Secure Swagger UI
+                app.UseWhen(context => context.Request.Path.StartsWithSegments("/swagger"), appBuilder =>
+                {
+                    appBuilder.UseAuthentication();
+                    appBuilder.UseAuthorization();
+                    appBuilder.Use(async (context, next) =>
+                    {
+                        if (!context.User.Identity.IsAuthenticated)
+                        {
+                            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                            return;
+                        }
+                        await next();
+                    });
+                });
 
                 app.Run();
             }
@@ -190,3 +203,4 @@ namespace PersonalWebApi
         }
     }
 }
+
