@@ -64,4 +64,4 @@ The project is configured to use Azure Application Insights. To use it, follow t
 ## Template
 
 A branch called `TemplateAPI-branch` is available, which serves as a template with the main API features without any additional functionality. After downloading the branch for your new API project, change the project name, solution name, namespaces, etc., and read the 'Getting Started' section from the branch `README.md`.
-A brach called `TemaplateApiAzure-branch` is available, which serves as a template with the main API features without any additional functionality. After downloading the branch for your new API project, change the project name, solution name, namespaces, etc., and read the 'Getting Started' section from the branch `README.md`.
+A brach called `TemaplateApi-Azure-AppServices-branch` is available, which serves as a template with the main API features without any additional functionality. After downloading the branch for your new API project, change the project name, solution name, namespaces, etc., and read the 'Getting Started' section from the branch `README.md`.
