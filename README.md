@@ -50,12 +50,18 @@
 4. **Retrieve JWT Token**: Obtain the Bearer JWT token and include it in the Headers of your HTTP requests.
 5. **Token Expiry**: Check the token expiry duration in `appsettings.json`.
 
-## Template
-
-There is a branch called `TemplateAPI-branch` which is a template with the main API features without any additional functionality. After downloading the branch for your new API project, change the project name, solution name, namespaces, etc., and read the 'Getting Started' section from the branch `README.md`.
-
 ## Azure - App Services
 
-First add environment variables from appsettings.json to the Azure App Service. The best option is using the Azure CLI.
-For example:
-    - az webapp config appsettings set --resource-group PersonalWebApi_group --name PersonalWebApi --settings "Authentication:JwtKey= ...
+Before deploying to Azure App Service, remove all directories and files except `launchSettings.json` from the Properties directory.
+
+### Azure Application Insights
+
+The project is configured to use Azure Application Insights. To use it, follow the steps below:
+
+1. Rename `nlogsettings_azureinsightsapp_schema.json` to `nlogsettings_azureinsightsapp.json`.
+2. Add the `instrumentationKey` and `EndpointAddress` from your insights application in the `nlogsettings_azureinsightsapp.json`.
+
+## Template
+
+A branch called `TemplateAPI-branch` is available, which serves as a template with the main API features without any additional functionality. After downloading the branch for your new API project, change the project name, solution name, namespaces, etc., and read the 'Getting Started' section from the branch `README.md`.
+A brach called `TemaplateApiAzure-branch` is available, which serves as a template with the main API features without any additional functionality. After downloading the branch for your new API project, change the project name, solution name, namespaces, etc., and read the 'Getting Started' section from the branch `README.md`.
