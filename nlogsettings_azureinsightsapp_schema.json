@@ -1,0 +1,40 @@
+{
+  "NLog": {
+    "autoReload": true,
+    "internalLogLevel": "Trace",
+    "internalLogFile": "${basedir}/logs/nlog-internal.log",
+    "extensions": [
+      {
+        "assembly": "NLog.Web.AspNetCore"
+      },
+      {
+        "assembly": "Microsoft.ApplicationInsights.NLogTarget"
+      }
+    ],
+    "targets": {
+      "appInsights": {
+        "type": "ApplicationInsightsTarget",
+        "instrumentationKey": "",
+        "EndpointAddress": "",
+        "layout": "${longdate}|${uppercase:${level}}|${logger}|${message}${exception:format=toString,StackTrace}"
+      }
+    },
+    "rules": [
+      {
+        "logger": "*",
+        "minLevel": "Trace",
+        "writeTo": "appInsights"
+      },
+      {
+        "logger": "PersonalWebApi.Middleware.ErrorHandlingMiddleware",
+        "minLevel": "Error",
+        "writeTo": "appInsights"
+      },
+      {
+        "logger": "PersonalWebApi.*",
+        "minLevel": "Error",
+        "writeTo": "appInsights"
+      }
+    ]
+  }
+}
