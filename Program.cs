@@ -26,7 +26,7 @@ namespace PersonalWebApi
 
             // Add configuration sources
             builder.Configuration.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
-                                 .AddJsonFile("nlogsettings.json", optional: true, reloadOnChange: true)
+                                 .AddJsonFile("nlogsettings_azureinsightsapp.json", optional: true, reloadOnChange: true)
                                  .AddUserSecrets<Program>()
                                  .AddEnvironmentVariables();
 
@@ -35,8 +35,9 @@ namespace PersonalWebApi
             builder.Logging.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Trace);
             builder.Host.UseNLog();
 
-            // Load NLog configuration from nlogsettings.json
-            var logger = NLog.LogManager.Setup().LoadConfigurationFromFile("nlogsettings.json").GetCurrentClassLogger();
+            // Load NLog configuration from nlogsettings_azureinsightsapp.json
+            var logger = NLog.LogManager.Setup().LoadConfigurationFromFile("nlogsettings_azureinsightsapp.json").GetCurrentClassLogger();
+            //var logger = NLog.LogManager.Setup().LoadConfigurationFromFile("nlogsettings.json").GetCurrentClassLogger();
 
             logger.Debug("init main");
 
@@ -67,23 +68,23 @@ namespace PersonalWebApi
 
                     // Use the Bearer scheme globally
                     options.AddSecurityRequirement(new OpenApiSecurityRequirement
-                    {
-                        {
-                            new OpenApiSecurityScheme
-                            {
-                                Reference = new OpenApiReference
-                                {
-                                    Type = ReferenceType.SecurityScheme,
-                                    Id = "Bearer"
-                                },
-                                Scheme = "oauth2",
-                                Name = "Bearer",
-                                BearerFormat = "JWT",
-                                In = ParameterLocation.Header,
-                            },
-                            new List<string>()
-                        }
-                    });
+                       {
+                           {
+                               new OpenApiSecurityScheme
+                               {
+                                   Reference = new OpenApiReference
+                                   {
+                                       Type = ReferenceType.SecurityScheme,
+                                       Id = "Bearer"
+                                   },
+                                   Scheme = "oauth2",
+                                   Name = "Bearer",
+                                   BearerFormat = "JWT",
+                                   In = ParameterLocation.Header,
+                               },
+                               new List<string>()
+                           }
+                       });
                 });
 
                 #region add services
