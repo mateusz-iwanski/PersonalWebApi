@@ -35,10 +35,8 @@ namespace PersonalWebApi
             builder.Host.UseNLog();
 
             // Load NLog configuration from nlogsettings.json
-            var nlogConfig = new NLog.Config.LoggingConfiguration();
-            nlogConfig = NLogBuilder.ConfigureNLog("nlogsettings.json").Configuration;
-
-            var logger = NLog.LogManager.GetCurrentClassLogger();
+            var logger = NLog.LogManager.Setup().LoadConfigurationFromFile("nlogsettings.json").GetCurrentClassLogger();
+            
             logger.Debug("init main");
 
             try
