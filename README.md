@@ -15,6 +15,7 @@
   - `NLog.Extensions.Logging` - Version 5.3.15
   - `NLog.Web.AspNetCore` - Version 5.3.15
   - `Swashbuckle.AspNetCore` - Version 7.2.0
+  - `Microsoft.ApplicationInsights.NLogTarget` - Version 2.22.0
 
 ## Features
 
