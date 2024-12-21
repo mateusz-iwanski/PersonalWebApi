@@ -5,6 +5,7 @@
 
 # User-specific files
 appsettings.json
+nlogsettings_azureinsightsapp.json
 
 *.rsuser
 *.suo
@@ -13,7 +14,7 @@ appsettings.json
 *.sln.docstates
 
 # User-specific files (MonoDevelop/Xamarin Studio)
-*.userprefs
+*.userprefss
 
 # Mono auto generated files
 mono_crash.*
