@@ -15,6 +15,7 @@ using System.Text;
 using Microsoft.Extensions.Options;
 using PersonalWebApi.Middleware;
 using Microsoft.EntityFrameworkCore;
+using PersonalWebApi.Services.Azure;
 
 namespace PersonalWebApi
 {
@@ -26,7 +27,8 @@ namespace PersonalWebApi
 
             // Add configuration sources
             builder.Configuration.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
-                                 .AddJsonFile("nlogsettings_azureinsightsapp.json", optional: true, reloadOnChange: true)
+                                 //.AddJsonFile("nlogsettings_azureinsightsapp.json", optional: true, reloadOnChange: true)
+                                 .AddJsonFile("nlogsettings.json", optional: true, reloadOnChange: true)
                                  .AddUserSecrets<Program>()
                                  .AddEnvironmentVariables();
 
@@ -36,8 +38,8 @@ namespace PersonalWebApi
             builder.Host.UseNLog();
 
             // Load NLog configuration from nlogsettings_azureinsightsapp.json
-            var logger = NLog.LogManager.Setup().LoadConfigurationFromFile("nlogsettings_azureinsightsapp.json").GetCurrentClassLogger();
-            //var logger = NLog.LogManager.Setup().LoadConfigurationFromFile("nlogsettings.json").GetCurrentClassLogger();
+            //var logger = NLog.LogManager.Setup().LoadConfigurationFromFile("nlogsettings_azureinsightsapp.json").GetCurrentClassLogger();
+            var logger = NLog.LogManager.Setup().LoadConfigurationFromFile("nlogsettings.json").GetCurrentClassLogger();
 
             logger.Debug("init main");
 
@@ -95,6 +97,7 @@ namespace PersonalWebApi
 
                 // Configure services for controllers
                 builder.Services.AddScoped<IAccountService, AccountService>();
+                builder.Services.AddScoped<IBlobStorageService, BlobStorageService>();
 
                 // Configure password hasher
                 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
