@@ -39,6 +39,10 @@ namespace PersonalWebApi.Middleware
             {
                 await HandleExceptionAsync(context, exception, 500);
             }
+            catch (AzureBlobStorageException exception)
+            {
+                await HandleExceptionAsync(context, exception, 400);
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, ex.Message);
