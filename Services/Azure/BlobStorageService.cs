@@ -265,5 +265,36 @@ namespace PersonalWebApi.Services.Azure
 
             return uri;
         }
+
+        // get list of files with metadata
+        public async Task<List<BlobItem>> GetFilesWithMetadataAsync(string containerName)
+        {
+            _blobContainerClient = _blobServiceClient.GetBlobContainerClient(containerName);
+            var blobs = new List<BlobItem>();
+            await foreach (var blobItem in _blobContainerClient.GetBlobsAsync())
+            {
+                var blobClient = _blobContainerClient.GetBlobClient(blobItem.Name);
+                var properties = await blobClient.GetPropertiesAsync();
+
+                foreach (var metadataItem in properties.Value.Metadata)
+                {
+                    blobItem.Metadata.Add(metadataItem);
+                }
+
+                blobs.Add(blobItem);
+            }
+            return blobs;
+        }
+
+        // get list of containers
+        public async Task<List<string>> GetContainersAsync()
+        {
+            var containers = new List<string>();
+            await foreach (var container in _blobServiceClient.GetBlobContainersAsync())
+            {
+                containers.Add(container.Name);
+            }
+            return containers;
+        }
     }
 }
