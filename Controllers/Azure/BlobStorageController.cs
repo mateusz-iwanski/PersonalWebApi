@@ -6,7 +6,7 @@ using System.ComponentModel.DataAnnotations;
 namespace PersonalWebApi.Controllers.Azure
 {
     [ApiController]
-    [Route("api/azure/[controller]")]
+    [Route("api/azure/blob-storage")]
     public class BlobStorageController : ControllerBase
     {
         private readonly IBlobStorageService _service;
@@ -61,8 +61,9 @@ namespace PersonalWebApi.Controllers.Azure
         /// <summary>
         /// Delete file from Azure Blob Storage Account from the `library` Container name
         /// </summary>
-        /// <param name="fileName">Name of the file to be deleted</param>
-        /// <returns>IActionResult indicating the result of the delete operation</returns>
+        /// <param name="fileName">Name of the file to be deleted</param>,
+        /// 
+        /// 01<returns>IActionResult indicating the result of the delete operation</returns>
         [HttpDelete("delete-from-library/{fileName}")]
         public async Task<IActionResult> DeleteFromLibrary([Required][FromRoute] string fileName)
         {
@@ -107,6 +108,22 @@ namespace PersonalWebApi.Controllers.Azure
         {
             var uri = await _service.UploadFromUriToLibrary(fileUri, fileName, overwrite);
             return Ok(uri);
+        }
+
+        // GetFilesWithMetadataAsync
+        [HttpGet("files-list-with-metadata/{containerName}")]
+        public async Task<IActionResult> GetFilesWithMetadataAsync([Required] string containerName)
+        {
+            var files = await _service.GetFilesWithMetadataAsync(containerName);
+            return Ok(files);
+        }
+
+        // GetContainersAsync
+        [HttpGet("containers-list")]
+        public async Task<IActionResult> GetContainersAsync()
+        {
+            var containers = await _service.GetContainersAsync();
+            return Ok(containers);
         }
     }
 }
