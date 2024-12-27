@@ -48,23 +48,26 @@ namespace PersonalWebApi.Services.Azure
         /// </summary>
         /// <param name="file">The file to upload.</param>
         /// <param name="ttlInDays">The time-to-live in days for the file.</param>
-        /// <param name="overwrite">Whether to overwrite the file if it already exists.</param>
+        /// <param name="overwrite">Whether to Overwrite the file if it already exists.</param>
         /// <param name="containerName">The name of the container to upload to.</param>
         /// <returns>The URI of the uploaded file.</returns>
-        /// <exception cref="AzureBlobStorageException">Thrown when the blob already exists and overwrite is set to false.</exception>
+        /// <exception cref="AzureBlobStorageException">Thrown when the blob already exists and Overwrite is set to false.</exception>
         /// <exception cref="RequestFailedException">Thrown when an error occurs during the upload.</exception>
-        private async Task<Uri> upload(IFormFile file, double? ttlInDays, bool overwrite, string containerName)
+        private async Task<Uri> upload(IFormFile file, double? ttlInDays, bool overwrite, string containerName, Dictionary<string, string>? metadata = null)
         {
             _blobContainerClient = await getContainerPublicAccessAsync(containerName, PublicAccessType.Blob);
 
             BlobClient blobClient = _blobContainerClient.GetBlobClient(file.FileName);
 
-            Dictionary<string, string>? metadata = null;
+            Dictionary<string, string>? _metadata = new Dictionary<string, string> { };
             if (ttlInDays != null)
-                metadata = new Dictionary<string, string>
+                _metadata.Add(nameof(ttlInDays), DateTime.UtcNow.AddDays(ttlInDays ?? 0d).ToString("o")); // ISO 8601 format
+
+            if (metadata !=null)
+                foreach (var item in metadata)
                 {
-                    { "ttl", DateTime.UtcNow.AddDays(ttlInDays ?? 0d).ToString("o") } // ISO 8601 format
-                };
+                    _metadata.Add(item.Key, item.Value);
+                }
 
             var blobHttpHeaders = new BlobHttpHeaders
             {
@@ -76,13 +79,13 @@ namespace PersonalWebApi.Services.Azure
                 await blobClient.UploadAsync(file.OpenReadStream(), new BlobUploadOptions
                 {
                     HttpHeaders = blobHttpHeaders,
-                    Metadata = metadata,
+                    Metadata = _metadata,
                     Conditions = overwrite ? null : new BlobRequestConditions { IfNoneMatch = new ETag("*") }
                 });
             }
             catch (RequestFailedException ex) when (ex.ErrorCode == BlobErrorCode.BlobAlreadyExists)
             {
-                throw new AzureBlobStorageException("Blob already exists and overwrite is set to false.");
+                throw new AzureBlobStorageException("Blob already exists and Overwrite is set to false.");
             }
             catch (RequestFailedException ex)
             {
@@ -132,12 +135,13 @@ namespace PersonalWebApi.Services.Azure
         /// </summary>
         /// <param name="file">The file to upload.</param>
         /// <param name="ttlInDays">The time-to-live in days for the file.</param>
-        /// <param name="overwrite">Whether to overwrite the file if it already exists.</param>
+        /// <param name="overwrite">Whether to Overwrite the file if it already exists.</param>
+        /// <param name="metadata">The metadata to add to the file.</param>
         /// <returns>The URI of the uploaded file.</returns>
-        /// <remarks>Once you set ttl in the metadata, the other service will delete the file after the set time.</remarks>
-        public async Task<Uri> UploadToTempAsync(IFormFile file, double ttlInDays, bool overwrite = true)
+        /// <remarks>Once you set ttl in the metadat, the other service will delete the file after the set time.</remarks>
+        public async Task<Uri> UploadToTempAsync(IFormFile file, double ttlInDays, bool overwrite = true, Dictionary<string, string>? metadata = null)
         {
-            var uri = await upload(file, ttlInDays, overwrite, _tempContainerName);
+            var uri = await upload(file, ttlInDays, overwrite, _tempContainerName, metadata);
             return uri;
         }
 
@@ -145,11 +149,12 @@ namespace PersonalWebApi.Services.Azure
         /// Uploads a file to the library container in Azure Blob Storage.
         /// </summary>
         /// <param name="file">The file to upload.</param>
-        /// <param name="overwrite">Whether to overwrite the file if it already exists.</param>
+        /// <param name="overwrite">Whether to Overwrite the file if it already exists.</param>
         /// <returns>The URI of the uploaded file.</returns>
-        public async Task<Uri> UploadToLibrary(IFormFile file, bool overwrite = false)
+        /// <param name="metadata">The metadata to add to the file.</param>
+        public async Task<Uri> UploadToLibrary(IFormFile file, bool overwrite = false, Dictionary<string, string>? metadata = null)
         {
-            var uri = await upload(file, null, overwrite, _libraryContainerName);
+            var uri = await upload(file, null, overwrite, _libraryContainerName, metadata);
             return uri;
         }
 
@@ -181,11 +186,12 @@ namespace PersonalWebApi.Services.Azure
         /// <param name="fileUri">The URI of the file to upload.</param>
         /// <param name="fileName">The name of the file.</param>
         /// <param name="ttlInDays">The time-to-live in days for the file.</param>
-        /// <param name="overwrite">Whether to overwrite the file if it already exists.</param>
+        /// <param name="overwrite">Whether to Overwrite the file if it already exists.</param>
+        /// <param name="metadata">The metadata to add to the file.</param>
         /// <returns>The URI of the uploaded file.</returns>
-        public async Task<Uri> UploadFromUriToTemp(string fileUri, string fileName, double ttlInDays, bool overwrite = false)
+        public async Task<Uri> UploadFromUriToTemp(string fileUri, string fileName, double ttlInDays, bool overwrite = false, Dictionary<string, string>? metadata = null)
         {
-            return await uploadFromUriAsync(fileUri, fileName, _tempContainerName, ttlInDays, overwrite);
+            return await uploadFromUriAsync(fileUri, fileName, _tempContainerName, ttlInDays, overwrite, metadata);
         }
 
         /// <summary>
@@ -193,11 +199,12 @@ namespace PersonalWebApi.Services.Azure
         /// </summary>
         /// <param name="fileUri">The URI of the file to upload.</param>
         /// <param name="fileName">The name of the file.</param>
-        /// <param name="overwrite">Whether to overwrite the file if it already exists.</param>
+        /// <param name="overwrite">Whether to Overwrite the file if it already exists.</param>
+        /// <param name="metadata">The metadata to add to the file.</param>
         /// <returns>The URI of the uploaded file.</returns>
-        public async Task<Uri> UploadFromUriToLibrary(string fileUri, string fileName, bool overwrite = false)
+        public async Task<Uri> UploadFromUriToLibrary(string fileUri, string fileName, bool overwrite = false, Dictionary<string, string>? metadata = null)
         {
-            return await uploadFromUriAsync(fileUri, fileName, _libraryContainerName, null, overwrite);
+            return await uploadFromUriAsync(fileUri, fileName, _libraryContainerName, null, overwrite, metadata);
         }
 
         /// <summary>
@@ -224,9 +231,10 @@ namespace PersonalWebApi.Services.Azure
         /// <param name="fileName">The name of the file.</param>
         /// <param name="containerName">The name of the container to upload to.</param>
         /// <param name="ttlInDays">The time-to-live in days for the file.</param>
-        /// <param name="overwrite">Whether to overwrite the file if it already exists.</param>
+        /// <param name="overwrite">Whether to Overwrite the file if it already exists.</param>
+        /// <param name="metadata">The metadata to add to the file.</param>
         /// <returns>The URI of the uploaded file.</returns>
-        private async Task<Uri> uploadFromUriAsync(string fileUri, string fileName, string containerName, double? ttlInDays, bool overwrite = false)
+        private async Task<Uri> uploadFromUriAsync(string fileUri, string fileName, string containerName, double? ttlInDays, bool overwrite = false, Dictionary<string, string>? metadata = null)
         {
             string tempFilePath = Path.GetTempFileName();
             Uri uri = null;
@@ -255,7 +263,7 @@ namespace PersonalWebApi.Services.Azure
                     ContentType = "application/octet-stream" // Set the appropriate content type if known
                 };
 
-                uri = await upload(file, ttlInDays, overwrite, containerName);
+                uri = await upload(file, ttlInDays, overwrite, containerName, metadata);
 
                 // Ensure fileStream is disposed before deleting the file
             }
@@ -266,7 +274,7 @@ namespace PersonalWebApi.Services.Azure
             return uri;
         }
 
-        // get list of files with metadata
+        // get list of files with metadat
         public async Task<List<BlobItem>> GetFilesWithMetadataAsync(string containerName)
         {
             _blobContainerClient = _blobServiceClient.GetBlobContainerClient(containerName);
