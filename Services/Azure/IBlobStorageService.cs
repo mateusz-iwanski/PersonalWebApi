@@ -5,12 +5,12 @@ namespace PersonalWebApi.Services.Azure
 {
     public interface IBlobStorageService
     {
-        Task<Uri> UploadToTempAsync(IFormFile file, double ttlInDays, bool overwrite = true);
-        Task<Uri> UploadToLibrary(IFormFile file, bool overwrite = false);
+        Task<Uri> UploadToTempAsync(IFormFile file, double ttlInDays, bool overwrite = true, Dictionary<string, string>? metadata = null);
+        Task<Uri> UploadToLibrary(IFormFile file, bool overwrite = false, Dictionary<string, string>? metadata = null);
         Task DeleteFileFromTemp(string fileName);
         Task DeleteFileFromLibrary(string fileName);
-        Task<Uri> UploadFromUriToTemp(string fileUri, string fileName, double ttlInDays, bool overwrite = false);
-        Task<Uri> UploadFromUriToLibrary(string fileUri, string fileName, bool overwrite = false);
+        Task<Uri> UploadFromUriToTemp(string fileUri, string fileName, double ttlInDays, bool overwrite = false, Dictionary<string, string>? metadata = null);
+        Task<Uri> UploadFromUriToLibrary(string fileUri, string fileName, bool overwrite = false, Dictionary<string, string>? metadata = null);
         Task<List<BlobItem>> GetFilesWithMetadataAsync(string containerName);
         Task<List<string>> GetContainersAsync();
     }
