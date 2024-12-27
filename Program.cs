@@ -98,6 +98,7 @@ namespace PersonalWebApi
                 // Configure services for controllers
                 builder.Services.AddScoped<IAccountService, AccountService>();
                 builder.Services.AddScoped<IBlobStorageService, BlobStorageService>();
+                builder.Services.AddScoped<ICosmosDbContentStoreService, CosmosDbContentStoreService>();
 
                 // Configure password hasher
                 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
