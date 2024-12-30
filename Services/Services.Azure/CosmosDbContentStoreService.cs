@@ -8,6 +8,7 @@ namespace PersonalWebApi.Services.Azure
 {
     public class CosmosDbContentStoreService : CosmosDbBase, ICosmosDbContentStoreService
     {
+        // TODO: add settings to appsettings.AzureService.json
         public CosmosDbContentStoreService(IConfiguration configuration)
             : base(configuration.GetConnectionString("PersonalApiDbCosmos"), "PersonalApi", "Items", "uri")
         {

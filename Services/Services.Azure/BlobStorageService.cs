@@ -31,6 +31,8 @@ namespace PersonalWebApi.Services.Azure
         {
             _configuration = configuration;
 
+            // TODO: remove settings to appsettings.AzureService.json
+
             var blobStorageConnection = _configuration.GetConnectionString("AzureBlobStorageConnection") ??
                 throw new SettingsException("Appsettings doesn't have ConnectionStrings:AzureBlobStorage");
 
