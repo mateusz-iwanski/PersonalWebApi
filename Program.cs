@@ -16,6 +16,8 @@ using Microsoft.Extensions.Options;
 using PersonalWebApi.Middleware;
 using Microsoft.EntityFrameworkCore;
 using PersonalWebApi.Services.Azure;
+using Microsoft.SemanticKernel;
+using PersonalWebApi.Extensions;
 
 namespace PersonalWebApi
 {
@@ -28,7 +30,9 @@ namespace PersonalWebApi
             // Add configuration sources
             builder.Configuration.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
                                  //.AddJsonFile("nlogsettings_azureinsightsapp.json", optional: true, reloadOnChange: true)
-                                 .AddJsonFile("nlogsettings.json", optional: true, reloadOnChange: true)
+                                 .AddJsonFile("appsettings.Nlog.json", optional: true, reloadOnChange: true)
+                                 .AddJsonFile("appsettings.SemanticKernel.json", optional: true, reloadOnChange: true)
+                                 //.AddJsonFile("semantickernelsettings.json", optional: true, reloadOnChange: true)
                                  .AddUserSecrets<Program>()
                                  .AddEnvironmentVariables();
 
@@ -85,11 +89,15 @@ namespace PersonalWebApi
                                    In = ParameterLocation.Header,
                                },
                                new List<string>()
-                           }
+                        }
                        });
                 });
 
                 #region add services
+
+                builder
+                    .AddSemanticKernelServices()
+                    .AddKernelMemoryServices(); // Dodanie Kernel Memory jako us³ugi
 
                 // Register Seeder
                 builder.Services.AddScoped<RoleSeeder>();
@@ -157,7 +165,8 @@ namespace PersonalWebApi
                     userSeeder.SeedBasic();
                 }
 
-                // Configure the HTTP request pipeline.
+                //
+                // the HTTP request pipeline.
                 app.UseSwagger();
                 app.UseSwaggerUI(c =>
                 {
