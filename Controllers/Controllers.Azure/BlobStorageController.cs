@@ -20,29 +20,24 @@ namespace PersonalWebApi.Controllers.Azure
         }
 
         /// <summary>
-        /// Upload file to Azure Blob Storage Account to the `file` Container name
+        /// Uploads a file to the Azure Blob Storage Account in the `file` container.
         /// </summary>
-        /// <param name="file"></param>
-        /// <param name="ttlInDays">Set how many days it should be store.</param>i added, but still 
-        /// <param name="overwrite">If file exists with the same name Overwrite it.</param>
-        /// <returns>IActionResult with URI</returns>
-        /// <remarks>The files will be automatically deleted after TtlInDays</remarks>
+        /// <param name="request">The request containing the file, TTL in days, overwrite flag, and metadata.</param>
+        /// <returns>IActionResult with the URI of the uploaded file.</returns>
+        /// <remarks>The file will be automatically deleted after the specified TTL in days.</remarks>
         [HttpPost("upload-to-temp")]
         public async Task<IActionResult> UploadToTempAsync([FromForm] UploadFileToTempRequestDto request)
         {
             var uri = await _service.UploadToTempAsync(request.File, request.TtlInDays, request.Overwrite, request.Metadata);
-
             return Ok(uri);
         }
 
         /// <summary>
-        /// Upload file to Azure Blob Storage Account to the `library` Container name
+        /// Uploads a file to the Azure Blob Storage Account in the `library` container.
         /// </summary>
-        /// <param name="file"></param>
-        /// <param name="ttlInDays">Set how many days it should be store.</param>
-        /// <param name="overwrite">If file exists with the same name Overwrite it.</param>
-        /// <returns>IActionResult with URI</returns>
-        /// <remark>File will not automatically delete</remark>
+        /// <param name="request">The request containing the file, overwrite flag, and metadata.</param>
+        /// <returns>IActionResult with the URI of the uploaded file.</returns>
+        /// <remarks>The file will not be automatically deleted.</remarks>
         [HttpPost("upload-to-library")]
         public async Task<IActionResult> UploadToLibrary([FromForm] UploadFileToLibraryRequestDto request)
         {
@@ -51,11 +46,11 @@ namespace PersonalWebApi.Controllers.Azure
         }
 
         /// <summary>
-        /// Delete file from Azure Blob Storage Account from the `file` Container name
+        /// Deletes a file from the Azure Blob Storage Account in the `file` container.
         /// </summary>
-        /// <param name="fileName">Name of the file to be deleted</param>
-        /// <returns>IActionResult indicating the result of the delete operation</returns>
-        [HttpDelete("delete-from-temp/{FileName}")]
+        /// <param name="fileName">The name of the file to be deleted.</param>
+        /// <returns>IActionResult indicating the result of the delete operation.</returns>
+        [HttpDelete("delete-from-temp/{fileName}")]
         public async Task<IActionResult> DeleteFromTemp([Required][FromRoute] string fileName)
         {
             await _service.DeleteFileFromTemp(fileName);
@@ -63,12 +58,11 @@ namespace PersonalWebApi.Controllers.Azure
         }
 
         /// <summary>
-        /// Delete file from Azure Blob Storage Account from the `library` Container name
+        /// Deletes a file from the Azure Blob Storage Account in the `library` container.
         /// </summary>
-        /// <param name="fileName">Name of the file to be deleted</param>,
-        /// 
-        /// 01<returns>IActionResult indicating the result of the delete operation</returns>
-        [HttpDelete("delete-from-library/{FileName}")]
+        /// <param name="fileName">The name of the file to be deleted.</param>
+        /// <returns>IActionResult indicating the result of the delete operation.</returns>
+        [HttpDelete("delete-from-library/{fileName}")]
         public async Task<IActionResult> DeleteFromLibrary([Required][FromRoute] string fileName)
         {
             await _service.DeleteFileFromLibrary(fileName);
@@ -78,16 +72,9 @@ namespace PersonalWebApi.Controllers.Azure
         /// <summary>
         /// Uploads a file from a given URI to the Azure Blob Storage Account in the `file` container.
         /// </summary>
-        /// <param name="fileUri">The URI of the file to be uploaded.</param>
-        /// <param name="fileName">The name to be assigned to the uploaded file.</param>
-        /// <param name="ttlInDays">The number of days the file should be stored before automatic deletion.</param>
-        /// <param name="overwrite">Indicates whether to Overwrite the file if it already exists.</param>
-        /// <returns>IActionResult containing the URI of the uploaded file.</returns>
-        /// <remarks>
-        /// The file will be automatically deleted after the specified TtlInDays.
-        /// First it is downloaded from uri locally and then uploaded to the blob storage.
-        /// After uploading the file is deleted from the local storage.
-        /// </remarks>
+        /// <param name="request">The request containing the file URI, file name, TTL in days, overwrite flag, and metadata.</param>
+        /// <returns>IActionResult with the URI of the uploaded file.</returns>
+        /// <remarks>The file will be automatically deleted after the specified TTL in days.</remarks>
         [HttpPost("upload-from-uri-to-temp")]
         public async Task<IActionResult> UploadFromUriToTemp([FromBody] UploadFileFromUriToTempRequestDto request)
         {
@@ -98,15 +85,9 @@ namespace PersonalWebApi.Controllers.Azure
         /// <summary>
         /// Uploads a file from a given URI to the Azure Blob Storage Account in the `library` container.
         /// </summary>
-        /// <param name="fileUri">The URI of the file to be uploaded.</param>
-        /// <param name="fileName">The name to be assigned to the uploaded file.</param>
-        /// <param name="overwrite">Indicates whether to Overwrite the file if it already exists.</param>
-        /// <returns>IActionResult containing the URI of the uploaded file.</returns>
-        /// <remarks>
-        /// The file will not be automatically deleted.
-        /// First it is downloaded from uri locally and then uploaded to the blob storage.
-        /// After uploading the file is deleted from the local storage.
-        /// </remarks>
+        /// <param name="request">The request containing the file URI, file name, overwrite flag, and metadata.</param>
+        /// <returns>IActionResult with the URI of the uploaded file.</returns>
+        /// <remarks>The file will not be automatically deleted.</remarks>
         [HttpPost("upload-from-uri-to-library")]
         public async Task<IActionResult> UploadFromUriToLibrary([FromBody] UploadFileFromUriToLibraryRequestDto request)
         {
@@ -114,7 +95,11 @@ namespace PersonalWebApi.Controllers.Azure
             return Ok(uri);
         }
 
-        // GetFilesWithMetadataAsync
+        /// <summary>
+        /// Retrieves a list of files with metadata from the specified container.
+        /// </summary>
+        /// <param name="containerName">The name of the container.</param>
+        /// <returns>IActionResult with the list of files and their metadata.</returns>
         [HttpGet("files-list-with-metadata/{containerName}")]
         public async Task<IActionResult> GetFilesWithMetadataAsync([Required] string containerName)
         {
@@ -122,7 +107,10 @@ namespace PersonalWebApi.Controllers.Azure
             return Ok(files);
         }
 
-        // GetContainersAsync
+        /// <summary>
+        /// Retrieves a list of all containers in the Azure Blob Storage Account.
+        /// </summary>
+        /// <returns>IActionResult with the list of container names.</returns>
         [HttpGet("containers-list")]
         public async Task<IActionResult> GetContainersAsync()
         {
