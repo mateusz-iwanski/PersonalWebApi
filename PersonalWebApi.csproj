@@ -21,6 +21,8 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="Microsoft.KernelMemory" Version="0.95.241216.2" />
+    <PackageReference Include="Microsoft.SemanticKernel" Version="1.32.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="NLog.Extensions.Logging" Version="5.3.15" />
     <PackageReference Include="NLog.Web.AspNetCore" Version="5.3.15" />
