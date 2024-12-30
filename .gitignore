@@ -5,7 +5,12 @@
 
 # User-specific files
 appsettings.json
-nlogsettings_azureinsightsapp.json
+appsettings.NlogAzureInsights.json
+appsettings.SemanticKernel.json
+
+PersonalWebApi.db
+PersonalWebApi.db-shm
+PersonalWebApi.db-wal
 
 *.rsuser
 *.suo
