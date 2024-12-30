@@ -5,7 +5,6 @@ using Microsoft.Extensions.Options;
 using Microsoft.KernelMemory;
 using Microsoft.SemanticKernel;
 using PersonalWebApi.Extensions.ExtensionsSettings;
-using PersonalWebApi.Services.SemanticKernel;
 
 namespace PersonalWebApi.Extensions
 {
@@ -117,10 +116,10 @@ namespace PersonalWebApi.Extensions
         //    return kernel;
         //}
 
-        private static void InitializeKernelProvider(this WebApplicationBuilder builder)
-        {
-            builder.Services.AddSingleton(sp => new SemanticKernelProvider(sp, builder.Configuration, sp.GetRequiredService<IHttpClientFactory>()));
-        }
+        //private static void InitializeKernelProvider(this WebApplicationBuilder builder)
+        //{
+        //    builder.Services.AddSingleton(sp => new SemanticKernelProvider(sp, builder.Configuration, sp.GetRequiredService<IHttpClientFactory>()));
+        //}
 
         /// <summary>
         /// Register functions with the main kernel responsible for handling Chat Copilot requests.
