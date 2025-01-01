@@ -5,7 +5,10 @@
 
 # User-specific files
 appsettings.json
+appsettings.KernelMemory.json
+appsettings.Nlog.json
 appsettings.NlogAzureInsights.json
+appsettings.Qdrant.json
 appsettings.SemanticKernel.json
 
 PersonalWebApi.db
