@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using PersonalWebApi.Exceptions;
 using PersonalWebApi.Services.HttpUtils;
+using Qdrant.Client.Grpc;
 
 namespace PersonalWebApi.Services.Services.Qdrant
 {
@@ -27,6 +28,62 @@ namespace PersonalWebApi.Services.Services.Qdrant
                 throw new SettingsException("QdrantCloud Key not exists in appsettings");
             _uri = configuration.GetSection("QdrantCloud:Uri").Value ??
                 throw new SettingsException("QdrantCloud Uri not exists in appsettings");
+        }
+
+        /// <summary>
+        /// Checks if a collection exists.
+        /// </summary>
+        /// <param name="collectionName">Name of the collection to check.</param>
+        /// <returns>HTTP response message.</returns>
+        /// <remarks>
+        /// This method sends a GET request to check if a collection exists.
+        /// </remarks>
+        public async Task<bool> CollectionExistsAsync(string collectionName)
+        {
+            var url = $"{_uri}/collections/{collectionName}/exists";
+
+
+            try
+            {
+                var response = await _apiClient.GetWithApiKeyAsync(url, _key);
+            }
+            catch (HttpRequestException exception)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Creates a collection with a default dense vector.
+        /// </summary>
+        /// <param name="collectionName">Name of the collection to create.</param>
+        /// <param name="vectorSize">Size of the vector.</param>
+        /// <param name="distance">Distance metric for the vector.</param>
+        /// <returns>HTTP response message.</returns>
+        /// <remarks>
+        /// This method sends a PUT request to create a collection with a default dense vector.
+        /// </remarks>
+        public async Task<HttpResponseMessage> CreateCollectionAsync(
+            string collectionName,
+            int vectorSize,
+            string distance)
+        {
+            var url = $"{_uri}/collections/{collectionName}";
+
+            var requestBody = new
+            {
+                vectors = new
+                {
+                    size = vectorSize,
+                    distance = distance
+                }
+            };
+
+            var jsonRequestBody = JsonConvert.SerializeObject(requestBody);
+
+            return await _apiClient.PutWithApiKeyAsync(url, _key, jsonRequestBody);
         }
 
         /// <summary>
@@ -67,6 +124,20 @@ namespace PersonalWebApi.Services.Services.Qdrant
             var jsonRequestBody = JsonConvert.SerializeObject(requestBody);
 
             return await _apiClient.PostWithApiKeyAsync(url, _key, jsonRequestBody);
+        }
+
+        /// <summary>
+        /// Performs the insert + update action on specified points. Any point with an existing {id} will be overwritten.
+        /// </summary>
+        /// <param name="jsonPointRepresentation">Qdrant point as json format</param>
+        /// <remarks>
+        /// This method sends a PUT request to upsert points in the collection.
+        /// </remarks>
+        public async Task<HttpResponseMessage> UpsertPointsAsync(string collectionName, string jsonPointRepresentation)
+        {
+            var url = $"{_uri}/collections/{collectionName}/points?wait=true";
+
+            return await _apiClient.PutWithApiKeyAsync(url, _key, jsonPointRepresentation);
         }
 
         /// <summary>
