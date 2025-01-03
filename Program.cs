@@ -18,20 +18,27 @@ using Microsoft.EntityFrameworkCore;
 using PersonalWebApi.Services.Azure;
 using Microsoft.SemanticKernel;
 using PersonalWebApi.Extensions;
+using PersonalWebApi.Services.HttpUtils;
+using PersonalWebApi.Services.Services.DocumentReaders;
+using System.Diagnostics.CodeAnalysis;
+using PersonalWebApi.Services.Services.Qdrant;
 
 namespace PersonalWebApi
 {
     public class Program
     {
+        [Experimental("SKEXP0010")]
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
             // Add configuration sources
             builder.Configuration.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
-                                 //.AddJsonFile("nlogsettings_azureinsightsapp.json", optional: true, reloadOnChange: true)
                                  .AddJsonFile("appsettings.Nlog.json", optional: true, reloadOnChange: true)
                                  .AddJsonFile("appsettings.SemanticKernel.json", optional: true, reloadOnChange: true)
+                                 //.AddJsonFile("appsettings.KernelMemory.json", optional: true, reloadOnChange: true)
+                                 //.AddJsonFile("appsettings.NlogAzureInsights.json", optional: true, reloadOnChange: true)
+                                 .AddJsonFile("appsettings.Qdrant.json", optional: true, reloadOnChange: true)
                                  //.AddJsonFile("semantickernelsettings.json", optional: true, reloadOnChange: true)
                                  .AddUserSecrets<Program>()
                                  .AddEnvironmentVariables();
@@ -95,6 +102,7 @@ namespace PersonalWebApi
 
                 #region add services
 
+                // register semantic kernel services and kernel memory services
                 builder
                     .AddSemanticKernelServices()
                     .AddKernelMemoryServices(); // Dodanie Kernel Memory jako us³ugi
@@ -107,6 +115,12 @@ namespace PersonalWebApi
                 builder.Services.AddScoped<IAccountService, AccountService>();
                 builder.Services.AddScoped<IBlobStorageService, BlobStorageService>();
                 builder.Services.AddScoped<ICosmosDbContentStoreService, CosmosDbContentStoreService>();
+                builder.Services.AddScoped<IDocumentReaderDocx, DocumentReaderDocx>();
+                builder.Services.AddScoped<IQdrant, QdrantCustom>();
+                builder.Services.AddScoped<QdrantCloud>();
+
+                // Register utils
+                builder.Services.AddScoped<IApiClient, ApiClient>();
 
                 // Configure password hasher
                 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
