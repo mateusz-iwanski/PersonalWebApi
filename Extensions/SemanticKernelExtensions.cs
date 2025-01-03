@@ -5,6 +5,10 @@ using Microsoft.Extensions.Options;
 using Microsoft.KernelMemory;
 using Microsoft.SemanticKernel;
 using PersonalWebApi.Extensions.ExtensionsSettings;
+using Microsoft.KernelMemory.MemoryDb.Qdrant.Client;
+using Microsoft.SemanticKernel.Plugins.Document;
+using Microsoft.SemanticKernel.Plugins.Document.OpenXml;
+using System.Diagnostics.CodeAnalysis;
 
 namespace PersonalWebApi.Extensions
 {
@@ -24,11 +28,13 @@ namespace PersonalWebApi.Extensions
         /// <summary>
         /// Add Semantic Kernel services
         /// </summary>
+        [Experimental("SKEXP0010")]
         public static WebApplicationBuilder AddSemanticKernelServices(this WebApplicationBuilder builder)
         {
 
             // Register options
             builder.Services.Configure<SemanticKernelOptions>(builder.Configuration.GetSection("SemanticKernel"));
+
 
             builder.Services.AddScoped<Kernel>(sp =>
             {
@@ -41,6 +47,11 @@ namespace PersonalWebApi.Extensions
                 kernelBuilder.AddOpenAIChatCompletion(
                     defaultModelId,
                     apiKey
+                );
+
+                kernelBuilder.AddOpenAITextEmbeddingGeneration(
+                    modelId: "text-embedding-3-small",
+                    apiKey: options.Access.OpenAi.ApiKey
                 );
 
                 return kernelBuilder.Build();
