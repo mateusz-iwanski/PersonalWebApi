@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <PackageReference Include="Azure.Storage.Blobs" Version="12.23.0" />
+    <PackageReference Include="DocumentFormat.OpenXml" Version="3.2.0" />
     <PackageReference Include="FluentValidation.AspNetCore" Version="11.3.0" />
     <PackageReference Include="Microsoft.ApplicationInsights.NLogTarget" Version="2.22.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.0" />
@@ -23,6 +24,7 @@
     </PackageReference>
     <PackageReference Include="Microsoft.KernelMemory" Version="0.95.241216.2" />
     <PackageReference Include="Microsoft.SemanticKernel" Version="1.32.0" />
+    <PackageReference Include="Microsoft.SemanticKernel.Plugins.Document" Version="1.32.0-alpha" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="NLog.Extensions.Logging" Version="5.3.15" />
     <PackageReference Include="NLog.Web.AspNetCore" Version="5.3.15" />
