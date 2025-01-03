@@ -154,8 +154,14 @@ namespace PersonalWebApi.Services.Azure
         /// <param name="overwrite">Whether to Overwrite the file if it already exists.</param>
         /// <returns>The URI of the uploaded file.</returns>
         /// <param name="metadata">The metadata to add to the file.</param>
-        public async Task<Uri> UploadToLibrary(IFormFile file, bool overwrite = false, Dictionary<string, string>? metadata = null)
+        public async Task<Uri> UploadToLibraryAsync(IFormFile file, bool overwrite = false, Dictionary<string, string>? metadata = null, string fileId = "")
         {
+            if (!string.IsNullOrEmpty(fileId))
+                if (metadata != null) 
+                    metadata["fileId"] = fileId;
+                else
+                    metadata = new Dictionary<string, string> { { "fileId", fileId } };
+
             var uri = await upload(file, null, overwrite, _libraryContainerName, metadata);
             return uri;
         }
@@ -305,6 +311,21 @@ namespace PersonalWebApi.Services.Azure
                 containers.Add(container.Name);
             }
             return containers;
+        }
+
+        /// <summary>
+        /// Downloads a file from the specified URI and returns it as a stream.
+        /// </summary>
+        /// <param name="fileUri">The URI of the file to download.</param>
+        /// <returns>A stream containing the file data.</returns>
+        public async Task<Stream> DownloadFileAsync(Uri fileUri)
+        {
+            BlobClient blobClient = new BlobClient(fileUri);
+            BlobDownloadInfo download = await blobClient.DownloadAsync();
+            MemoryStream memoryStream = new MemoryStream();
+            await download.Content.CopyToAsync(memoryStream);
+            memoryStream.Position = 0; // Reset the stream position to the beginning
+            return memoryStream;
         }
     }
 }
