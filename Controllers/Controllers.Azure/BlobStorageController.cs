@@ -41,7 +41,7 @@ namespace PersonalWebApi.Controllers.Azure
         [HttpPost("upload-to-library")]
         public async Task<IActionResult> UploadToLibrary([FromForm] UploadFileToLibraryRequestDto request)
         {
-            var uri = await _service.UploadToLibrary(request.File, request.Overwrite, request.Metadata);
+            var uri = await _service.UploadToLibraryAsync(request.File, request.Overwrite, request.Metadata);
             return Ok(uri);
         }
 
@@ -116,6 +116,19 @@ namespace PersonalWebApi.Controllers.Azure
         {
             var containers = await _service.GetContainersAsync();
             return Ok(containers);
+        }
+
+        /// <summary>
+        /// Downloads a file from the Azure Blob Storage Account.
+        /// </summary>
+        /// <param name="fileUri">The URI of the file to be downloaded.</param>
+        /// <returns>IActionResult with the file stream.</returns>
+        /// <remarks>The file is returned as an application/octet-stream.</remarks>
+        [HttpGet("download-file-stream")]
+        public async Task<IActionResult> DownloadFileAsync([Required] Uri fileUri)
+        {
+            var stream = await _service.DownloadFileAsync(fileUri);
+            return File(stream, "application/octet-stream");
         }
     }
 }
