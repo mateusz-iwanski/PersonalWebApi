@@ -10,7 +10,7 @@ namespace PersonalWebApi.Services.HttpUtils
     // apiClient.SetAuthorizationHeader("Bearer", "your_token_here");
     // var response = await apiClient.GetAsync("https://api.example.com/data");
     //
-    // 2. Authorization by Qdrant API Key:
+    // 2. Authorization by QdrantController API Key:
     // var apiClient = new ApiClient();
     // var response = await apiClient.GetWithApiKeyAsync("http://localhost:6333/collections/collection_name/points/42", "your_api_key_here");
 
@@ -108,6 +108,7 @@ namespace PersonalWebApi.Services.HttpUtils
         /// </summary>
         public async Task<HttpResponseMessage> PostWithApiKeyAsync(string url, string apiKey, string rawData)
         {
+            _httpClient.DefaultRequestHeaders.Clear(); // Clear existing headers
             _httpClient.DefaultRequestHeaders.Add("api-key", apiKey);
             var content = new StringContent(rawData, Encoding.UTF8, "application/json");
             var response = await _httpClient.PostAsync(url, content);
@@ -120,6 +121,7 @@ namespace PersonalWebApi.Services.HttpUtils
         /// </summary>
         public async Task<HttpResponseMessage> GetWithApiKeyAsync(string url, string apiKey)
         {
+            _httpClient.DefaultRequestHeaders.Clear(); // Clear existing headers
             _httpClient.DefaultRequestHeaders.Add("api-key", apiKey);
             var response = await _httpClient.GetAsync(url);
             response.EnsureSuccessStatusCode();
@@ -131,10 +133,10 @@ namespace PersonalWebApi.Services.HttpUtils
         /// </summary>
         public async Task<HttpResponseMessage> PutWithApiKeyAsync(string url, string apiKey, string rawData)
         {
+            _httpClient.DefaultRequestHeaders.Clear(); // Clear existing headers
             _httpClient.DefaultRequestHeaders.Add("api-key", apiKey);
             var content = new StringContent(rawData, Encoding.UTF8, "application/json");
             var response = await _httpClient.PutAsync(url, content);
-            response.EnsureSuccessStatusCode();
             return response;
         }
     }
