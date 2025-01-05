@@ -18,24 +18,26 @@ using Microsoft.EntityFrameworkCore;
 using PersonalWebApi.Services.Azure;
 using Microsoft.SemanticKernel;
 using PersonalWebApi.Extensions;
-using PersonalWebApi.Services.HttpUtils;
-using PersonalWebApi.Services.Services.DocumentReaders;
 using System.Diagnostics.CodeAnalysis;
 using PersonalWebApi.Services.Services.Qdrant;
+using PersonalWebApi.Services.Services.Agent;
+using PersonalWebApi.Utilities.Utilities.Qdrant;
+using PersonalWebApi.Utilities.Utilities.HttUtils;
+using PersonalWebApi.Utilities.Utilities.DocumentReaders;
 
 namespace PersonalWebApi
 {
     public class Program
     {
-        [Experimental("SKEXP0010")]
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // Add configuration sources
+            // AddAsync configuration sources
             builder.Configuration.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
                                  .AddJsonFile("appsettings.Nlog.json", optional: true, reloadOnChange: true)
-                                 .AddJsonFile("appsettings.SemanticKernel.json", optional: true, reloadOnChange: true)
+                                 //.AddJsonFile("appsettings.SemanticKernel.json", optional: true, reloadOnChange: true)
+                                 .AddJsonFile("appsettings.OpenAi.json", optional: true, reloadOnChange: true)
                                  //.AddJsonFile("appsettings.KernelMemory.json", optional: true, reloadOnChange: true)
                                  //.AddJsonFile("appsettings.NlogAzureInsights.json", optional: true, reloadOnChange: true)
                                  .AddJsonFile("appsettings.Qdrant.json", optional: true, reloadOnChange: true)
@@ -56,7 +58,7 @@ namespace PersonalWebApi
 
             try
             {
-                // Add services to the container
+                // AddAsync services to the container
                 builder.Services.AddDbContext<PersonalWebApiDbContext>();
 
                 builder.Services.AddControllers();
@@ -116,8 +118,10 @@ namespace PersonalWebApi
                 builder.Services.AddScoped<IBlobStorageService, BlobStorageService>();
                 builder.Services.AddScoped<ICosmosDbContentStoreService, CosmosDbContentStoreService>();
                 builder.Services.AddScoped<IDocumentReaderDocx, DocumentReaderDocx>();
-                builder.Services.AddScoped<IQdrant, QdrantCustom>();
-                builder.Services.AddScoped<QdrantCloud>();
+                builder.Services.AddScoped<IQdrantFileService, QdrantFileService>();
+                builder.Services.AddScoped<QdrantRestApiClient>();
+                builder.Services.AddScoped<ChatHistoryRepository>();
+                builder.Services.AddScoped<IEmbedding, EmbeddingOpenAi>();
 
                 // Register utils
                 builder.Services.AddScoped<IApiClient, ApiClient>();
