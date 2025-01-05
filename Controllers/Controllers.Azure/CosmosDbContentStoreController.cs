@@ -20,12 +20,12 @@ namespace PersonalWebApi.Controllers.Azure
         }
 
         /// <summary>
-        /// Creates a new item in the Cosmos DB content store.
+        /// Creates a new item in the Cosmos DB content store for site.
         /// </summary>
         /// <param name="item">The item to be created.</param>
         /// <returns>IActionResult indicating the result of the create operation.</returns>
         /// <remarks>Data should not exceed 1.99 MB.</remarks>
-        [HttpPost("create")]
+        [HttpPost("www-content/create")]
         public async Task<IActionResult> CreateItem([FromBody] SiteContentStoreCosmosDbDto item)
         {
             if (item.Data.Length > 1990000) // Check if data exceeds 1.99 MB
@@ -68,7 +68,7 @@ namespace PersonalWebApi.Controllers.Azure
         /// <param name="id">The ID of the item to be updated.</param>
         /// <param name="item">The updated item data.</param>
         /// <returns>IActionResult with the updated item.</returns>
-        [HttpPut("put/{id}/{uri}")]
+        [HttpPut("www-content/put/{id}/{uri}")]
         public async Task<IActionResult> UpdateItem(string id, [FromBody] SiteContentStoreCosmosDbDto item)
         {
             var response = await _service.UpdateItemAsync(id, item);
