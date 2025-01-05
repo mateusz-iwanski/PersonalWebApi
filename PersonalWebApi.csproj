@@ -35,6 +35,13 @@
 
   <ItemGroup>
     <Folder Include="Controllers\Controllers.KernelMemory\" />
+    <Folder Include="Services\Services.Document\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="cert.pem">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>
