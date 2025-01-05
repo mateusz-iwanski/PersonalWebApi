@@ -5,6 +5,8 @@ namespace PersonalWebApi.Services.Azure
 {
     public interface IBlobStorageService
     {
+        string TempContainerName();
+        string LibraryContainerName();
         Task<Uri> UploadToTempAsync(IFormFile file, double ttlInDays, bool overwrite = true, Dictionary<string, string>? metadata = null);
         Task<Uri> UploadToLibraryAsync(IFormFile file, bool overwrite = false, Dictionary<string, string>? metadata = null, string fileId = "");
         Task DeleteFileFromTemp(string fileName);
