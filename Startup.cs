@@ -2,7 +2,7 @@
 {
     public void ConfigureServices(IServiceCollection services)
     {
-        // Add services to the container.
+        // AddAsync services to the container.
         services.AddControllers();
         services.AddSwaggerGen();
     }
