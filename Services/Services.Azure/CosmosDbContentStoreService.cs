@@ -23,6 +23,15 @@ namespace PersonalWebApi.Services.Azure
             return await _container.CreateItemAsync(item, new PartitionKey(item.Uri));
         }
 
+        public async Task<ItemResponse<object>> CreateItemAsync(object item)
+        {
+            if (item == null)
+            {
+                throw new ArgumentException("Item or partition key (Uri) cannot be null or empty.");
+            }
+            return await _container.CreateItemAsync(item);
+        }
+
         public async Task<ItemResponse<SiteContentStoreCosmosDbDto>> GetItemAsync(string id, string uri)
         {
             if (string.IsNullOrEmpty(id) || string.IsNullOrEmpty(uri))
