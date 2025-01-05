@@ -4,12 +4,15 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.KernelMemory;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
+using PersonalWebApi.Controllers.Controllers.Qdrant;
+using PersonalWebApi.Exceptions;
 using PersonalWebApi.Models.Agent;
 using PersonalWebApi.Models.Azure;
 using PersonalWebApi.Services.Azure;
-using PersonalWebApi.Services.Services.DocumentReaders;
-using PersonalWebApi.Services.Services.LLMIntegrations;
+using PersonalWebApi.Services.Services.Agent;
 using PersonalWebApi.Services.Services.Qdrant;
+using PersonalWebApi.Utilities.Utilities.DocumentReaders;
+using Qdrant.Client.Grpc;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 
@@ -23,26 +26,31 @@ namespace PersonalWebApi.Controllers.Agent
         private readonly IKernelMemory _memory;
         private readonly IBlobStorageService _blobStorage;
         private readonly IDocumentReaderDocx _documentReaderDocx;
-        private readonly IQdrant _qdrant;
+        private readonly IQdrantFileService _qdrant;
+        private readonly IConfiguration _configuration;
+        private readonly ChatHistoryRepository _chatHistoryRepository;
 
         public Agent(
             Kernel kernel, 
             IKernelMemory memory, 
             IBlobStorageService blobStorageService, 
             IDocumentReaderDocx documentReaderDocx,
-            IQdrant qdrant
+            IQdrantFileService qdrant,
+            IConfiguration configuration,
+            ChatHistoryRepository chatHistoryRepository
             )
         {
             _kernel = kernel;
             _memory = memory;
             _blobStorage = blobStorageService;
             _documentReaderDocx = documentReaderDocx;
+            _qdrant = qdrant;
+            _configuration = configuration;
         }
 
-
-        [HttpPost("chat/{id:int}")]
+        [HttpPost("chat/{conversationUuid:guid}/{id:int}")]
         [Experimental("SKEXP0050")]
-        public async Task<string> Chat(int id)
+        public async Task<string> Chat(Guid conversationUuid, int id)
         {
 
             // Name of the plugin. This is the name you'll use in skPrompt, e.g. {{memory.ask ...}}
@@ -60,14 +68,12 @@ namespace PersonalWebApi.Controllers.Agent
 
             //return JsonSerializer.Serialize(chunked);
 
-
-
-
             // Import the plugin into the kernel.
             // 'waitForIngestionToComplete' set to true forces memory write operations to wait for completion.
             var memoryPlugin = _kernel.ImportPluginFromObject(
                 new MemoryPlugin(_memory, waitForIngestionToComplete: true),
                 pluginName);
+
 
             //var chatCompletionService = _kernel.GetRequiredService<IChatCompletionService>();
             //var test = await chatCompletionService.GetChatMessageContentAsync("powiedz jak wygląda wigilia w usa");
