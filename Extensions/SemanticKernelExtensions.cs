@@ -1,14 +1,5 @@
-﻿using System.Reflection;
-using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
-using Microsoft.AspNetCore.SignalR;
-using Microsoft.Extensions.Options;
-using Microsoft.KernelMemory;
-using Microsoft.SemanticKernel;
-using PersonalWebApi.Extensions.ExtensionsSettings;
-using Microsoft.KernelMemory.MemoryDb.Qdrant.Client;
-using Microsoft.SemanticKernel.Plugins.Document;
-using Microsoft.SemanticKernel.Plugins.Document.OpenXml;
-using System.Diagnostics.CodeAnalysis;
+﻿using Microsoft.SemanticKernel;
+using PersonalWebApi.Exceptions;
 
 namespace PersonalWebApi.Extensions
 {
@@ -21,37 +12,30 @@ namespace PersonalWebApi.Extensions
 
         /// <summary>
         /// Delegate for any complimentary setup of the kernel, i.e., registering custom plugins, etc.
-        /// See webapi/README.md#Add-Custom-Setup-to-Chat-Copilot's-Kernel for more details.
+        /// See webapi/README.md#AddAsync-Custom-Setup-to-Chat-Copilot's-Kernel for more details.
         /// </summary>
         public delegate Task KernelSetupHook(IServiceProvider sp, Kernel kernel);
 
         /// <summary>
-        /// Add Semantic Kernel services
+        /// AddAsync Semantic Kernel services
         /// </summary>
-        [Experimental("SKEXP0010")]
         public static WebApplicationBuilder AddSemanticKernelServices(this WebApplicationBuilder builder)
         {
 
-            // Register options
-            builder.Services.Configure<SemanticKernelOptions>(builder.Configuration.GetSection("SemanticKernel"));
+            var apiKey = builder.Configuration.GetSection("OpenAI:Access:ApiKey").Value ??
+                throw new SettingsException("OpenAi ApiKey not exists in appsettings");
+
+            var defaultModelId = builder.Configuration.GetSection("OpenAI:DefaultModelId").Value ??
+                throw new SettingsException("OpenAi DefaultModelId not exists in appsettings");
 
 
             builder.Services.AddScoped<Kernel>(sp =>
             {
-                var options = sp.GetRequiredService<IOptions<SemanticKernelOptions>>().Value;
-                var defaultModelId = options.Access.OpenAi.DefaultModelId;
-                var apiKey = options.Access.OpenAi.ApiKey;
-
                 var kernelBuilder = Kernel.CreateBuilder();
 
                 kernelBuilder.AddOpenAIChatCompletion(
                     defaultModelId,
                     apiKey
-                );
-
-                kernelBuilder.AddOpenAITextEmbeddingGeneration(
-                    modelId: "text-embedding-3-small",
-                    apiKey: options.Access.OpenAi.ApiKey
                 );
 
                 return kernelBuilder.Build();
@@ -77,7 +61,7 @@ namespace PersonalWebApi.Extensions
             // Register plugins
             //builder.Services.AddScoped<RegisterFunctionsWithKernel>(sp => RegisterChatCopilotFunctionsAsync);
 
-            // Add any additional setup needed for the kernel.
+            // AddAsync any additional setup needed for the kernel.
             // Uncomment the following line and pass in a custom hook for any complimentary setup of the kernel.
             // builder.Services.AddKernelSetupHook(customHook);
 
@@ -85,7 +69,7 @@ namespace PersonalWebApi.Extensions
         }
 
         /// <summary>
-        /// Add embedding model
+        /// AddAsync embedding model
         /// </summary>
         //public static WebApplicationBuilder AddBotConfig(this WebApplicationBuilder builder)
         //{
@@ -100,7 +84,7 @@ namespace PersonalWebApi.Extensions
         /// <param name="hook">The delegate to perform any additional setup of the kernel.</param>
         public static IServiceCollection AddKernelSetupHook(this IServiceCollection services, KernelSetupHook hook)
         {
-            // Add the hook to the service collection
+            // AddAsync the hook to the service collection
             services.AddScoped<KernelSetupHook>(sp => hook);
             return services;
         }
@@ -135,7 +119,7 @@ namespace PersonalWebApi.Extensions
         /// <summary>
         /// Register functions with the main kernel responsible for handling Chat Copilot requests.
         /// </summary>
-        //private static Task RegisterChatCopilotFunctionsAsync(IServiceProvider sp, Kernel kernel)
+        //private static TaskHistory RegisterChatCopilotFunctionsAsync(IServiceProvider sp, Kernel kernel)
         //{
         //    // Chat Copilot functions
         //    kernel.RegisterChatPlugin(sp);
@@ -143,13 +127,13 @@ namespace PersonalWebApi.Extensions
         //    // Time plugin
         //    kernel.ImportPluginFromObject(new TimePlugin(), nameof(TimePlugin));
 
-        //    return Task.CompletedTask;
+        //    return TaskHistory.CompletedTask;
         //}
 
         /// <summary>
         /// Register plugins with a given kernel.
         /// </summary>
-        //private static Task RegisterPluginsAsync(IServiceProvider sp, Kernel kernel)
+        //private static TaskHistory RegisterPluginsAsync(IServiceProvider sp, Kernel kernel)
         //{
         //    var logger = kernel.LoggerFactory.CreateLogger(nameof(Kernel));
 
@@ -165,7 +149,7 @@ namespace PersonalWebApi.Extensions
         //            }
         //            catch (KernelException ex)
         //            {
-        //                logger.LogError("Could not load plugin from {Directory}: {Message}", subDir, ex.Message);
+        //                logger.LogError("Could not load plugin from {Directory}: {MessageHistory}", subDir, ex.MessageHistory);
         //            }
         //        }
         //    }
@@ -194,7 +178,7 @@ namespace PersonalWebApi.Extensions
         //                }
         //                catch (KernelException ex)
         //                {
-        //                    logger.LogError("Could not load plugin from file {File}: {Details}", file, ex.Message);
+        //                    logger.LogError("Could not load plugin from file {File}: {Details}", file, ex.MessageHistory);
         //                }
         //            }
         //            else
@@ -204,7 +188,7 @@ namespace PersonalWebApi.Extensions
         //        }
         //    }
 
-        //    return Task.CompletedTask;
+        //    return TaskHistory.CompletedTask;
         //}
 
         /// <summary>
