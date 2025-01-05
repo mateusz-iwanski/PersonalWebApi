@@ -45,6 +45,9 @@ namespace PersonalWebApi.Services.Azure
                 throw new SettingsException("Appsettings doesn't have AzureBlobStorage:LibraryContainerName.");
         }
 
+        public string TempContainerName() => _tempContainerName;
+        public string LibraryContainerName() => _libraryContainerName;
+
         /// <summary>
         /// Uploads a file to the specified container in Azure Blob Storage.
         /// </summary>
