@@ -17,6 +17,6 @@
         public string Tags { get; set; }
         public string Title { get; set; }
         public string MimeType { get; set; }
-        public string Type { get => "File"; }
+        public QdrantDataType DataType { get; set; }
     }
 }
