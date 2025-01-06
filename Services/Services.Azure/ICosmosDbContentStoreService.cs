@@ -1,16 +1,16 @@
 ﻿using Microsoft.Azure.Cosmos;
 using PersonalWebApi.Models.Azure;
+using PersonalWebApi.Models.Models.Azure;
+using PersonalWebApi.Services.Services.History;
 
 namespace PersonalWebApi.Services.Azure
 {
     public interface ICosmosDbContentStoreService
     {
-        Task<ItemResponse<SiteContentStoreCosmosDbDto>> CreateItemAsync(SiteContentStoreCosmosDbDto item);
-        Task<ItemResponse<object>> CreateItemAsync(object item);
-        Task<ItemResponse<SiteContentStoreCosmosDbDto>> DeleteItemAsync(string id, string uri);
-        Task<ItemResponse<SiteContentStoreCosmosDbDto>> GetItemAsync(string id, string uri);
-        Task<ItemResponse<SiteContentStoreCosmosDbDto>> UpdateItemAsync(string id, SiteContentStoreCosmosDbDto item);
-        Task<List<SiteContentStoreCosmosDbDto>> GetItemsAsync(string query);
-        Task<SiteContentStoreCosmosDbDto> GetByUuidAsync(string uuid);
+        Task<ItemResponse<T>> CreateItemAsync<T>(T cosmosDto) where T : CosmosDbDtoBase;
+        Task<ItemResponse<T>> GetItemAsync<T>(string id, string containerName, string uri) where T : CosmosDbDtoBase;
+        Task<T?> GetByQueryAsync<T>(QueryDefinition query, string containerName) where T : CosmosDbDtoBase;
+        Task<ItemResponse<T>> UpdateItemAsync<T>(T item) where T : CosmosDbDtoBase;
+        Task<ItemResponse<T>> DeleteItemAsync<T>(T item) where T : CosmosDbDtoBase;
     }
 }
