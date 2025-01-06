@@ -9,7 +9,7 @@ using PersonalWebApi.Exceptions;
 using PersonalWebApi.Models.Agent;
 using PersonalWebApi.Models.Azure;
 using PersonalWebApi.Services.Azure;
-using PersonalWebApi.Services.Services.Agent;
+using PersonalWebApi.Services.Services.History;
 using PersonalWebApi.Services.Services.Qdrant;
 using PersonalWebApi.Utilities.Utilities.DocumentReaders;
 using Qdrant.Client.Grpc;
