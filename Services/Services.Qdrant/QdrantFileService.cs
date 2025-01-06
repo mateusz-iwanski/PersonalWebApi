@@ -156,7 +156,7 @@ namespace PersonalWebApi.Services.Services.Qdrant
                     { "Author", authorName },
                     { "Text", chunk.line },
                     { "CreatedAt", DateTime.Now.ToString("o") },
-                    { "UploadedBy", _user?.Identity?.Name ?? "Unknown" },
+                    { "UploadedBy", _user.FindFirstValue(ClaimTypes.Name) ?? "Unknown" },
                     { "FileName", document.FileName },
                     { "ConversationId", conversationUuid },
                     { "BlobUri", uri.ToString() },
@@ -166,7 +166,8 @@ namespace PersonalWebApi.Services.Services.Qdrant
                     { "Summary", summary.Content },
                     { "EmbeddingModel", _modelEmbedding },
                     { "StartPosition", chunk.startPosition },
-                    { "EndPosition", chunk.endPosition }
+                    { "EndPosition", chunk.endPosition },
+                    { "DataType", QdrantDataType.Document }
                 });
             });
 
@@ -226,7 +227,8 @@ namespace PersonalWebApi.Services.Services.Qdrant
                         Summary = result.Payload["Summary"].StringValue,
                         Tags = result.Payload["Tags"].StringValue,
                         Title = result.Payload["Title"].StringValue,
-                        MimeType = result.Payload["MimeType"].StringValue
+                        MimeType = result.Payload["MimeType"].StringValue,
+                        DataType = Enum.Parse<QdrantDataType>(result.Payload["DataType"].StringValue)
                     },
                     Score = result.Score,
                     Version = result.Version.ToString()
