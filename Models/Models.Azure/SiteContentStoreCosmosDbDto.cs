@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using PersonalWebApi.Models.Models.Azure;
 using System.ComponentModel.DataAnnotations;
 
 namespace PersonalWebApi.Models.Azure
@@ -6,7 +7,7 @@ namespace PersonalWebApi.Models.Azure
     /// <summary>
     /// Storing data as text from for example www sites
     /// </summary>
-    public class SiteContentStoreCosmosDbDto
+    public class SiteContentStoreCosmosDbDto : CosmosDbDtoBase
     {
         [Required]
         [JsonProperty(PropertyName = "id")]
@@ -32,6 +33,9 @@ namespace PersonalWebApi.Models.Azure
         public List<string> Tags { get; set; } // List of tags
 
         [JsonProperty(PropertyName = "createdAt")]
-        public DateTime CreatedAt{ get; } = DateTime.UtcNow; // Date and time of the creation
+        public DateTime CreatedAt{ get; set; } // Date and time of the creation
+
+        public override string ContainerName() => "files";
+        public override string PartitionKey() => "uri";
     }
 }
