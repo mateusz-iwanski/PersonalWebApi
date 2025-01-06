@@ -11,6 +11,7 @@ appsettings.NlogAzureInsights.json
 appsettings.Qdrant.json
 appsettings.SemanticKernel.json
 appsettings.OpenAi.json
+appsettings.Azure.json
 
 PersonalWebApi.db
 PersonalWebApi.db-shm
