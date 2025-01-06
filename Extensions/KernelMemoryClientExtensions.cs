@@ -22,7 +22,7 @@ namespace PersonalWebApi.Extensions
 
             var apiKey = builder.Configuration.GetSection("OpenAI:Access:ApiKey").Value ??
                 throw new SettingsException("OpenAi ApiKey not exists in appsettings");
-            
+
             //var qdrantEndpoint = builder.Configuration.GetSection("Services:QdrantController:Endpoint").Value ??
             //    throw new SettingsException("QdrantController Endpoint not exists in appsettings");
             //var qdrantKey = builder.Configuration.GetSection("Services:QdrantController:APIKey").Value ??
@@ -34,7 +34,7 @@ namespace PersonalWebApi.Extensions
                 //.WithQdrantMemoryDb(endpoint: qdrantEndpoint, apiKey: qdrantKey)
                 .Build<MemoryServerless>();
 
-            builder.Services.AddSingleton(memory);
+            builder.Services.AddScoped<IKernelMemory>(_ => memory);
 
             return builder;
         }
