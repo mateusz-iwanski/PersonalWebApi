@@ -24,7 +24,6 @@ using PersonalWebApi.Services.Services.Agent;
 using PersonalWebApi.Utilities.Utilities.Qdrant;
 using PersonalWebApi.Utilities.Utilities.HttUtils;
 using PersonalWebApi.Utilities.Utilities.DocumentReaders;
-using PersonalWebApi.Services.Services.History;
 
 namespace PersonalWebApi
 {
@@ -117,16 +116,14 @@ namespace PersonalWebApi
 
                 // Configure services for controllers
                 builder.Services.AddScoped<IAccountService, AccountService>();
-                builder.Services.AddScoped<IBlobStorageService, BlobStorageService>();
+                builder.Services.AddScoped<IBlobStorageService, AzureBlobStorageService>();
                 builder.Services.AddScoped<IDocumentReaderDocx, DocumentReaderDocx>();
                 builder.Services.AddScoped<IQdrantFileService, QdrantFileService>();
                 builder.Services.AddScoped<QdrantRestApiClient>();
-                builder.Services.AddScoped<ChatHistoryRepository>();
                 builder.Services.AddScoped<IEmbedding, EmbeddingOpenAi>();
 
-                builder.Services.AddScoped<ICosmosDbContentStoreService, CosmosDbContentStoreService>();
+                builder.Services.AddScoped<ICosmosDbService, AzureCosmosDbService>();
 
-                builder.Services.AddScoped<IChatHistoryRepository, ChatHistoryRepository>();
 
                 // Register utils
                 builder.Services.AddScoped<IApiClient, ApiClient>();
