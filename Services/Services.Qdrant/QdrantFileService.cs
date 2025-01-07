@@ -21,7 +21,7 @@ namespace PersonalWebApi.Services.Services.Qdrant
         private readonly IEmbedding _embeddingOpenAi;
 
         private QdrantApi _qdrantApi { get; set; }
-        private ClaimsPrincipal _user { get; set; }
+        private ClaimsPrincipal _userClaimsPrincipal { get; set; }
         private string _modelEmbedding { get; set; }
         private string _qdrantCollectionName { get; set; }
         private ulong _qdrantCollectionSize { get; set; }
@@ -69,7 +69,7 @@ namespace PersonalWebApi.Services.Services.Qdrant
             _qdrantCollectionSize = qdrantCollectionSize;
             _overwrite = overwrite;
 
-            _user = user;
+            _userClaimsPrincipal = user;
 
             _embeddingOpenAi.Setup(modelEmbedding, modelEmbeddingApiKey);
 
@@ -156,7 +156,7 @@ namespace PersonalWebApi.Services.Services.Qdrant
                     { "Author", authorName },
                     { "Text", chunk.line },
                     { "CreatedAt", DateTime.Now.ToString("o") },
-                    { "UploadedBy", _user.FindFirstValue(ClaimTypes.Name) ?? "Unknown" },
+                    { "UploadedBy", _userClaimsPrincipal.FindFirstValue(ClaimTypes.Name) ?? ClaimTypes.Anonymous },
                     { "FileName", document.FileName },
                     { "ConversationId", conversationUuid },
                     { "BlobUri", uri.ToString() },
