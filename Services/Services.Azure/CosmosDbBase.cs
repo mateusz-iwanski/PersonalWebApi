@@ -9,24 +9,26 @@ namespace PersonalWebApi.Services.Azure
     {
         protected readonly CosmosClient _cosmosClient;
         protected readonly string _databaseName;
-        //protected readonly Container _container;
+        protected readonly int _throughput;
 
-        public CosmosDbBase(string connectionString, string databaseName)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="connectionString"></param>
+        /// <param name="databaseName"></param>
+        /// <param name="throughput">Throughput in Cosmos DB is the amount of resources allocated for operations, measured in Request Units (RUs), determining performance and scalability.</param>
+        public CosmosDbBase(string connectionString, string databaseName, int throughput)
         {
             _cosmosClient = new CosmosClient(connectionString);
             _databaseName = databaseName;
-            
+            _throughput = throughput;
+
         }
 
         public async Task CreateDatabaseAndContainerIfNotExistsAsync(string databaseName, string containerName, string partitionKeyPath)
         {
             // Create database if it doesn't exist
-            var databaseResponse = await _cosmosClient.CreateDatabaseIfNotExistsAsync(databaseName);
-
-            // Ensure at least 1 second delay if the database was created
-            // Sometimes an error appears: the database is not ready and we want to insert a new container into it
-            if (databaseResponse.StatusCode == HttpStatusCode.Created)
-                await Task.Delay(1000); 
+            var databaseResponse = await _cosmosClient.CreateDatabaseIfNotExistsAsync(databaseName, throughput: 1000);
 
             // Create container if it doesn't exist with partition key
             var containerProperties = new ContainerProperties
@@ -34,6 +36,7 @@ namespace PersonalWebApi.Services.Azure
                 Id = containerName,
                 PartitionKeyPath = $"/{partitionKeyPath}"
             };
+
             await _cosmosClient.GetDatabase(databaseName).CreateContainerIfNotExistsAsync(containerProperties);
         }
 
@@ -71,11 +74,6 @@ namespace PersonalWebApi.Services.Azure
 
         public async Task<List<string>> ListAllContainersAsync(string databaseName)
         {
-            if (string.IsNullOrEmpty(databaseName))
-            {
-                throw new ArgumentException("Database name cannot be null or empty.");
-            }
-
             var containers = new List<string>();
             var database = _cosmosClient.GetDatabase(databaseName);
             using (var iterator = database.GetContainerQueryIterator<ContainerProperties>())
