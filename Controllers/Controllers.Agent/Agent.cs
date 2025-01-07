@@ -9,7 +9,6 @@ using PersonalWebApi.Exceptions;
 using PersonalWebApi.Models.Agent;
 using PersonalWebApi.Models.Azure;
 using PersonalWebApi.Services.Azure;
-using PersonalWebApi.Services.Services.History;
 using PersonalWebApi.Services.Services.Qdrant;
 using PersonalWebApi.Utilities.Utilities.DocumentReaders;
 using Qdrant.Client.Grpc;
@@ -28,7 +27,6 @@ namespace PersonalWebApi.Controllers.Agent
         private readonly IDocumentReaderDocx _documentReaderDocx;
         private readonly IQdrantFileService _qdrant;
         private readonly IConfiguration _configuration;
-        private readonly ChatHistoryRepository _chatHistoryRepository;
 
         public Agent(
             Kernel kernel, 
@@ -36,8 +34,7 @@ namespace PersonalWebApi.Controllers.Agent
             IBlobStorageService blobStorageService, 
             IDocumentReaderDocx documentReaderDocx,
             IQdrantFileService qdrant,
-            IConfiguration configuration,
-            ChatHistoryRepository chatHistoryRepository
+            IConfiguration configuration
             )
         {
             _kernel = kernel;
