@@ -1,11 +1,17 @@
 ﻿using DocumentFormat.OpenXml.Office2010.Word;
 using DocumentFormat.OpenXml.Wordprocessing;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.AI;
 using Microsoft.KernelMemory;
+using Microsoft.KernelMemory.Prompts;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
+using MongoDB.Bson;
+using PersonalWebApi.Agent;
+using PersonalWebApi.Agent.MicrosoftKernelMemory;
 using PersonalWebApi.Controllers.Controllers.Qdrant;
 using PersonalWebApi.Exceptions;
+using PersonalWebApi.Extensions;
 using PersonalWebApi.Models.Agent;
 using PersonalWebApi.Models.Azure;
 using PersonalWebApi.Services.Azure;
@@ -22,19 +28,24 @@ namespace PersonalWebApi.Controllers.Agent
     public class Agent : ControllerBase
     {
         private readonly Kernel _kernel;
-        private readonly IKernelMemory _memory;
+        private readonly MicrosoftKernelMemoryWrapper _memory;  // IkernelMemory
         private readonly IBlobStorageService _blobStorage;
         private readonly IDocumentReaderDocx _documentReaderDocx;
         private readonly IQdrantFileService _qdrant;
         private readonly IConfiguration _configuration;
 
+        private readonly IAssistantHistoryManager _assistantHistoryManager;
+
         public Agent(
-            Kernel kernel, 
-            IKernelMemory memory, 
-            IBlobStorageService blobStorageService, 
+            Kernel kernel,
+            MicrosoftKernelMemoryWrapper memory,
+            IBlobStorageService blobStorageService,
             IDocumentReaderDocx documentReaderDocx,
             IQdrantFileService qdrant,
-            IConfiguration configuration
+            IConfiguration configuration,
+            
+            IAssistantHistoryManager assistantHistoryManager
+
             )
         {
             _kernel = kernel;
@@ -43,82 +54,84 @@ namespace PersonalWebApi.Controllers.Agent
             _documentReaderDocx = documentReaderDocx;
             _qdrant = qdrant;
             _configuration = configuration;
+
+            _assistantHistoryManager = assistantHistoryManager;
         }
 
-        [HttpPost("chat/{conversationUuid:guid}/{id:int}")]
+
+
+        [HttpPost("chat/{conversationUuid}/{id:int}")]
         [Experimental("SKEXP0050")]
-        public async Task<string> Chat(Guid conversationUuid, int id)
+        public async Task<string> Chat(string conversationUuid = "30f4373b-5b18-41fd-8b40-5953825b3c0d", int id = 1)
         {
+            var sessionId = Guid.NewGuid().ToString();
+
+
+            //await _chatRepo.LoadChatHistoryToMemoryAsync(User, Guid.Parse(conversationUuid), _memory);
 
             // Name of the plugin. This is the name you'll use in skPrompt, e.g. {{memory.ask ...}}
             var pluginName = "memory";
 
-            await _memory.ImportTextAsync("Mateusz Iwański - rozwalił głowę");
-
             string filePath = Path.Combine(AppContext.BaseDirectory, "bajka.docx");
-            await _memory.ImportDocumentAsync(filePath, tags: new() { { "bajka", "dziewczynka z mama" } });
 
-            // example of upload to qdrant
+            TagCollection tags = new TagCollection();
+            tags.Add("sessionUuid", sessionId.ToString());
+            tags.Add("conversationUuid", conversationUuid);
 
-            //SemanticKernelTextChunker s = new SemanticKernelTextChunker("text-embedding-3-small");
-            //var chunked = s.ChunkText("newId", 100, );
 
-            //return JsonSerializer.Serialize(chunked);
+
+            var aa = "Mateusz Iwański ma zielone oczy";
+
+            var b = "Piotr ma czerowne oczy";
+
+            //_memory.ImportDocumentAsync(filePath, index:)
+
+            await _memory.ImportTextAsync(aa, index: "1");
+            await _memory.ImportTextAsync(b, index: "2");
+
+            var k = await _memory.AskAsync("Kto ma zielone oczy?", index:"1");
+
+            var c = await _memory.AskAsync("Kto ma zielone oczy?", index: "2");
+
+            await _memory.ImportDocumentAsync(filePath, tags: tags);
 
             // Import the plugin into the kernel.
-            // 'waitForIngestionToComplete' set to true forces memory write operations to wait for completion.
             var memoryPlugin = _kernel.ImportPluginFromObject(
                 new MemoryPlugin(_memory, waitForIngestionToComplete: true),
                 pluginName);
 
-
-            //var chatCompletionService = _kernel.GetRequiredService<IChatCompletionService>();
-            //var test = await chatCompletionService.GetChatMessageContentAsync("powiedz jak wygląda wigilia w usa");
-            //if (id == 1)
-            //{
-            //    string filePath = Path.Combine(AppContext.BaseDirectory, "bajka.docx");
-            //    await _memory.ImportDocumentAsync(filePath, tags: new() { { "bajka", "dziewczynka z mama" } });
-
-            //}
-
-
-
-            //var context = new KernelArguments
-            //{
-            //    [MemoryPlugin.FilePathParam] = Path.Combine(AppContext.BaseDirectory, "bajka.docx"),
-            //    [MemoryPlugin.DocumentIdParam] = "B1"
-            //};
-
-
-            //await memoryPlugin["SaveFile"].InvokeAsync(_kernel, context);
-
             var skPrompt = """
-                Question to Memory: {{$input}}
+                        Question to Memory: {{$input}}
 
-                Answer from Memory: {{memory.ask $input}}
+                        Answer from Memory: {{memory.ask $input}}
 
-                If the answer is empty look forward. If you find answer say 'I haven't in memory but ai found the answer - <answer>' otherwise reply with a preview of the answer,
-                truncated to 15 words. Prefix with one emoji relevant to the content.
-                """;
+                        If the answer is empty look forward. If you find answer say 'I haven't in memory but ai found the answer - <answer>' otherwise reply with a preview of the answer,
+                        truncated to 15 words. Prefix with one emoji relevant to the content.
+                        """;
 
-
-            var myFunction = _kernel.CreateFunctionFromPrompt(skPrompt);
-
-            var answer = await myFunction.InvokeAsync(_kernel,
-                "Kto skręcił sobie nogę?");
+            await _assistantHistoryManager.LoadAsync(Guid.Parse(conversationUuid), _memory);
 
 
+            ChatMessage a = new ChatMessage();
+
+            var f = new PromptExecutionSettings()
+            {
+                ExtensionData = new Dictionary<string, object>()
+                {
+                    { "conversationUuid", conversationUuid },
+                    { "sessionUuid", sessionId }
+                }
+            };
 
 
+            var myFunction = _kernel.CreateFunctionFromPrompt(skPrompt, f);
+
+            //myFunction.Metadata.AdditionalProperties.TryAdd("sessionUuid", sessionId.ToString());
+            //myFunction.Metadata.AdditionalProperties.TryAdd("conversationUuid", conversationUuid.ToString());
+
+            var answer = await myFunction.InvokeAsync(_kernel, "Kto skręcił sobie nogę?");
 
             return answer.ToString();
-
-            //await memoryPlugin["SaveFile"].InvokeAsync(_kernel, context);
-
-
-            //var answer1 = await _memory.AskAsync("kto skręcił sobie nogę?");
-
-            //return answer1.ToJson(true);
         }
     }
 }
