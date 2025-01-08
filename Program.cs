@@ -24,6 +24,8 @@ using PersonalWebApi.Services.Services.Agent;
 using PersonalWebApi.Utilities.Utilities.Qdrant;
 using PersonalWebApi.Utilities.Utilities.HttUtils;
 using PersonalWebApi.Utilities.Utilities.DocumentReaders;
+using PersonalWebApi.Seeder.Agent.History;
+using PersonalWebApi.Seeder.Seeder.PageContent;
 
 namespace PersonalWebApi
 {
@@ -113,6 +115,10 @@ namespace PersonalWebApi
                 // Register Seeder
                 builder.Services.AddScoped<RoleSeeder>();
                 builder.Services.AddScoped<UserSeeder>();
+                builder.Services.AddScoped<HistoryCosmosDbSeeder>();
+                builder.Services.AddScoped<PageContentDbSeeder>();
+
+               
 
                 // Configure services for controllers
                 builder.Services.AddScoped<IAccountService, AccountService>();
@@ -181,8 +187,15 @@ namespace PersonalWebApi
 
                     var roleSeeder = scope.ServiceProvider.GetRequiredService<RoleSeeder>();
                     roleSeeder.SeedBasic();
+
                     var userSeeder = scope.ServiceProvider.GetRequiredService<UserSeeder>();
                     userSeeder.SeedBasic();
+
+                    var historyCosmosSeeder = scope.ServiceProvider.GetRequiredService<HistoryCosmosDbSeeder>();
+                    historyCosmosSeeder.SeedIfDbAndContainerNotExists();
+
+                    var pageContentCosmosSeeder = scope.ServiceProvider.GetRequiredService<PageContentDbSeeder>();
+                    pageContentCosmosSeeder.SeedIfDbAndContainerNotExists();
                 }
 
                 //
