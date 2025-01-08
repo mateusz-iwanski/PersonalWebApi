@@ -23,10 +23,10 @@ namespace PersonalWebApi.Services.Azure
 
         public async Task<ItemResponse<T>> CreateItemAsync<T>(T cosmosDto) where T : CosmosDbDtoBase
         {
-            await CreateDatabaseAndContainerIfNotExistsAsync(_databaseName, cosmosDto.ContainerName(), cosmosDto.PartitionKeyName());
             var container = _cosmosClient.GetContainer(_databaseName, cosmosDto.ContainerName());
             var partitionKey = new PartitionKey(cosmosDto.PartitionKeyName());
-            return await container.CreateItemAsync(cosmosDto, new PartitionKey(cosmosDto.PartitionKeyData()));
+
+            return await container.CreateItemAsync<T>(cosmosDto, new PartitionKey(cosmosDto.PartitionKeyData()));
         }
 
         /// <summary>
@@ -59,18 +59,19 @@ namespace PersonalWebApi.Services.Azure
         ///     QueryDefinition queryDefinition = new QueryDefinition(query).WithParameter("@uuid", uuid);
         /// 
         /// </remarks>
-        public async Task<T?> GetByQueryAsync<T>(QueryDefinition query, string containerName) where T : CosmosDbDtoBase
+        public async Task<List<T>> GetByQueryAsync<T>(QueryDefinition query, string containerName) where T : CosmosDbDtoBase
         {
             var container = _cosmosClient.GetContainer(_databaseName, containerName);
             var queryResultSetIterator = container.GetItemQueryIterator<T>(query);
 
-            if (queryResultSetIterator.HasMoreResults)
+            var results = new List<T>();
+            while (queryResultSetIterator.HasMoreResults)
             {
                 var response = await queryResultSetIterator.ReadNextAsync();
-                return response.FirstOrDefault(); // Return the first matching document or null if none found
+                results.AddRange(response);
             }
 
-            return default(T); // No results found
+            return results;
         }
 
         /// <summary>
