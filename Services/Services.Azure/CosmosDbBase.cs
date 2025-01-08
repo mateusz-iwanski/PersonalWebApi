@@ -22,7 +22,39 @@ namespace PersonalWebApi.Services.Azure
             _cosmosClient = new CosmosClient(connectionString);
             _databaseName = databaseName;
             _throughput = throughput;
+        }
 
+        public async Task<bool> ContainerExistsAsync(string databaseName, string containerName)
+        {
+            var database = _cosmosClient.GetDatabase(databaseName);
+            using (var iterator = database.GetContainerQueryIterator<ContainerProperties>())
+            {
+                while (iterator.HasMoreResults)
+                {
+                    var response = await iterator.ReadNextAsync();
+                    if (response.Any(container => container.Id == containerName))
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        public async Task<bool> DatabaseExistsAsync(string databaseName)
+        {
+            using (var iterator = _cosmosClient.GetDatabaseQueryIterator<DatabaseProperties>())
+            {
+                while (iterator.HasMoreResults)
+                {
+                    var response = await iterator.ReadNextAsync();
+                    if (response.Any(db => db.Id == databaseName))
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
         }
 
         public async Task CreateDatabaseAndContainerIfNotExistsAsync(string databaseName, string containerName, string partitionKeyPath)
