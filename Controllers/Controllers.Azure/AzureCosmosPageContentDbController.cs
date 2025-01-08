@@ -58,7 +58,7 @@ namespace PersonalWebApi.Controllers.Azure
         /// You can't modify id and uri fields.
         /// </remarks>
         [HttpGet("get/page-content/query")]
-        public async Task<PageContentCosmosDbDto> GetPageByQueryAsync([FromQuery] string query)
+        public async Task<List<PageContentCosmosDbDto>> GetPageByQueryAsync([FromQuery] string query)
         {
             QueryDefinition queryDefinition = new QueryDefinition(query);
             return await _service.GetByQueryAsync<PageContentCosmosDbDto>(queryDefinition, PageContentCosmosDbDto.ContainerNameStatic());
