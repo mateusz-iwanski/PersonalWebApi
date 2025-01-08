@@ -3,6 +3,8 @@ using Microsoft.Extensions.Options;
 using Microsoft.KernelMemory;
 using Microsoft.KernelMemory.DataFormats.AzureAIDocIntel;
 using Microsoft.KernelMemory.MemoryStorage;
+using PersonalWebApi.Agent;
+using PersonalWebApi.Agent.MicrosoftKernelMemory;
 using PersonalWebApi.Exceptions;
 using System.Reflection.PortableExecutable;
 
@@ -23,20 +25,27 @@ namespace PersonalWebApi.Extensions
             var apiKey = builder.Configuration.GetSection("OpenAI:Access:ApiKey").Value ??
                 throw new SettingsException("OpenAi ApiKey not exists in appsettings");
 
-            //var qdrantEndpoint = builder.Configuration.GetSection("Services:QdrantController:Endpoint").Value ??
-            //    throw new SettingsException("QdrantController Endpoint not exists in appsettings");
-            //var qdrantKey = builder.Configuration.GetSection("Services:QdrantController:APIKey").Value ??
-            //    throw new SettingsException("QdrantController APIKey not exists in appsettings");
-
+            // Register IHttpContextAccessor early
+            builder.Services.AddHttpContextAccessor();
 
             IKernelMemory memory = new KernelMemoryBuilder()
                 .WithOpenAIDefaults(apiKey)
-                //.WithQdrantMemoryDb(endpoint: qdrantEndpoint, apiKey: qdrantKey)
                 .Build<MemoryServerless>();
+
+            builder.Services.AddScoped<IAssistantHistoryManager, AssistantHistoryManager>();
 
             builder.Services.AddScoped<IKernelMemory>(_ => memory);
 
+            builder.Services.AddScoped<MicrosoftKernelMemoryWrapper>(provider =>
+            {
+                var innerKernelMemory = provider.GetRequiredService<IKernelMemory>();
+                var assistantHistoryManager = provider.GetRequiredService<IAssistantHistoryManager>();
+
+                return new MicrosoftKernelMemoryWrapper(innerKernelMemory, assistantHistoryManager);
+            });
+
             return builder;
         }
+
     }
 }
