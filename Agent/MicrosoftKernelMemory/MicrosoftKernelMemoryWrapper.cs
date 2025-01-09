@@ -21,6 +21,9 @@ namespace PersonalWebApi.Agent.MicrosoftKernelMemory
     /// The class ensures that all required validation checks are performed before executing memory operations. 
     /// It throws <see cref="ChatHistoryMessageException"/> for any validation errors, providing detailed information about the required parameters and their expected formats.
     /// 
+    /// The wrapper requires additional data not provided in the original implementation, such as the conversation UUID, session UUID, document ID, etc.
+    /// It throws an exception every time if the required data is not provided.
+    /// 
     /// Additionally, the class supports the following operations:
     /// - Importing documents, text, and web pages into the kernel memory.
     /// - Deleting documents and indexes from the kernel memory.
@@ -31,37 +34,48 @@ namespace PersonalWebApi.Agent.MicrosoftKernelMemory
     /// <example>
     /// <code>
     /// // We have two conversations that are independently retrieved by conversation uuid
+    /// // It's just one memory, but we choose which part we want to use via a uuid conversation.
     /// 
-    /// // conversation  1
-    /// var conversation_1Id = Guid.NewGuid().ToString();
-    /// var session_1Id = Guid.NewGuid().ToString();
-    /// var memory_1 = "Mateusz has green eyes";  // memory for conversation 1
-    /// var memory_2 = "Mateusz has a long nose";   // memory for conversation 1
-    /// TagCollection conversation_1_id_tags = new TagCollection();
-    /// conversation_1_id_tags.Add("sessionUuid", session_1Id);
+    /// // DATA CONVERSATION 1
     /// 
-    /// // conversation 2
-    /// var memory_3 = "Piotr has red eyes";
-    /// var conversation_2Id = Guid.NewGuid().ToString();
-    /// var session_2Id = Guid.NewGuid().ToString();
-    /// TagCollection conversation_id2_tags = new TagCollection();
-    /// conversation_id2_tags.Add("sessionUuid", session_2Id);
+    ///     var conversation_1Id = Guid.NewGuid().ToString();
+    ///     var session_1Id = Guid.NewGuid().ToString();
     /// 
-    /// // import to memory conversation 1
-    /// await _memory.ImportTextAsync(memory_1, index: conversation_1Id, tags: conversation_1_id_tags);
-    /// await _memory.ImportTextAsync(memory_2, index: conversation_1Id, tags: conversation_1_id_tags);
+    ///     var memory_1 = "Mateusz has green eyes";  // memory for conversation 1
+    ///     var memory_2 = "Mateusz has a long nose";   // memory for conversation 1
     /// 
-    /// // import to memory conversation 2
-    /// await _memory.ImportTextAsync(memory_3, index: conversation_2Id, tags: conversation_id2_tags);
+    ///     TagCollection conversation_1_id_tags = new TagCollection();  
+    ///     conversation_1_id_tags.Add("sessionUuid", session_1Id);  // add session UUID to tags (required)
     /// 
-    /// var r1 = await _memory.AskAsync("Who has green eyes?", index: conversation_1Id);  // response: Mateusz
-    /// var r2 = await _memory.AskAsync("Who has green eyes?", index: conversation_2Id);  // none - not in memory by index
-    /// var r3 = await _memory.AskAsync("Who has red eyes?", index: conversation_2Id);   // response: Piotr
-    /// var r4 = await _memory.AskAsync("Who has a long nose?", index: conversation_1Id);  // response: Mateusz
-    /// var r5 = await _memory.AskAsync("Who has a long nose?", index: conversation_2Id);  // none - not in memory by index
+    /// // DATA CONVERSATION 2
+    /// 
+    ///     var conversation_2Id = Guid.NewGuid().ToString();
+    ///     var session_2Id = Guid.NewGuid().ToString();
+    /// 
+    ///     var memory_3 = "Piotr has red eyes";
+    /// 
+    ///     TagCollection conversation_id2_tags = new TagCollection(); 
+    ///     conversation_id2_tags.Add("sessionUuid", session_2Id);  // add session UUID to tags (required)
+    /// 
+    /// // IMPORT TO MEMORY CONVERSATION 1
+    /// 
+    ///     await _memory.ImportTextAsync(memory_1, index: conversation_1Id, tags: conversation_1_id_tags);
+    ///     await _memory.ImportTextAsync(memory_2, index: conversation_1Id, tags: conversation_1_id_tags);
+    /// 
+    /// // IMPORT TO MEMORY CONVERSATION 2
+    /// 
+    ///     await _memory.ImportTextAsync(memory_3, index: conversation_2Id, tags: conversation_id2_tags);
+    /// 
+    /// // CHAT :
+    ///     var r1 = await _memory.AskAsync("Who has green eyes?", index: conversation_1Id);  // response: Mateusz
+    ///     var r2 = await _memory.AskAsync("Who has green eyes?", index: conversation_2Id);  // none - not in memory by index
+    ///     var r3 = await _memory.AskAsync("Who has red eyes?", index: conversation_2Id);   // response: Piotr
+    ///     var r4 = await _memory.AskAsync("Who has a long nose?", index: conversation_1Id);  // response: Mateusz
+    ///     var r5 = await _memory.AskAsync("Who has a long nose?", index: conversation_2Id);  // none - not in memory by index
     /// 
     /// // the same is with rest of the data you use
-    /// await _memory.ImportDocumentAsync(filePath, tags: conversation_1_id_tags, index: conversation_1Id, documentId:Guid.NewGuid().ToString());
+    ///     await _memory.ImportDocumentAsync(filePath, tags: conversation_1_id_tags, index: conversation_1Id, documentId:Guid.NewGuid().ToString());
+    ///     
     /// </code>
     /// </example>
     /// </summary>
