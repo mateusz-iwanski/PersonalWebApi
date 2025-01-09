@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.Azure.Cosmos;
 using Microsoft.KernelMemory;
+using PersonalWebApi.Models.Models.Agent;
 using PersonalWebApi.Models.Models.Azure;
 using PersonalWebApi.Services.Azure;
 using System.Security.Claims;
@@ -66,7 +67,7 @@ namespace PersonalWebApi.Agent
         {
             var query = $"SELECT * FROM c WHERE c.conversationUuid = '{conversationUuid}'";
             var queryDefinition = new QueryDefinition(query);
-            var result = await _service.GetByQueryAsync<ChatHistoryStoreDbDto>(queryDefinition, ChatHistoryStoreDbDto.ContainerNameStatic());
+            var result = await _service.GetByQueryAsync<ChatHistoryShortTermMessageDto>(queryDefinition, ChatHistoryShortTermMessageDto.ContainerNameStatic());
 
             if (result.Count > 0) 
                 return isUserPermittedForHistory(result.FirstOrDefault());
@@ -85,7 +86,7 @@ namespace PersonalWebApi.Agent
 
             var query = $"SELECT * FROM c WHERE c.conversationUuid = '{conversationUuid}' ORDER BY c.createdAt ASC";
             var queryDefinition = new QueryDefinition(query);
-            var result = await _service.GetByQueryAsync<ChatHistoryStoreDbDto>(queryDefinition, ChatHistoryStoreDbDto.ContainerNameStatic());
+            var result = await _service.GetByQueryAsync<ChatHistoryShortTermMessageDto>(queryDefinition, ChatHistoryShortTermMessageDto.ContainerNameStatic());
 
             foreach (var item in result)
                 await memory.ImportTextAsync(item.Message);
@@ -98,14 +99,10 @@ namespace PersonalWebApi.Agent
         /// <param name="conversationUuid">The unique identifier for the conversation.</param>
         /// <param name="message">The chat message to save.</param>
         /// <returns>The saved chat history record.</returns>
-        public async Task<ChatHistoryStoreDbDto> SaveAsync(Guid sessionUuid, Guid conversationUuid, string message)
+        public async Task<T> SaveAsync<T>(T historyDto) where T : CosmosDbDtoBase
         {
-            var chatHistory = new ChatHistoryStoreDbDto(conversationUuid, sessionUuid)
-            {
-                Message = message,
-                CreatedBy = _user
-            };
-            return await _service.CreateItemAsync(chatHistory);
+            historyDto.CreatedBy = _user;
+            return await _service.CreateItemAsync(historyDto);
         }
     }
 }
