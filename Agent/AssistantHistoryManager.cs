@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.Azure.Cosmos;
 using Microsoft.KernelMemory;
-using PersonalWebApi.Models.Models.Agent;
 using PersonalWebApi.Models.Models.Azure;
+using PersonalWebApi.Models.Models.Memory;
 using PersonalWebApi.Services.Azure;
 using System.Security.Claims;
 
