@@ -34,7 +34,7 @@ namespace PersonalWebApi.Agent.SemanticKernel
             Guid.TryParse(conversationUuidObj.ToString(), out conversationUuidGuidObj);
             Guid.TryParse(sessionUuidObj.ToString(), out sessionUuidGuidObj);
 
-            await _assistantHistoryManager.SaveAsync(conversationUuidGuidObj, sessionUuidGuidObj, renderedPrompt);
+            //await _assistantHistoryManager.SaveAsync(conversationUuidGuidObj, sessionUuidGuidObj, renderedPrompt);
         }
 
         public void OnRender(string prompt)
