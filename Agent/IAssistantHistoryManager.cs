@@ -1,5 +1,4 @@
 ﻿using Microsoft.KernelMemory;
-using PersonalWebApi.Models.Models.Agent;
 using PersonalWebApi.Models.Models.Azure;
 
 namespace PersonalWebApi.Agent
