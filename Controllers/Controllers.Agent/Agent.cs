@@ -81,19 +81,23 @@ namespace PersonalWebApi.Controllers.Agent
 
 
             var aa = "Mateusz Iwański ma zielone oczy";
+            var aa1 = "Mateusz Iwański ma długi nos";
 
             var b = "Piotr ma czerowne oczy";
 
             //_memory.ImportDocumentAsync(filePath, index:)
 
             await _memory.ImportTextAsync(aa, index: "1");
+            await _memory.ImportTextAsync(aa1, index: "1");
             await _memory.ImportTextAsync(b, index: "2");
 
-            var k = await _memory.AskAsync("Kto ma zielone oczy?", index:"1");
+            var k = await _memory.AskAsync("Kto ma zielone oczy?", index:"1");  // odpowiedz: Mateusz Iwański
+            var c = await _memory.AskAsync("Kto ma zielone oczy?", index: "2");  // zadna
+            var d = await _memory.AskAsync("Kto ma czerowne oczy?", index: "2");  // odpowiedz: Piotr
+            var e = await _memory.AskAsync("Kto ma długi nos?", index: "1");  // odpowiedz: Mateusz Iwański
+            var fk = await _memory.AskAsync("Kto ma długi nos?", index: "2");  // zadna
 
-            var c = await _memory.AskAsync("Kto ma zielone oczy?", index: "2");
-
-            await _memory.ImportDocumentAsync(filePath, tags: tags);
+            await _memory.ImportDocumentAsync(filePath, tags: tags, index:"userid1", documentId:Guid.NewGuid().ToString());
 
             // Import the plugin into the kernel.
             var memoryPlugin = _kernel.ImportPluginFromObject(
