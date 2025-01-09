@@ -3,7 +3,7 @@ using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.AI;
 using Newtonsoft.Json;
 using PersonalWebApi.Models.Azure;
-using PersonalWebApi.Models.Models.Agent;
+using PersonalWebApi.Models.Models.Memory;
 using PersonalWebApi.Services.Azure;
 using System;
 using System.Collections.Generic;
