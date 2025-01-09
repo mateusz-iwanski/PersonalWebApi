@@ -1,5 +1,5 @@
 ﻿using PersonalWebApi.Exceptions;
-using PersonalWebApi.Models.Models.Azure;
+using PersonalWebApi.Models.Models.Agent;
 using PersonalWebApi.Services.Azure;
 
 namespace PersonalWebApi.Seeder.Agent.History
@@ -36,8 +36,8 @@ namespace PersonalWebApi.Seeder.Agent.History
 
             await _cosmosDbService.CreateDatabaseAndContainerIfNotExistsAsync(
                 cosmosDbDatabaseName,
-                ChatHistoryStoreDbDto.ContainerNameStatic(),
-                ChatHistoryStoreDbDto.PartitionKeyNameStatic()
+                ChatHistoryShortTermMessageDto.ContainerNameStatic(),
+                ChatHistoryShortTermMessageDto.PartitionKeyNameStatic()
             );
         }
     }
