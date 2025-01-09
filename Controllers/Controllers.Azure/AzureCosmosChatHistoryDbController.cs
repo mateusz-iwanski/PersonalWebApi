@@ -3,7 +3,7 @@ using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.AI;
 using Newtonsoft.Json;
 using PersonalWebApi.Models.Azure;
-using PersonalWebApi.Models.Models.Azure;
+using PersonalWebApi.Models.Models.Agent;
 using PersonalWebApi.Services.Azure;
 using System;
 using System.Collections.Generic;
@@ -30,7 +30,7 @@ namespace PersonalWebApi.Controllers.Azure
         /// <param name="chatHistoryDto">The DTO containing the chat history data.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains an IActionResult with the created chat history item.</returns>
         [HttpPost("create/chat-history")]
-        public async Task<IActionResult> CreateChatHistory([FromBody] ChatHistoryStoreDbDto chatHistoryDto)
+        public async Task<IActionResult> CreateChatHistory([FromBody] ChatHistoryShortTermMessageDto chatHistoryDto)
         {
             var response = await _service.CreateItemAsync(chatHistoryDto);
             return Ok(response.Resource);
@@ -45,7 +45,7 @@ namespace PersonalWebApi.Controllers.Azure
         [HttpGet("get/chat-history/{id}/{conversationUuid}")]
         public async Task<IActionResult> GetChatHistory(string id, string conversationUuid)
         {
-            var response = await _service.GetItemAsync<ChatHistoryStoreDbDto>(id, ChatHistoryStoreDbDto.ContainerNameStatic(), conversationUuid);
+            var response = await _service.GetItemAsync<ChatHistoryShortTermMessageDto>(id, ChatHistoryShortTermMessageDto.ContainerNameStatic(), conversationUuid);
             return Ok(response.Resource);
         }
 
@@ -58,7 +58,7 @@ namespace PersonalWebApi.Controllers.Azure
         public async Task<IActionResult> QueryChatHistory([FromQuery] string query)
         {
             var queryDefinition = new QueryDefinition(query);
-            var result = await _service.GetByQueryAsync<ChatHistoryStoreDbDto>(queryDefinition, ChatHistoryStoreDbDto.ContainerNameStatic());
+            var result = await _service.GetByQueryAsync<ChatHistoryShortTermMessageDto>(queryDefinition, ChatHistoryShortTermMessageDto.ContainerNameStatic());
             return Ok(result);
         }
 
@@ -68,7 +68,7 @@ namespace PersonalWebApi.Controllers.Azure
         /// <param name="chatHistoryDto">The DTO containing the updated chat history data.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains an IActionResult with the updated chat history item.</returns>
         [HttpPut("update/chat-history")]
-        public async Task<IActionResult> UpdateChatHistory([FromBody] ChatHistoryStoreDbDto chatHistoryDto)
+        public async Task<IActionResult> UpdateChatHistory([FromBody] ChatHistoryShortTermMessageDto chatHistoryDto)
         {
             var response = await _service.UpdateItemAsync(chatHistoryDto);
             return Ok(response.Resource);
@@ -83,7 +83,7 @@ namespace PersonalWebApi.Controllers.Azure
         [HttpDelete("delete/chat-history/{id}/{conversationUuid}")]
         public async Task<IActionResult> DeleteChatHistory(string id, string conversationUuid)
         {
-            var response = await _service.DeleteItemAsync<ChatHistoryStoreDbDto>(id, ChatHistoryStoreDbDto.ContainerNameStatic(), conversationUuid);
+            var response = await _service.DeleteItemAsync<ChatHistoryShortTermMessageDto>(id, ChatHistoryShortTermMessageDto.ContainerNameStatic(), conversationUuid);
             return Ok(response.Resource);
         }
 
@@ -94,7 +94,7 @@ namespace PersonalWebApi.Controllers.Azure
         [HttpGet("get/chat-history/schema")]
         public IActionResult GetChatHistorySchema()
         {
-            var chatHistoryDto = new ChatHistoryStoreDbDto(
+            var chatHistoryDto = new ChatHistoryShortTermMessageDto(
                 conversationUuid: Guid.Empty,
                 sessionUuid: Guid.Empty
             )
