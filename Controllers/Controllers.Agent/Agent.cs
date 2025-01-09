@@ -74,30 +74,40 @@ namespace PersonalWebApi.Controllers.Agent
 
             string filePath = Path.Combine(AppContext.BaseDirectory, "bajka.docx");
 
-            TagCollection tags = new TagCollection();
-            tags.Add("sessionUuid", sessionId.ToString());
-            tags.Add("conversationUuid", conversationUuid);
+            
+            // mamy dwie konwersacje, które są niezależnie pozyckiwane po conversation uuid
+
+            // conversation  1
+            var conversation_1Id = Guid.NewGuid().ToString();
+            var session_1Id = Guid.NewGuid().ToString();
+            var memory_1 = "Mateusz has green eyes";  // memory for conversation 1
+            var memory_2 = "Mateusz has a long nose";   // memory for conversation 1
+            TagCollection conversation_1_id_tags = new TagCollection();
+            conversation_1_id_tags.Add("sessionUuid", session_1Id);
 
 
+            // conversation 2
+            var memory_3 = "Piotr has red eyes";
+            var conversation_2Id = Guid.NewGuid().ToString();
+            var session_2Id = Guid.NewGuid().ToString();
+            TagCollection conversation_id2_tags = new TagCollection();
+            conversation_id2_tags.Add("sessionUuid", session_2Id);
 
-            var aa = "Mateusz Iwański ma zielone oczy";
-            var aa1 = "Mateusz Iwański ma długi nos";
+            // import to memory conversation 1
+            await _memory.ImportTextAsync(memory_1, index: conversation_1Id, tags: conversation_1_id_tags);
+            await _memory.ImportTextAsync(memory_2, index: conversation_1Id, tags: conversation_1_id_tags);
 
-            var b = "Piotr ma czerowne oczy";
+            // import to memory conversation 2
+            await _memory.ImportTextAsync(memory_3, index: conversation_2Id, tags: conversation_id2_tags);
 
-            //_memory.ImportDocumentAsync(filePath, index:)
+            var r1 = await _memory.AskAsync("Who has green eyes?", index: conversation_1Id);  // response: Mateusz
+            var r2 = await _memory.AskAsync("Who has green eyes?", index: conversation_2Id);  // none - not in memory by index
+            var r3 = await _memory.AskAsync("Who has red eyes?", index: conversation_2Id);   // response: Piotr
+            var r4 = await _memory.AskAsync("Who has a long nose?", index: conversation_1Id);  // response: Mateusz
+            var r5 = await _memory.AskAsync("Who has a long nose?", index: conversation_2Id);  // none - not in memory by index
 
-            await _memory.ImportTextAsync(aa, index: "1");
-            await _memory.ImportTextAsync(aa1, index: "1");
-            await _memory.ImportTextAsync(b, index: "2");
-
-            var k = await _memory.AskAsync("Kto ma zielone oczy?", index:"1");  // odpowiedz: Mateusz Iwański
-            var c = await _memory.AskAsync("Kto ma zielone oczy?", index: "2");  // zadna
-            var d = await _memory.AskAsync("Kto ma czerowne oczy?", index: "2");  // odpowiedz: Piotr
-            var e = await _memory.AskAsync("Kto ma długi nos?", index: "1");  // odpowiedz: Mateusz Iwański
-            var fk = await _memory.AskAsync("Kto ma długi nos?", index: "2");  // zadna
-
-            await _memory.ImportDocumentAsync(filePath, tags: tags, index:"userid1", documentId:Guid.NewGuid().ToString());
+            // the same is with rest of the data you use
+            await _memory.ImportDocumentAsync(filePath, tags: conversation_1_id_tags, index: conversation_1Id, documentId:Guid.NewGuid().ToString());
 
             // Import the plugin into the kernel.
             var memoryPlugin = _kernel.ImportPluginFromObject(
