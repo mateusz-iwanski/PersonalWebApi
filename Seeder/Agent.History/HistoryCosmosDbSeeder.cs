@@ -1,5 +1,5 @@
 ﻿using PersonalWebApi.Exceptions;
-using PersonalWebApi.Models.Models.Agent;
+using PersonalWebApi.Models.Models.Memory;
 using PersonalWebApi.Services.Azure;
 
 namespace PersonalWebApi.Seeder.Agent.History
