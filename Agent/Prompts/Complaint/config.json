@@ -1,0 +1,29 @@
+﻿{
+    "schema": 1,
+    "type": "completion",
+    "description": "Handle the customers complaint.",
+    "execution_settings": {
+        "default": {
+            "max_tokens": 1000,
+            "temperature": 0
+        },
+        "gpt-4": {
+            "model_id": "gpt-4-1106-preview",
+            "max_tokens": 8000,
+            "temperature": 0.3
+        }
+    },
+
+    "input_variables": [
+        {
+            "name": "$customerName",
+            "description": "The users name.",
+            "required": true
+        },
+        {
+            "name": "$request",
+            "description": "The user's complaint.",
+            "required": true
+        }
+    ]
+}
