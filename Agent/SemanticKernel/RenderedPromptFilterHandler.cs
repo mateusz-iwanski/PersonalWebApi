@@ -16,46 +16,56 @@ namespace PersonalWebApi.Agent.SemanticKernel
             _assistantHistoryManager = assistantHistoryManager;
         }
 
-        // raise when FunctionResult - _kernel.CreateFunctionFromPrompt(skPrompt).InvokeAsync
+        private (Guid, Guid) _getUuid(KernelArguments arguments)
+        {
+            if (!arguments.ContainsName("conversationUuid") || !arguments.ContainsName("sessionUuid"))
+            {
+                throw new InvalidUuidException("The required keys 'conversationUuid' and 'sessionUuid' are not present in the kernel arguments.");
+            }
+
+            if (string.IsNullOrEmpty(arguments["conversationUuid"].ToString()) || string.IsNullOrEmpty(arguments["sessionUuid"].ToString()))
+            {
+                throw new InvalidUuidException("Invalid conversation UUID or session UUID. They must be valid GUIDs.");
+            }
+
+            if (!Guid.TryParse(arguments["conversationUuid"].ToString(), out Guid conversationUuid) || !Guid.TryParse(arguments["sessionUuid"].ToString(), out Guid sessionUuid))
+            {
+                throw new InvalidUuidException("Invalid conversation UUID or session UUID. They must be valid GUIDs.");
+            }
+
+            return (conversationUuid, sessionUuid);
+        }
+
+        // raise when FunctionResult when kernel invoke
         // https://learn.microsoft.com/en-us/semantic-kernel/concepts/enterprise-readiness/filters?pivots=programming-language-csharp
+        /// <summary>
+        /// This method is called when the Kernel invoke.
+        /// </summary>
+        /// <param name="context">The context must have KernelArguments with conversationUuid and sessionUuid</param>
+        /// <param name="next"></param>
+        /// <returns></returns>
         public async Task OnPromptRenderAsync(PromptRenderContext context, Func<PromptRenderContext, Task> next)
         {
             // Call the next filter in the pipeline
             await next(context);
 
-            // Save the rendered prompt to history
-            context.Function.ExecutionSettings["default"].ExtensionData.TryGetValue("conversationUuid", out object conversationUuidObj);
-            context.Function.ExecutionSettings["default"].ExtensionData.TryGetValue("sessionUuid", out object sessionUuidObj);
+            (Guid conversationUuid, Guid sessionUuid) = _getUuid(context.Arguments);
 
-            Guid.TryParse(conversationUuidObj?.ToString(), out Guid conversationUuidGuid);
-            Guid.TryParse(sessionUuidObj?.ToString(), out Guid sessionUuidGuid);
-
-            string status = "Done";
-            string inputArguments = context.Arguments["input"].ToString();
-            string functionName = context.Function.Name;
-            string functionDescription = context.Function.Description;
-            string renderedPrompt = context.RenderedPrompt;
-            string usedPluginNames = string.Join("][", context.Kernel.Plugins
-                .Select(x => x.Name)
-                .Where(name => !string.IsNullOrEmpty(name)));
-
-            if (!string.IsNullOrEmpty(usedPluginNames))
-            {
-                usedPluginNames = "[" + usedPluginNames + "]";
-            }
-
-            var functionExecutingHistory = new FunctionExecutingHistory(
-                conversationUuidGuid,
-                sessionUuidGuid,
-                inputArguments,
-                functionName,
-                functionDescription,
-                renderedPrompt,
-                usedPluginNames,
-                status);
-
-            await _assistantHistoryManager.SaveAsync(functionExecutingHistory);
-            
+            await _assistantHistoryManager.SaveAsync(new FunctionExecutingHistory(
+                conversationUuid: conversationUuid,
+                sessionUuid: sessionUuid,
+                inputArguments: context.Arguments.ToDictionary(arg => arg.Key, arg => arg.Value.ToString()),
+                functionName: context.Function.Name,
+                pluginName: context.Function.PluginName,
+                functionDescription: context.Function.Description,
+                renderedPrompt: context.RenderedPrompt,
+                status: "Done",
+                executionSettings: context.Function.ExecutionSettings?
+                    .Select(arg => arg.Value.ExtensionData.ToDictionary(
+                        ed => string.IsNullOrEmpty(arg.Value.ModelId) ? $"{arg.Key}-{ed.Key}" : $"{arg.Key}-{arg.Value.ModelId}_{ed.Key}",
+                        ed => ed.Value.ToString()
+                    )).ToList() ?? new List<Dictionary<string, string?>>()
+            ));
         }
 
         public void OnRender(string prompt)
