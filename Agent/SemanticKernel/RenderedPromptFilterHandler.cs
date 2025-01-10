@@ -1,4 +1,9 @@
-﻿using Microsoft.SemanticKernel;
+﻿using DocumentFormat.OpenXml.Drawing.Diagrams;
+using DocumentFormat.OpenXml.Math;
+using Microsoft.SemanticKernel;
+using PersonalWebApi.Exceptions;
+using PersonalWebApi.Models.Models.SemanticKernel;
+using System.Text.Json;
 
 namespace PersonalWebApi.Agent.SemanticKernel
 {
@@ -12,29 +17,45 @@ namespace PersonalWebApi.Agent.SemanticKernel
         }
 
         // raise when FunctionResult - _kernel.CreateFunctionFromPrompt(skPrompt).InvokeAsync
+        // https://learn.microsoft.com/en-us/semantic-kernel/concepts/enterprise-readiness/filters?pivots=programming-language-csharp
         public async Task OnPromptRenderAsync(PromptRenderContext context, Func<PromptRenderContext, Task> next)
         {
             // Call the next filter in the pipeline
             await next(context);
 
-            // Get the rendered prompt
-            var renderedPrompt = context.RenderedPrompt;
+            // Save the rendered prompt to history
+            context.Function.ExecutionSettings["default"].ExtensionData.TryGetValue("conversationUuid", out object conversationUuidObj);
+            context.Function.ExecutionSettings["default"].ExtensionData.TryGetValue("sessionUuid", out object sessionUuidObj);
 
-            // Save or log the rendered prompt
-            //SaveRenderedPrompt(renderedPrompt);
+            Guid.TryParse(conversationUuidObj?.ToString(), out Guid conversationUuidGuid);
+            Guid.TryParse(sessionUuidObj?.ToString(), out Guid sessionUuidGuid);
 
-            object conversationUuidObj;
-            object sessionUuidObj;
-            Guid conversationUuidGuidObj;
-            Guid sessionUuidGuidObj;
+            string status = "Done";
+            string inputArguments = context.Arguments["input"].ToString();
+            string functionName = context.Function.Name;
+            string functionDescription = context.Function.Description;
+            string renderedPrompt = context.RenderedPrompt;
+            string usedPluginNames = string.Join("][", context.Kernel.Plugins
+                .Select(x => x.Name)
+                .Where(name => !string.IsNullOrEmpty(name)));
 
-            context.Function.ExecutionSettings["default"].ExtensionData.TryGetValue("conversationUuid", out conversationUuidObj);
-            context.Function.ExecutionSettings["default"].ExtensionData.TryGetValue("sessionUuid", out sessionUuidObj);
+            if (!string.IsNullOrEmpty(usedPluginNames))
+            {
+                usedPluginNames = "[" + usedPluginNames + "]";
+            }
 
-            Guid.TryParse(conversationUuidObj.ToString(), out conversationUuidGuidObj);
-            Guid.TryParse(sessionUuidObj.ToString(), out sessionUuidGuidObj);
+            var functionExecutingHistory = new FunctionExecutingHistory(
+                conversationUuidGuid,
+                sessionUuidGuid,
+                inputArguments,
+                functionName,
+                functionDescription,
+                renderedPrompt,
+                usedPluginNames,
+                status);
 
-            //await _assistantHistoryManager.SaveAsync(conversationUuidGuidObj, sessionUuidGuidObj, renderedPrompt);
+            await _assistantHistoryManager.SaveAsync(functionExecutingHistory);
+            
         }
 
         public void OnRender(string prompt)
@@ -49,4 +70,8 @@ namespace PersonalWebApi.Agent.SemanticKernel
             System.IO.File.AppendAllText("rendered_prompts.log", prompt + Environment.NewLine);
         }
     }
+
+
+
+
 }
