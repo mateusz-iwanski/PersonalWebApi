@@ -9,6 +9,26 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Remove="Agent\config.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="Agent\Prompts\skprompt.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Agent\Prompts\Complaint\config.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Agent\Prompts\Complaint\skprompt.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Azure.Storage.Blobs" Version="12.23.0" />
     <PackageReference Include="DocumentFormat.OpenXml" Version="3.2.0" />
     <PackageReference Include="FluentValidation.AspNetCore" Version="11.3.0" />
