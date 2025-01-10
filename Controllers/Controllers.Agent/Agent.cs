@@ -21,6 +21,7 @@ using PersonalWebApi.Utilities.Utilities.DocumentReaders;
 using Qdrant.Client.Grpc;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
+using static Microsoft.ApplicationInsights.MetricDimensionNames.TelemetryContext;
 
 namespace PersonalWebApi.Controllers.Agent
 {
@@ -29,7 +30,7 @@ namespace PersonalWebApi.Controllers.Agent
     public class Agent : ControllerBase
     {
         private readonly Kernel _kernel;
-        private readonly MicrosoftKernelMemoryWrapper _memory;  // IkernelMemory
+        private readonly KernelMemoryWrapper _memory;  // IkernelMemory
         private readonly IBlobStorageService _blobStorage;
         private readonly IDocumentReaderDocx _documentReaderDocx;
         private readonly IQdrantFileService _qdrant;
@@ -39,7 +40,7 @@ namespace PersonalWebApi.Controllers.Agent
 
         public Agent(
             Kernel kernel,
-            MicrosoftKernelMemoryWrapper memory,
+            KernelMemoryWrapper memory,
             IBlobStorageService blobStorageService,
             IDocumentReaderDocx documentReaderDocx,
             IQdrantFileService qdrant,
@@ -108,9 +109,10 @@ namespace PersonalWebApi.Controllers.Agent
                 ExtensionData = new Dictionary<string, object>()
                 {
                     { "conversationUuid", conversationUuid },
-                    { "sessionUuid", sessionId }
+                    { "sessionUuid", sessionId },
+                    { "shortMemory", true }
                 }
-            };
+            };  
 
             OpenAIPromptExecutionSettings settings = new()
             {
@@ -122,14 +124,51 @@ namespace PersonalWebApi.Controllers.Agent
             {
                 ["input"] = "Kto skręcił sobie nogę?",
                 ["index"] = conversationId.ToString(),
+                ["conversationUuid"] = conversationUuid,
+                ["sessionUuid"] = sessionId
                 //[MemoryPlugin.IndexParam] = conversationId.ToString()
             };
+
+            var prompts = _kernel.CreatePluginFromPromptDirectory(Path.Combine(AppContext.BaseDirectory, "../../../Agent/Prompts"));
+
+
+
+            var chatResult = _kernel.InvokeStreamingAsync<StreamingChatMessageContent>(
+              prompts["Complaint"],
+              new ()
+              {
+               //{ "customerName", "Jamie" },
+               { "request", "my pdf filter is faulty" },
+               { "input" , "Kto skręcił sobie nogę?" },
+               { "conversationUuid", conversationUuid },
+               { "sessionUuid", sessionId }
+              }
+            );
+
+            string message = "";
+
+            await foreach (var chunk in chatResult)
+            {
+                if (chunk.Role.HasValue)
+                {
+                    Console.Write(chunk.Role + " > ");
+                }
+                message += chunk;
+                Console.Write(chunk);
+            }
+
+            Console.WriteLine();
 
             var myFunction = _kernel.CreateFunctionFromPrompt(skPrompt, f);
 
             var answer = await myFunction.InvokeAsync(_kernel, arguments);
 
             return answer.ToString();
+
+
+
+
+
 
 
             // https://learn.microsoft.com/en-us/semantic-kernel/concepts/prompts/prompt-injection-attacks?pivots=programming-language-csharp
@@ -158,3 +197,58 @@ namespace PersonalWebApi.Controllers.Agent
         }
     }
 }
+
+////// working code
+//var pluginName = "memory";
+
+//string filePath = Path.Combine(AppContext.BaseDirectory, "bajka.docx");
+
+//TagCollection conversation_1_id_tags = new TagCollection();
+//conversation_1_id_tags.Add("sessionUuid", Guid.NewGuid().ToString());
+
+//var conversationId = Guid.Parse(conversationUuid);
+
+//await _memory.ImportDocumentAsync(filePath, tags: conversation_1_id_tags, index: conversationUuid, documentId: Guid.NewGuid().ToString());
+
+//var memoryPlugin = _kernel.ImportPluginFromObject(
+//    new MemoryPlugin(_memory, waitForIngestionToComplete: true),
+//    pluginName);
+
+//var skPrompt = """
+//                        Question to Memory: {{$input}}
+
+//                        Answer from Memory: {{memory.ask $input index=$index}}
+
+//                        If the answer is empty look forward. If you find answer say 'I haven't in memory but ai found the answer - <answer>' otherwise reply with a preview of the answer,
+//                        truncated to 15 words. Prefix with one emoji relevant to the content.
+//                        """;
+
+
+//var f = new PromptExecutionSettings()
+//{
+//    ExtensionData = new Dictionary<string, object>()
+//    {
+//                    { "conversationUuid", conversationUuid },
+//                    { "sessionUuid", sessionId }
+//                }
+//};
+
+//OpenAIPromptExecutionSettings settings = new()
+//{
+//    ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions,
+//};
+
+
+//KernelArguments arguments = new KernelArguments(settings)
+//{
+//    ["input"] = "Kto skręcił sobie nogę?",
+//    ["index"] = conversationId.ToString(),
+//    //[MemoryPlugin.IndexParam] = conversationId.ToString()
+//};
+
+//var myFunction = _kernel.CreateFunctionFromPrompt(skPrompt, f);
+
+//var answer = await myFunction.InvokeAsync(_kernel, arguments);
+
+//return answer.ToString();
+//////
