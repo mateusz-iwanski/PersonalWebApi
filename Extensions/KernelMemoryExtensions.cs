@@ -13,7 +13,7 @@ namespace PersonalWebApi.Extensions
     /// <summary>
     /// Extension methods for <see cref="IKernelMemory"/> and service registration.
     /// </summary>
-    internal static class KernelMemoryClientExtensions
+    internal static class KernelMemoryExtensions
     {
         /// <summary>
         /// Inject <see cref="IKernelMemory"/>.
