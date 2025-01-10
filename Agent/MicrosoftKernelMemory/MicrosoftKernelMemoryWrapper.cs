@@ -212,21 +212,6 @@ namespace PersonalWebApi.Agent.MicrosoftKernelMemory
         /// 
         /// The method also saves the import history using the IAssistantHistoryManager.
         /// 
-        /// Example usage:
-        /// var text1 = "Mateusz ma zielone oczy";
-        /// var text2 = "Mateusz ma długi nos";
-        /// var text3 = "Piotr ma czerowne oczy";
-        /// 
-        /// await _memory.ImportTextAsync(text1, index: "1"); index is conversation uuid
-        /// await _memory.ImportTextAsync(text2, index: "1");
-        /// await _memory.ImportTextAsync(text3, index: "2");
-        /// 
-        /// await _memory.AskAsync("Kto ma zielone oczy?", index:"1");  // reposnse: Mateusz
-        /// await _memory.AskAsync("Kto ma zielone oczy?", index: "2");  // empty
-        /// await _memory.AskAsync("Kto ma czerowne oczy?", index: "2");  // reponse: Piotr
-        /// await _memory.AskAsync("Kto ma długi nos?", index: "1");  // response: Mateusz
-        /// await _memory.AskAsync("Kto ma długi nos?", index: "2");  // empty
-        /// 
         /// </summary>
         /// <param name="filePath">The file path of the document to be imported.</param>
         /// <param name="documentId">The unique identifier of the document in UUID format.</param>
@@ -283,7 +268,6 @@ namespace PersonalWebApi.Agent.MicrosoftKernelMemory
 
             // Store the document in the memory
             var result = await _innerKernelMemory.ImportDocumentAsync(filePath, documentId, tags, conversationUuid.ToString(), steps, context, cancellationToken);
-
 
             // save action history
             var chatMessage = new ChatHistoryShortTermFileMessageDto(conversationUuid, sessionUuid, fileId)
