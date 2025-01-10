@@ -16,22 +16,25 @@ namespace PersonalWebApi.Models.Models.SemanticKernel
     public class FunctionExecutingHistory : CosmosDbDtoBase
     {
         [JsonProperty(PropertyName = "inputArguments")]
-        public string InputArguments { get; private set; } = string.Empty;
+        public Dictionary<string, string> InputArguments { get; set; }
 
         [JsonProperty(PropertyName = "functionName")]
-        public string FunctionName { get; private set; } = string.Empty;
+        public string FunctionName { get; set; } = string.Empty;
+
+        [JsonProperty(PropertyName = "pluginName")]
+        public string PluginName { get; set; } = string.Empty;
 
         [JsonProperty(PropertyName = "functionDescription")]
-        public string FunctionDescription { get; private set; } = string.Empty;
+        public string FunctionDescription { get; set; } = string.Empty;
 
         [JsonProperty(PropertyName = "renderedPrompt")]
-        public string RenderedPrompt { get; private set; } = string.Empty;
-
-        [JsonProperty(PropertyName = "usedPluginNames")]
-        public string UsedPluginNames { get; private set; } = string.Empty;
+        public string RenderedPrompt { get; set; } = string.Empty;
 
         [JsonProperty(PropertyName = "status")]
         public string Status { get; set; } = string.Empty;
+
+        [JsonProperty(PropertyName = "executionSettings ")]
+        public List<Dictionary<string, string?>> ExecutionSettings { get; set; }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="FunctionExecutingHistory"/> class.
@@ -44,20 +47,25 @@ namespace PersonalWebApi.Models.Models.SemanticKernel
         /// <param name="renderedPrompt">The rendered prompt.</param>
         /// <param name="usedPluginNames">The names of the used plugins.</param>
         /// <param name="status">The status of the function execution.</param>
-        public FunctionExecutingHistory(Guid conversationUuid, Guid sessionUuid,
-            string inputArguments,
+        public FunctionExecutingHistory(
+            Guid conversationUuid, 
+            Guid sessionUuid,
+            Dictionary<string, string> inputArguments,
             string functionName,
+            string pluginName,
             string functionDescription,
             string renderedPrompt,
-            string usedPluginNames,
-            string status) : base(conversationUuid, sessionUuid)
+            string status,
+            List<Dictionary<string, string?>> executionSettings
+            ) : base(conversationUuid, sessionUuid)
         {
             InputArguments = inputArguments;
             FunctionName = functionName;
             FunctionDescription = functionDescription;
             RenderedPrompt = renderedPrompt;
-            UsedPluginNames = usedPluginNames;
             Status = status;
+            ExecutionSettings = executionSettings;
+            PluginName = pluginName;
         }
 
         /// <summary>
