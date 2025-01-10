@@ -6,6 +6,7 @@ using Microsoft.KernelMemory.MemoryStorage;
 using PersonalWebApi.Agent;
 using PersonalWebApi.Agent.MicrosoftKernelMemory;
 using PersonalWebApi.Exceptions;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection.PortableExecutable;
 
 namespace PersonalWebApi.Extensions
@@ -13,6 +14,7 @@ namespace PersonalWebApi.Extensions
     /// <summary>
     /// Extension methods for <see cref="IKernelMemory"/> and service registration.
     /// </summary>
+    [Experimental("KMEXP00")]  // for EmbeddedPromptProvider in MyMemoryPromptProvider
     internal static class KernelMemoryExtensions
     {
         /// <summary>
@@ -36,12 +38,12 @@ namespace PersonalWebApi.Extensions
 
             builder.Services.AddScoped<IKernelMemory>(_ => memory);
 
-            builder.Services.AddScoped<MicrosoftKernelMemoryWrapper>(provider =>
+            builder.Services.AddScoped<KernelMemoryWrapper>(provider =>
             {
                 var innerKernelMemory = provider.GetRequiredService<IKernelMemory>();
                 var assistantHistoryManager = provider.GetRequiredService<IAssistantHistoryManager>();
 
-                return new MicrosoftKernelMemoryWrapper(innerKernelMemory, assistantHistoryManager);
+                return new KernelMemoryWrapper(innerKernelMemory, assistantHistoryManager);
             });
 
             return builder;
