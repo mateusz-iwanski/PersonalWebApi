@@ -53,7 +53,6 @@ namespace PersonalWebApi.Models.Models.Memory
         [JsonProperty(PropertyName = "messageType")]
         public string MessageType { get; set; } = string.Empty;
 
-
         /// <summary>
         /// Initializes a new instance of the <see cref="ChatHistoryShortTermMessageDto"/> class.
         /// </summary>
