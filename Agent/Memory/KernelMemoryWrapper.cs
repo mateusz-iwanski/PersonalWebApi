@@ -95,7 +95,7 @@ namespace PersonalWebApi.Agent.MicrosoftKernelMemory
         /// Returns a string that represents the type of message for memory actions.
         /// This method is used to mark all actions with the same name in history.
         /// </summary>
-        /// <returns>A string "MemoryAction" indicating the type of memory action message.</returns>
+        /// <returns>A string "MemoryAction" indicating the type of memory action messag    e.</returns>
         public static string GetMessageType() => "MemoryAction";
 
 
