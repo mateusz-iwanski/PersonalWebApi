@@ -26,6 +26,11 @@ using PersonalWebApi.Utilities.Utilities.HttUtils;
 using PersonalWebApi.Utilities.Utilities.DocumentReaders;
 using PersonalWebApi.Seeder.Agent.History;
 using PersonalWebApi.Seeder.Seeder.PageContent;
+using OpenTelemetry.Resources;
+using OpenTelemetry;
+using OpenTelemetry.Trace;
+using Azure.Monitor.OpenTelemetry.Exporter;
+using OpenTelemetry.Metrics;
 
 namespace PersonalWebApi
 {
@@ -41,30 +46,76 @@ namespace PersonalWebApi
                                  //.AddJsonFile("appsettings.SemanticKernel.json", optional: true, reloadOnChange: true)
                                  .AddJsonFile("appsettings.OpenAi.json", optional: true, reloadOnChange: true)
                                  //.AddJsonFile("appsettings.KernelMemory.json", optional: true, reloadOnChange: true)
-                                 //.AddJsonFile("appsettings.NlogAzureInsights.json", optional: true, reloadOnChange: true)
+                                 .AddJsonFile("appsettings.Telemetry.json", optional: true, reloadOnChange: true)
                                  .AddJsonFile("appsettings.Qdrant.json", optional: true, reloadOnChange: true)
                                  .AddJsonFile("appsettings.Azure.json", optional: true, reloadOnChange: true)
                                  //.AddJsonFile("semantickernelsettings.json", optional: true, reloadOnChange: true)
                                  .AddUserSecrets<Program>()
                                  .AddEnvironmentVariables();
 
-            // Configure NLog
-            builder.Logging.ClearProviders();
-            builder.Logging.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Trace);
-            builder.Host.UseNLog();
+            #region telemetry_settings
 
-            // Load NLog configuration from nlogsettings_azureinsightsapp.json
-            //var logger = NLog.LogManager.Setup().LoadConfigurationFromFile("nlogsettings_azureinsightsapp.json").GetCurrentClassLogger();
-            var logger = NLog.LogManager.Setup().LoadConfigurationFromFile("nlogsettings.json").GetCurrentClassLogger();
+            https://learn.microsoft.com/en-us/semantic-kernel/concepts/enterprise-readiness/observability/telemetry-with-app-insights?tabs=Powershell&pivots=programming-language-csharp
 
-            logger.Debug("init main");
+            var connectionString = builder.Configuration.GetSection("Telemetry:ApplicationInsights:ConnectionString").Value; //"InstrumentationKey=9b62f058-236b-464a-bb45-d6d1bb4bd5b4;IngestionEndpoint=https://polandcentral-0.in.applicationinsights.azure.com/;LiveEndpoint=https://polandcentral.livediagnostics.monitor.azure.com/;ApplicationId=b63f87eb-cde7-44b7-b57d-56e4f4b58aaf";
+
+            var resourceBuilder = ResourceBuilder
+                .CreateDefault()
+                .AddService("TelemetryApplicationInsightsQuickstart");
+
+            // Enable model diagnostics with sensitive data.
+            AppContext.SetSwitch("Microsoft.SemanticKernel.Experimental.GenAI.EnableOTelDiagnosticsSensitive", true);
+
+            using var traceProvider = Sdk.CreateTracerProviderBuilder()
+                .SetResourceBuilder(resourceBuilder)
+                .AddSource("Microsoft.SemanticKernel*")
+                .AddAzureMonitorTraceExporter(options => options.ConnectionString = connectionString)
+                .Build();
+
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .SetResourceBuilder(resourceBuilder)
+                .AddMeter("Microsoft.SemanticKernel*")
+                .AddAzureMonitorMetricExporter(options => options.ConnectionString = connectionString)
+                .Build();
+
+            using var loggerFactory = LoggerFactory.Create(builder =>
+            {
+                // Add OpenTelemetry as a logging provider
+                builder.AddOpenTelemetry(options =>
+                {
+                    options.SetResourceBuilder(resourceBuilder);
+                    options.AddAzureMonitorLogExporter(options => options.ConnectionString = connectionString);
+                    // Format log messages. This is default to false.
+                    options.IncludeFormattedMessage = true;
+                    options.IncludeScopes = true;
+                });
+                builder.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Information);
+            });
+
+            builder.Services.AddSingleton(loggerFactory);
+
+            #endregion telemetry_settings
+
+
+            //// Configure NLog
+            //builder.Logging.ClearProviders();
+            //builder.Logging.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Trace);
+            //builder.Host.UseNLog();
+
+            //// Load NLog configuration from nlogsettings_azureinsightsapp.json
+            ////var logger = NLog.LogManager.Setup().LoadConfigurationFromFile("nlogsettings_azureinsightsapp.json").GetCurrentClassLogger();
+            //var logger = NLog.LogManager.Setup().LoadConfigurationFromFile("nlogsettings.json").GetCurrentClassLogger();
+
+            //logger.Debug("init main");
 
             try
             {
-                // AddAsync services to the container
                 builder.Services.AddDbContext<PersonalWebApiDbContext>();
 
                 builder.Services.AddControllers();
+
+                #region swagger inject
+
                 builder.Services.AddSwaggerGen(options =>
                 {
                     options.SwaggerDoc("v1", new OpenApiInfo { Title = "PersonalAPI", Version = "v1" });
@@ -105,20 +156,20 @@ namespace PersonalWebApi
                        });
                 });
 
+                #endregion swagger
+
                 #region add services
 
                 // register semantic kernel services and kernel memory services
                 builder
                     .AddSemanticKernelServices()
-                    .AddKernelMemoryServices(); // Dodanie Kernel Memory jako us³ugi
+                    .AddKernelMemoryServices(); 
 
                 // Register Seeder
                 builder.Services.AddScoped<RoleSeeder>();
                 builder.Services.AddScoped<UserSeeder>();
                 builder.Services.AddScoped<HistoryCosmosDbSeeder>();
                 builder.Services.AddScoped<PageContentDbSeeder>();
-
-               
 
                 // Configure services for controllers
                 builder.Services.AddScoped<IAccountService, AccountService>();
@@ -127,9 +178,7 @@ namespace PersonalWebApi
                 builder.Services.AddScoped<IQdrantFileService, QdrantFileService>();
                 builder.Services.AddScoped<QdrantRestApiClient>();
                 builder.Services.AddScoped<IEmbedding, EmbeddingOpenAi>();
-
                 builder.Services.AddScoped<ICosmosDbService, AzureCosmosDbService>();
-
 
                 // Register utils
                 builder.Services.AddScoped<IApiClient, ApiClient>();
@@ -179,7 +228,8 @@ namespace PersonalWebApi
 
                 var app = builder.Build();
 
-                // Apply migrations and run seeders
+                #region seed migration
+
                 using (var scope = app.Services.CreateScope())
                 {
                     var dbContext = scope.ServiceProvider.GetRequiredService<PersonalWebApiDbContext>();
@@ -198,14 +248,7 @@ namespace PersonalWebApi
                     pageContentCosmosSeeder.SeedIfDbAndContainerNotExists();
                 }
 
-                //
-                // the HTTP request pipeline.
-                app.UseSwagger();
-                app.UseSwaggerUI(c =>
-                {
-                    c.SwaggerEndpoint("/swagger/v1/swagger.json", "My PersonalAPI V1");
-                    c.RoutePrefix = string.Empty; // Set Swagger UI at the app's root
-                });
+                #endregion seed migration
 
                 #region register middlewares
 
@@ -219,7 +262,15 @@ namespace PersonalWebApi
                 app.UseAuthorization();
                 app.MapControllers();
 
-                // Secure Swagger UI
+                #region swagger setup
+
+                app.UseSwagger();
+                app.UseSwaggerUI(c =>
+                {
+                    c.SwaggerEndpoint("/swagger/v1/swagger.json", "My PersonalAPI V1");
+                    c.RoutePrefix = string.Empty; // Set Swagger UI at the app's root
+                });
+
                 app.UseWhen(context => context.Request.Path.StartsWithSegments("/swagger"), appBuilder =>
                 {
                     appBuilder.UseAuthentication();
@@ -235,12 +286,14 @@ namespace PersonalWebApi
                     });
                 });
 
+                #endregion
+
                 app.Run();
             }
             catch (Exception ex)
             {
                 // NLog: catch setup errors
-                logger.Error(ex, "Stopped program because of exception");
+                //logger.Error(ex, "Stopped program because of exception");
                 throw;
             }
             finally
