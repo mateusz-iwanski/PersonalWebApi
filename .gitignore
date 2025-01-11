@@ -12,6 +12,7 @@ appsettings.Qdrant.json
 appsettings.SemanticKernel.json
 appsettings.OpenAi.json
 appsettings.Azure.json
+appsettings.Telemetry.json
 
 PersonalWebApi.db
 PersonalWebApi.db-shm
