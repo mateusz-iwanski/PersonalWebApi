@@ -17,6 +17,7 @@ using PersonalWebApi.Models.Agent;
 using PersonalWebApi.Models.Azure;
 using PersonalWebApi.Services.Azure;
 using PersonalWebApi.Services.Services.Qdrant;
+using PersonalWebApi.Utilities.Kql;
 using PersonalWebApi.Utilities.Utilities.DocumentReaders;
 using Qdrant.Client.Grpc;
 using System.Diagnostics.CodeAnalysis;
@@ -68,6 +69,10 @@ namespace PersonalWebApi.Controllers.Agent
         {
             var sessionId = Guid.NewGuid().ToString();
 
+            KqlApplicationInsightsApi kql = new KqlApplicationInsightsApi(_configuration);
+            var aaa = await kql.ExecuteQueryAsync("traces | getschema");
+
+            return Newtonsoft.Json.JsonConvert.SerializeObject(aaa);
 
             //await _chatRepo.LoadChatHistoryToMemoryAsync(User, Guid.Parse(conversationUuid), _memory);
 
