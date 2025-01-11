@@ -1,13 +1,18 @@
 ﻿using Microsoft.SemanticKernel;
+using OpenTelemetry.Resources;
+using OpenTelemetry;
 using PersonalWebApi.Agent;
-using PersonalWebApi.Agent.SemanticKernel;
 using PersonalWebApi.Exceptions;
 using PersonalWebApi.Services.Azure;
 using static Microsoft.ApplicationInsights.MetricDimensionNames.TelemetryContext;
+using OpenTelemetry.Trace;
+using Azure.Monitor.OpenTelemetry.Exporter;
+using OpenTelemetry.Metrics;
+using PersonalWebApi.Agent.SemanticKernel.Observability;
 
 namespace PersonalWebApi.Extensions
 {
-    
+
 
     internal static class SemanticKernelExtensions
     {
@@ -32,7 +37,6 @@ namespace PersonalWebApi.Extensions
 
             var defaultModelId = builder.Configuration.GetSection("OpenAI:DefaultModelId").Value ??
                 throw new SettingsException("OpenAi DefaultModelId not exists in appsettings");
-
 
 
             builder.Services.AddScoped<Kernel>(sp =>
