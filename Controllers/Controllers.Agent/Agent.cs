@@ -104,6 +104,9 @@ namespace PersonalWebApi.Controllers.Agent
                         """;
 
 
+
+
+
             var f = new PromptExecutionSettings()
             {
                 ExtensionData = new Dictionary<string, object>()
@@ -129,6 +132,7 @@ namespace PersonalWebApi.Controllers.Agent
                 //[MemoryPlugin.IndexParam] = conversationId.ToString()
             };
 
+            //https://jamiemaguire.net/index.php/2024/06/29/semantic-kernel-working-with-file-based-prompt-functions/
             var prompts = _kernel.CreatePluginFromPromptDirectory(Path.Combine(AppContext.BaseDirectory, "../../../Agent/Prompts"));
 
 
