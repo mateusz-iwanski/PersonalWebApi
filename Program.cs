@@ -31,6 +31,7 @@ using OpenTelemetry;
 using OpenTelemetry.Trace;
 using Azure.Monitor.OpenTelemetry.Exporter;
 using OpenTelemetry.Metrics;
+using PersonalWebApi.Utilities.Kql;
 
 namespace PersonalWebApi
 {
@@ -179,6 +180,7 @@ namespace PersonalWebApi
                 builder.Services.AddScoped<QdrantRestApiClient>();
                 builder.Services.AddScoped<IEmbedding, EmbeddingOpenAi>();
                 builder.Services.AddScoped<ICosmosDbService, AzureCosmosDbService>();
+                builder.Services.AddScoped<KqlApplicationInsightsApi>();
 
                 // Register utils
                 builder.Services.AddScoped<IApiClient, ApiClient>();
