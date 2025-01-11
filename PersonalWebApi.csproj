@@ -36,6 +36,7 @@
     <PackageReference Include="Microsoft.ApplicationInsights.NLogTarget" Version="2.22.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Azure.ApplicationInsights.Query" Version="1.0.0" />
     <PackageReference Include="Microsoft.Azure.Cosmos" Version="3.46.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.0" />
@@ -56,6 +57,7 @@
 
   <ItemGroup>
     <Folder Include="Controllers\Controllers.KernelMemory\" />
+    <Folder Include="Services\Telemetry\" />
     <Folder Include="Services\Services.Document\" />
     <Folder Include="Services\Services.History\" />
   </ItemGroup>
