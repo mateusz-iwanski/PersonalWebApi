@@ -25,7 +25,6 @@ using PersonalWebApi.Utilities.Utilities.Qdrant;
 using PersonalWebApi.Utilities.Utilities.HttUtils;
 using PersonalWebApi.Utilities.Utilities.DocumentReaders;
 using PersonalWebApi.Seeder.Agent.History;
-using PersonalWebApi.Seeder.Seeder.PageContent;
 using OpenTelemetry.Resources;
 using OpenTelemetry;
 using OpenTelemetry.Trace;
@@ -34,6 +33,7 @@ using OpenTelemetry.Metrics;
 using PersonalWebApi.Utilities.Kql;
 using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
 using PersonalWebApi.ActionFilters;
+using PersonalWebApi.Services.Services.History;
 
 namespace PersonalWebApi
 {
@@ -182,7 +182,6 @@ namespace PersonalWebApi
                 builder.Services.AddScoped<RoleSeeder>();
                 builder.Services.AddScoped<UserSeeder>();
                 builder.Services.AddScoped<HistoryCosmosDbSeeder>();
-                builder.Services.AddScoped<PageContentDbSeeder>();
 
                 // Configure services for controllers
                 builder.Services.AddScoped<IAccountService, AccountService>();
@@ -193,6 +192,7 @@ namespace PersonalWebApi
                 builder.Services.AddScoped<IEmbedding, EmbeddingOpenAi>();
                 builder.Services.AddScoped<ICosmosDbService, AzureCosmosDbService>();
                 builder.Services.AddScoped<KqlApplicationInsightsApi>();
+                builder.Services.AddScoped<IPersistentChatHistoryService, PersistentChatHistoryService>();
 
                 // Register utils
                 builder.Services.AddScoped<IApiClient, ApiClient>();
@@ -258,8 +258,6 @@ namespace PersonalWebApi
                     var historyCosmosSeeder = scope.ServiceProvider.GetRequiredService<HistoryCosmosDbSeeder>();
                     historyCosmosSeeder.SeedIfDbAndContainerNotExists();
 
-                    var pageContentCosmosSeeder = scope.ServiceProvider.GetRequiredService<PageContentDbSeeder>();
-                    pageContentCosmosSeeder.SeedIfDbAndContainerNotExists();
                 }
 
                 #endregion seed migration
