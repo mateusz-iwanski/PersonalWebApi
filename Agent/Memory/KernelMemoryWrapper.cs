@@ -1,5 +1,6 @@
 ﻿using DocumentFormat.OpenXml.Office2010.Word;
 using LLama.Common;
+using Microsoft.AspNetCore.Http;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.KernelMemory;
 using Microsoft.KernelMemory.Context;
@@ -7,6 +8,7 @@ using MongoDB.Driver.Core.WireProtocol.Messages;
 using PersonalWebApi.Entities.System;
 using PersonalWebApi.Exceptions;
 using PersonalWebApi.Models.Models.Memory;
+using PersonalWebApi.Services.Services.System;
 using SharpCompress.Common;
 using System;
 using System.Security.Claims;
@@ -84,11 +86,13 @@ namespace PersonalWebApi.Agent.MicrosoftKernelMemory
     {
         private readonly IKernelMemory _innerKernelMemory;
         private readonly IAssistantHistoryManager _assistantHistoryManager;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public KernelMemoryWrapper(IKernelMemory innerKernelMemory, IAssistantHistoryManager assistantHistoryManager)
+        public KernelMemoryWrapper(IKernelMemory innerKernelMemory, IAssistantHistoryManager assistantHistoryManager, IHttpContextAccessor httpContextAccessor)
         {
             _innerKernelMemory = innerKernelMemory;
             _assistantHistoryManager = assistantHistoryManager;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         /// <summary>
@@ -100,20 +104,6 @@ namespace PersonalWebApi.Agent.MicrosoftKernelMemory
 
 
         #region interface_with_additional_implementation
-
-        /// <summary>
-        /// Check if in tag collection exists sessionUuid
-        /// </summary>
-        /// <param name="tags"></param>
-        /// <returns></returns>
-        private bool _checkExistsingMainUuidInTag(TagCollection tags) 
-        {
-            if (!tags.ContainsKey("sessionUuid"))
-            {
-                return false;
-            }
-            return true;
-        }
 
         /// <summary>
         /// Imports a document into the kernel memory asynchronously.
@@ -228,13 +218,9 @@ namespace PersonalWebApi.Agent.MicrosoftKernelMemory
         /// </remarks>
         public async Task<string> ImportDocumentAsync(string filePath, string? documentId = null, TagCollection? tags = null, string? index = null, IEnumerable<string>? steps = null, IContext? context = null, CancellationToken cancellationToken = default)
         {
-            var conversationUuid = Guid.Parse(index);
-            var sessionUuid = Guid.Parse(tags["sessionUuid"].FirstOrDefault());
-            Guid fileId = new Guid();
+            (Guid conversationUuid, Guid sessionUuid) = ContextAccessorReader.RetrieveCrucialUuid(_httpContextAccessor);
 
-            if (!Guid.TryParse(documentId, out fileId) || !_checkExistsingMainUuidInTag(tags))
-            {
-                throw new ChatHistoryMessageException(
+            var defaultException = new ChatHistoryMessageException(
                     $@"""
                     <ChatHistoryMessageException>
                         <action>ImportDocumentAsFilePathToMemory</action>
@@ -243,12 +229,11 @@ namespace PersonalWebApi.Agent.MicrosoftKernelMemory
                             Required - documentID, tags (TagCollection) withsessionUuid , index as conversation UUID.
                             Please ensure the following:
                             -The 'index' - exists and is a valid conversation UUID format
-                            -The 'sessionUuid' - keys exists in the TagCollection and is a valid session UUID format.
                             -The 'documentId' - exists with valid UUID format.
                         </message>
                         <argumentSent>
-                            <conversationUuid>{conversationUuid}</conversationUuid>
-                            <sessionUuid>{sessionUuid}</sessionUuid>
+                            <conversationUuid>{conversationUuid.ToString() }</conversationUuid>
+                            <sessionUuid>{ sessionUuid.ToString() }</sessionUuid>
                             <documentId>{documentId}</documentId>
                         </argumentSent>
                         <details>
@@ -264,7 +249,11 @@ namespace PersonalWebApi.Agent.MicrosoftKernelMemory
                     </ChatHistoryMessageException>
                     """
                 );
-            }
+            
+
+            Guid fileId = new Guid();
+
+            if (!Guid.TryParse(documentId, out fileId)) throw defaultException;
 
             // Store the document in the memory
             var result = await _innerKernelMemory.ImportDocumentAsync(filePath, documentId, tags, conversationUuid.ToString(), steps, context, cancellationToken);
@@ -298,14 +287,10 @@ namespace PersonalWebApi.Agent.MicrosoftKernelMemory
         /// </summary>
         public async Task<string> ImportDocumentAsync(Stream content, string? fileName = null, string? documentId = null, TagCollection? tags = null, string? index = null, IEnumerable<string>? steps = null, IContext? context = null, CancellationToken cancellationToken = default)
         {
-            var conversationUuid = Guid.Parse(index);
-            var sessionUuid = Guid.Parse(tags["sessionUuid"].FirstOrDefault());
-            Guid fileId = new Guid();
+            (Guid conversationUuid, Guid sessionUuid) = ContextAccessorReader.RetrieveCrucialUuid(_httpContextAccessor);
 
-            if (!Guid.TryParse(documentId, out fileId) || !_checkExistsingMainUuidInTag(tags))
-            {
-                throw new ChatHistoryMessageException(
-                    $@"""
+            var defaultException = new ChatHistoryMessageException(
+                $@"""
                     <ChatHistoryMessageException>
                         <action>ImportDocumentAsStreamContent</action>
                         <documentUuid>{documentId}</documentUuid>
@@ -317,9 +302,9 @@ namespace PersonalWebApi.Agent.MicrosoftKernelMemory
                             -The 'documentId' - exists with valid UUID format.
                         </message>
                         <argumentSent>
-                            <conversationUuid>{conversationUuid}</conversationUuid>
-                            <sessionUuid>{sessionUuid}</sessionUuid>
-                            <documentId>{documentId}</documentId>
+                            <conversationUuid>{ conversationUuid.ToString() }</conversationUuid>
+                            <sessionUuid>{ sessionUuid.ToString() }</sessionUuid>
+                            <documentId>{ documentId }</documentId>
                         </argumentSent>
                         <details>
                             <requiredKeys>
@@ -333,8 +318,13 @@ namespace PersonalWebApi.Agent.MicrosoftKernelMemory
                         </details>
                     </ChatHistoryMessageException>
                     """
-                 );
-            }
+                    );
+
+            
+
+            Guid fileId = new Guid();
+
+            if (!Guid.TryParse(documentId, out fileId)) throw defaultException;
 
             var result = await _innerKernelMemory.ImportDocumentAsync(content, fileName, documentId, tags, index, steps, context, cancellationToken);
 
@@ -400,16 +390,13 @@ namespace PersonalWebApi.Agent.MicrosoftKernelMemory
         /// </remarks>
         public async Task<string> ImportTextAsync(string text, string? documentId = null, TagCollection? tags = null, string? index = null, IEnumerable<string>? steps = null, IContext? context = null, CancellationToken cancellationToken = default)
         {
-            var conversationUuid = Guid.Parse(index);
-            var sessionUuid = Guid.Parse(tags["sessionUuid"].FirstOrDefault());
+            (Guid conversationUuid, Guid sessionUuid) = ContextAccessorReader.RetrieveCrucialUuid(_httpContextAccessor);
 
-            if (!_checkExistsingMainUuidInTag(tags))
-            {
-                throw new ChatHistoryMessageException(
-                    $@"""
+            var defaultException = new ChatHistoryMessageException(
+                $@"""
                     <ChatHistoryMessageException>
                         <action>ImportTextToMemory</action>
-                        <documentUuid>{documentId}</documentUuid>
+                        <documentUuid>{ documentId }</documentUuid>
                         <message>
                             Required - tags (TagCollection) withsessionUuid , index as conversation UUID.
                             Please ensure the following:
@@ -418,9 +405,9 @@ namespace PersonalWebApi.Agent.MicrosoftKernelMemory
                             -The 'documentId' - exists with valid UUID format.
                         </message>
                         <argumentSent>
-                            <conversationUuid>{conversationUuid}</conversationUuid>
-                            <sessionUuid>{sessionUuid}</sessionUuid>
-                            <documentId>{documentId}</documentId>
+                            <conversationUuid>{ conversationUuid }</conversationUuid>
+                            <sessionUuid>{ sessionUuid.ToString() }</sessionUuid>
+                            <documentId>{ documentId }</documentId>
                         </argumentSent>
                         <details>
                             <requiredKeys>
@@ -434,8 +421,7 @@ namespace PersonalWebApi.Agent.MicrosoftKernelMemory
                         </details>
                     </ChatHistoryMessageException>
                     """
-                );
-            }
+                    );
 
             // save to memory
             var result = await _innerKernelMemory.ImportTextAsync(text, documentId, tags, index, steps, context, cancellationToken);
@@ -487,13 +473,10 @@ namespace PersonalWebApi.Agent.MicrosoftKernelMemory
         /// </remarks>
         public async Task<string> ImportWebPageAsync(string url, string? documentId = null, TagCollection? tags = null, string? index = null, IEnumerable<string>? steps = null, IContext? context = null, CancellationToken cancellationToken = default)
         {
-            var conversationUuid = Guid.Parse(index);
-            var sessionUuid = Guid.Parse(tags["sessionUuid"].FirstOrDefault());
+            (Guid conversationUuid, Guid sessionUuid) = ContextAccessorReader.RetrieveCrucialUuid(_httpContextAccessor);
 
-            if (!_checkExistsingMainUuidInTag(tags))
-            {
-                throw new ChatHistoryMessageException(
-                    $@"""
+            var defaultException = new ChatHistoryMessageException(
+                 $@"""
                     <ChatHistoryMessageException>
                         <action>ImportWebByUrlToMemory</action>
                         <message>
@@ -504,9 +487,9 @@ namespace PersonalWebApi.Agent.MicrosoftKernelMemory
                             -The 'documentId' - exists with valid UUID format.
                         </message>
                         <argumentSent>
-                            <conversationUuid>{conversationUuid}</conversationUuid>
-                            <sessionUuid>{sessionUuid}</sessionUuid>
-                            <documentId>{documentId}</documentId>
+                            <conversationUuid>{ conversationUuid.ToString() }</conversationUuid>
+                            <sessionUuid>{ sessionUuid.ToString() }</sessionUuid>
+                            <documentId>{ documentId }</documentId>
                         </argumentSent>
                         <details>
                             <requiredKeys>
@@ -520,8 +503,8 @@ namespace PersonalWebApi.Agent.MicrosoftKernelMemory
                         </details>
                     </ChatHistoryMessageException>
                     """
-                );
-            }
+                    );
+
 
             var result = await _innerKernelMemory.ImportWebPageAsync(url, documentId, tags, index, steps, context, cancellationToken);
 
@@ -548,16 +531,18 @@ namespace PersonalWebApi.Agent.MicrosoftKernelMemory
         /// <summary>
         /// Delete data from memory by index. Index is conversation UUID so will delete all memory from conversation.
         /// </summary>
-        /// <param name="index"></param>
+        /// <param name="index">Required  (conversation uuid)</param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
         public async Task DeleteIndexAsync(string? index = null, CancellationToken cancellationToken = default)
         {
-            var conversationUuid = Guid.Parse(index);
+            if (string.IsNullOrEmpty(index)) throw new InvalidUuidException("Index (conversation UUID) must not be null or empty.");
+
+            (Guid conversationUuid, Guid sessionUuid) = ContextAccessorReader.RetrieveCrucialUuid(_httpContextAccessor);
 
             await _innerKernelMemory.DeleteIndexAsync(index, cancellationToken);
 
-            var chatMessage = new ChatHistoryShortTermDeleteIndexDto(conversationUuid, Guid.NewGuid())
+            var chatMessage = new ChatHistoryShortTermDeleteIndexDto(conversationUuid, sessionUuid)
             {
                 Action = "DeleteIndexFromMemoryByIndex",
                 ActionMessage = "Delete data from memory by index (conversation UUID)",
@@ -565,7 +550,8 @@ namespace PersonalWebApi.Agent.MicrosoftKernelMemory
                 MessageType = GetMessageType(),
                 Metadata = new Dictionary<string, string>
                 {
-                    { "status", "Ended" }
+                    { "status", "Ended" },
+                    { "memoryIndex", index },
                 },
             };
 
@@ -590,12 +576,10 @@ namespace PersonalWebApi.Agent.MicrosoftKernelMemory
         /// <exception cref="ChatHistoryMessageException">Thrown to indicate validation errors or missing required parameters.</exception>
         public async Task DeleteDocumentAsync(string documentId, string? index = null, CancellationToken cancellationToken = default)
         {
-            Guid fileId = new Guid();
+            if (string.IsNullOrEmpty(index)) throw new InvalidUuidException("Index (conversation UUID) must not be null or empty.");
 
-            if (!Guid.TryParse(documentId, out fileId))
-            {
-                throw new ChatHistoryMessageException(
-                    $@"""
+            var defaultException = new ChatHistoryMessageException(
+                $@"""
                     <ChatHistoryMessageException>
                         <action>DeleteDocumentFromMemory</action>
                         <documentUuid>{documentId}</documentUuid>
@@ -613,12 +597,17 @@ namespace PersonalWebApi.Agent.MicrosoftKernelMemory
                         </details>
                     </ChatHistoryMessageException>
                     """
-                );
-            }
+                    );
+
+            (Guid conversationUuid, Guid sessionUuid) = ContextAccessorReader.RetrieveCrucialUuid(_httpContextAccessor);
+
+            Guid fileId = new Guid();
+
+            if (!Guid.TryParse(documentId, out fileId)) throw defaultException;
 
             await _innerKernelMemory.DeleteDocumentAsync(documentId, index, cancellationToken);
 
-            var chatMessage = new ChatHistoryShortTermDeleteDocumentDto(Guid.NewGuid(), Guid.NewGuid())
+            var chatMessage = new ChatHistoryShortTermDeleteDocumentDto(conversationUuid, sessionUuid)
             {
                 Action = "DeleteIndexFromMemoryByIndex",
                 ActionMessage = "Delete document from memory by document id",
@@ -627,7 +616,8 @@ namespace PersonalWebApi.Agent.MicrosoftKernelMemory
                 MessageType = GetMessageType(),
                 Metadata = new Dictionary<string, string>
                 {
-                    { "status", "Ended" }
+                    { "status", "Ended" },
+                    { "memoryIndex", index },
                 },
             };
 
