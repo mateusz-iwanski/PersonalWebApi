@@ -21,14 +21,29 @@ namespace PersonalWebApi.Services.Azure
         {
         }
 
+        private async Task<Container> getOrCreateContainerAsync(string containerName, string partitionKeyPath)
+        {
+            // Ensure the partition key path starts with a leading slash
+            if (!partitionKeyPath.StartsWith("/"))
+            {
+                partitionKeyPath = "/" + partitionKeyPath;
+            }
+
+            var database = await _cosmosClient.CreateDatabaseIfNotExistsAsync(_databaseName);
+            var container = await database.Database.CreateContainerIfNotExistsAsync(containerName, partitionKeyPath);
+            return container.Container;
+        }
+
         public async Task<ItemResponse<T>> CreateItemAsync<T>(T cosmosDto) where T : CosmosDbDtoBase
         {
-            var container = _cosmosClient.GetContainer(_databaseName, cosmosDto.ContainerName());
-            var partitionKey = new PartitionKey(cosmosDto.PartitionKeyName());
+            var containerName = cosmosDto.ContainerName();
+            var partitionKeyName = cosmosDto.PartitionKeyName();
+
+            await getOrCreateContainerAsync(containerName, partitionKeyName);
+            var container = _cosmosClient.GetContainer(_databaseName, containerName);
 
             return await container.CreateItemAsync<T>(cosmosDto, new PartitionKey(cosmosDto.PartitionKeyData()));
         }
-
         /// <summary>
         /// 
         /// </summary>
