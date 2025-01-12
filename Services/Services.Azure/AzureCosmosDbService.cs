@@ -31,6 +31,7 @@ namespace PersonalWebApi.Services.Azure
 
             var database = await _cosmosClient.CreateDatabaseIfNotExistsAsync(_databaseName);
             var container = await database.Database.CreateContainerIfNotExistsAsync(containerName, partitionKeyPath);
+            
             return container.Container;
         }
 
