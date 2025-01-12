@@ -13,14 +13,16 @@ namespace PersonalWebApi.Agent.SemanticKernel.Observability
     public class RenderedPromptFilterHandler : IPromptRenderFilter
     {
         private readonly IAssistantHistoryManager _assistantHistoryManager;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="RenderedPromptFilterHandler"/> class.
         /// </summary>
         /// <param name="assistantHistoryManager">The assistant history manager responsible for saving function execution history.</param>
-        public RenderedPromptFilterHandler(IAssistantHistoryManager assistantHistoryManager)
+        public RenderedPromptFilterHandler(IAssistantHistoryManager assistantHistoryManager, IHttpContextAccessor httpContextAccessor)
         {
             _assistantHistoryManager = assistantHistoryManager;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         /// <summary>
@@ -57,6 +59,8 @@ namespace PersonalWebApi.Agent.SemanticKernel.Observability
         /// <returns>A task representing the asynchronous operation.</returns>
         public async Task OnPromptRenderAsync(PromptRenderContext context, Func<PromptRenderContext, Task> next)
         {
+            var sessionId = _httpContextAccessor.HttpContext?.GetRouteValue("conversationUuid");
+
             // Call the next filter in the pipeline
             await next(context);
 
