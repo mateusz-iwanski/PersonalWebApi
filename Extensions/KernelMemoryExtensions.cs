@@ -42,8 +42,9 @@ namespace PersonalWebApi.Extensions
             {
                 var innerKernelMemory = provider.GetRequiredService<IKernelMemory>();
                 var assistantHistoryManager = provider.GetRequiredService<IAssistantHistoryManager>();
+                var httpContextAccessor = provider.GetRequiredService<IHttpContextAccessor>();
 
-                return new KernelMemoryWrapper(innerKernelMemory, assistantHistoryManager);
+                return new KernelMemoryWrapper(innerKernelMemory, assistantHistoryManager, httpContextAccessor);
             });
 
             return builder;
