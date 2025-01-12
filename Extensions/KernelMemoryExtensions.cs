@@ -3,9 +3,9 @@ using Microsoft.Extensions.Options;
 using Microsoft.KernelMemory;
 using Microsoft.KernelMemory.DataFormats.AzureAIDocIntel;
 using Microsoft.KernelMemory.MemoryStorage;
-using PersonalWebApi.Agent;
 using PersonalWebApi.Agent.MicrosoftKernelMemory;
 using PersonalWebApi.Exceptions;
+using PersonalWebApi.Services.Services.History;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection.PortableExecutable;
 
