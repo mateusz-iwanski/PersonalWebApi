@@ -32,6 +32,8 @@ using OpenTelemetry.Trace;
 using Azure.Monitor.OpenTelemetry.Exporter;
 using OpenTelemetry.Metrics;
 using PersonalWebApi.Utilities.Kql;
+using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
+using PersonalWebApi.ActionFilters;
 
 namespace PersonalWebApi
 {
@@ -115,6 +117,8 @@ namespace PersonalWebApi
 
                 builder.Services.AddControllers();
 
+               
+
                 #region swagger inject
 
                 builder.Services.AddSwaggerGen(options =>
@@ -164,7 +168,15 @@ namespace PersonalWebApi
                 // register semantic kernel services and kernel memory services
                 builder
                     .AddSemanticKernelServices()
-                    .AddKernelMemoryServices(); 
+                    .AddKernelMemoryServices();
+
+                // Register filters
+                builder.Services.AddControllersWithViews(options =>
+                {
+                    options.Filters.Add<CheckConversationAccessFilter>();
+                });
+                builder.Services.AddHttpContextAccessor();
+                builder.Services.AddScoped<CheckConversationAccessFilter>(); // Register the action filter
 
                 // Register Seeder
                 builder.Services.AddScoped<RoleSeeder>();
