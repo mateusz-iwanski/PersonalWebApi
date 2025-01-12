@@ -1,4 +1,5 @@
-﻿using DocumentFormat.OpenXml.Office2010.Word;
+﻿using Amazon.Runtime.Internal.Transform;
+using DocumentFormat.OpenXml.Office2010.Word;
 using DocumentFormat.OpenXml.Wordprocessing;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.AI;
@@ -8,6 +9,7 @@ using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
 using MongoDB.Bson;
+using PersonalWebApi.ActionFilters;
 using PersonalWebApi.Agent;
 using PersonalWebApi.Agent.MicrosoftKernelMemory;
 using PersonalWebApi.Controllers.Controllers.Qdrant;
@@ -17,7 +19,6 @@ using PersonalWebApi.Models.Agent;
 using PersonalWebApi.Models.Azure;
 using PersonalWebApi.Services.Azure;
 using PersonalWebApi.Services.Services.Qdrant;
-using PersonalWebApi.Utilities.Kql;
 using PersonalWebApi.Utilities.Utilities.DocumentReaders;
 using Qdrant.Client.Grpc;
 using System.Diagnostics.CodeAnalysis;
@@ -36,6 +37,7 @@ namespace PersonalWebApi.Controllers.Agent
         private readonly IDocumentReaderDocx _documentReaderDocx;
         private readonly IQdrantFileService _qdrant;
         private readonly IConfiguration _configuration;
+        IHttpContextAccessor _httpContextAccessor;
 
         private readonly IAssistantHistoryManager _assistantHistoryManager;
 
@@ -46,7 +48,7 @@ namespace PersonalWebApi.Controllers.Agent
             IDocumentReaderDocx documentReaderDocx,
             IQdrantFileService qdrant,
             IConfiguration configuration,
-            
+            IHttpContextAccessor httpContextAccessor,
             IAssistantHistoryManager assistantHistoryManager
 
             )
@@ -57,6 +59,7 @@ namespace PersonalWebApi.Controllers.Agent
             _documentReaderDocx = documentReaderDocx;
             _qdrant = qdrant;
             _configuration = configuration;
+            _httpContextAccessor = httpContextAccessor;
 
             _assistantHistoryManager = assistantHistoryManager;
         }
@@ -65,14 +68,13 @@ namespace PersonalWebApi.Controllers.Agent
 
         [HttpPost("chat/{conversationUuid}/{id:int}")]
         [Experimental("SKEXP0050")]
+        [ServiceFilter(typeof(CheckConversationAccessFilter))]
         public async Task<string> Chat(string conversationUuid = "30f4373b-5b18-41fd-8b40-5953825b3c0d", int id = 1)
         {
+            //_httpContextAccessor.HttpContext?.Items.Add("conversationUuid", conversationUuid);
+
             var sessionId = Guid.NewGuid().ToString();
 
-            KqlApplicationInsightsApi kql = new KqlApplicationInsightsApi(_configuration);
-            var aaa = await kql.ExecuteQueryAsync("traces | getschema");
-
-            return Newtonsoft.Json.JsonConvert.SerializeObject(aaa);
 
             //await _chatRepo.LoadChatHistoryToMemoryAsync(User, Guid.Parse(conversationUuid), _memory);
 
