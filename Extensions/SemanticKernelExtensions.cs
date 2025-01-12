@@ -1,7 +1,6 @@
 ﻿using Microsoft.SemanticKernel;
 using OpenTelemetry.Resources;
 using OpenTelemetry;
-using PersonalWebApi.Agent;
 using PersonalWebApi.Exceptions;
 using PersonalWebApi.Services.Azure;
 using static Microsoft.ApplicationInsights.MetricDimensionNames.TelemetryContext;
@@ -9,6 +8,7 @@ using OpenTelemetry.Trace;
 using Azure.Monitor.OpenTelemetry.Exporter;
 using OpenTelemetry.Metrics;
 using PersonalWebApi.Agent.SemanticKernel.Observability;
+using PersonalWebApi.Services.Services.History;
 
 namespace PersonalWebApi.Extensions
 {
