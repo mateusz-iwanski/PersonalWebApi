@@ -75,7 +75,7 @@ namespace PersonalWebApi.Models.Models.Memory
         /// This method returns the name of the partition key used to partition chat history records.
         /// </summary>
         /// <returns>The name of the partition key.</returns>
-        public static string PartitionKeyNameStatic() => "conversationUuid";
+        public static string PartitionKeyNameStatic() => "/conversationUuid";
 
         /// <summary>
         /// Gets the container name for the Cosmos DB.
