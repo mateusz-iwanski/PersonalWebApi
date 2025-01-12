@@ -58,7 +58,7 @@
   <ItemGroup>
     <Folder Include="Controllers\KernelMemory\" />
     <Folder Include="Services\Telemetry\" />
-    <Folder Include="Services\Services.Document\" />
+    <Folder Include="Services\Document\" />
   </ItemGroup>
 
   <ItemGroup>
