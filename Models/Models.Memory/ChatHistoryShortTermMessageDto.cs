@@ -68,7 +68,7 @@ namespace PersonalWebApi.Models.Models.Memory
         /// This method returns the name of the container where chat history records are stored.
         /// </summary>
         /// <returns>The name of the container.</returns>
-        public static string ContainerNameStatic() => "chat-history";
+        public static string ContainerNameStatic() => "history-memory-short-term";
 
         /// <summary>
         /// Gets the static partition key name for the Cosmos DB.
