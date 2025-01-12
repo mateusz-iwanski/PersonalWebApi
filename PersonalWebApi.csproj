@@ -56,10 +56,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Controllers\Controllers.KernelMemory\" />
+    <Folder Include="Controllers\KernelMemory\" />
     <Folder Include="Services\Telemetry\" />
     <Folder Include="Services\Services.Document\" />
-    <Folder Include="Services\Services.History\" />
   </ItemGroup>
 
   <ItemGroup>
