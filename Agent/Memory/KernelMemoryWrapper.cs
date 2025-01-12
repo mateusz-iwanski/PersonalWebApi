@@ -8,6 +8,7 @@ using MongoDB.Driver.Core.WireProtocol.Messages;
 using PersonalWebApi.Entities.System;
 using PersonalWebApi.Exceptions;
 using PersonalWebApi.Models.Models.Memory;
+using PersonalWebApi.Services.Services.History;
 using PersonalWebApi.Services.Services.System;
 using SharpCompress.Common;
 using System;
@@ -268,7 +269,7 @@ namespace PersonalWebApi.Agent.MicrosoftKernelMemory
                 MessageType = GetMessageType(),
                 FilePath = filePath,
                 FileName = Path.GetFileName(filePath),
-                Tags = tags.ToKeyValueList().Select(kv => kv.Value).ToList(),
+                Tags = tags?.ToKeyValueList().Select(kv => kv.Value).ToList() ?? new List<string>(),
                 Metadata = new Dictionary<string, string>
                 {
                     { "memoryIndex", conversationUuid.ToString() },
