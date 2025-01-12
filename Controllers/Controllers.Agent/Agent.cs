@@ -1,6 +1,7 @@
 ﻿using Amazon.Runtime.Internal.Transform;
 using DocumentFormat.OpenXml.Office2010.Word;
 using DocumentFormat.OpenXml.Wordprocessing;
+using LLama.Common;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.AI;
 using Microsoft.KernelMemory;
@@ -74,7 +75,7 @@ namespace PersonalWebApi.Controllers.Agent
             //_httpContextAccessor.HttpContext?.Items.Add("conversationUuid", conversationUuid);
 
             var sessionId = Guid.NewGuid().ToString();
-
+            
 
             //await _chatRepo.LoadChatHistoryToMemoryAsync(User, Guid.Parse(conversationUuid), _memory);
 
@@ -84,7 +85,7 @@ namespace PersonalWebApi.Controllers.Agent
             string filePath = Path.Combine(AppContext.BaseDirectory, "bajka.docx");
 
             TagCollection conversation_1_id_tags = new TagCollection();
-            conversation_1_id_tags.Add("sessionUuid", Guid.NewGuid().ToString());
+            //conversation_1_id_tags.Add("sessionUuid", Guid.NewGuid().ToString());
 
             var conversationId = Guid.Parse(conversationUuid);
 
@@ -118,8 +119,6 @@ namespace PersonalWebApi.Controllers.Agent
             {
                 ExtensionData = new Dictionary<string, object>()
                 {
-                    { "conversationUuid", conversationUuid },
-                    { "sessionUuid", sessionId },
                     { "shortMemory", true }
                 }
             };  
@@ -134,8 +133,6 @@ namespace PersonalWebApi.Controllers.Agent
             {
                 ["input"] = "Kto skręcił sobie nogę?",
                 ["index"] = conversationId.ToString(),
-                ["conversationUuid"] = conversationUuid,
-                ["sessionUuid"] = sessionId
                 //[MemoryPlugin.IndexParam] = conversationId.ToString()
             };
 
@@ -173,6 +170,13 @@ namespace PersonalWebApi.Controllers.Agent
             var myFunction = _kernel.CreateFunctionFromPrompt(skPrompt, f);
 
             var answer = await myFunction.InvokeAsync(_kernel, arguments);
+
+            var chatHistory = new Microsoft.SemanticKernel.ChatCompletion.ChatHistory();
+
+            chatHistory.AddMessage(Microsoft.SemanticKernel.ChatCompletion.AuthorRole.User, "Hi");
+
+            // Add the response to the chat history
+            chatHistory.AddMessage(Microsoft.SemanticKernel.ChatCompletion.AuthorRole.User, answer.ToString());
 
             return answer.ToString();
 
