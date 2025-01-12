@@ -47,7 +47,7 @@ namespace PersonalWebApi.Services.Services.System
 
             //return (conversationUuid, sessionUuid);
 
-            return (Guid.NewGuid(), Guid.NewGuid());
+            return (Guid.Parse("836ce690-ee5a-40e4-827d-d5f34bdeca3e"), Guid.NewGuid());
         }
     }
 }
