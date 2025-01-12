@@ -3,6 +3,7 @@ using DocumentFormat.OpenXml.Math;
 using Microsoft.SemanticKernel;
 using PersonalWebApi.Exceptions;
 using PersonalWebApi.Models.Models.SemanticKernel;
+using PersonalWebApi.Services.Services.History;
 using PersonalWebApi.Services.Services.System;
 using System.Text.Json;
 
@@ -39,7 +40,7 @@ namespace PersonalWebApi.Agent.SemanticKernel.Observability
             // Call the next filter in the pipeline
             await next(context);
 
-            await _assistantHistoryManager.SaveAsync(new FunctionExecutingHistory(
+            await _assistantHistoryManager.SaveAsync(new FunctionExecutingHistoryDto(
                 conversationUuid: conversationUuid,
                 sessionUuid: sessionUuid,
                 inputArguments: context.Arguments.ToDictionary(arg => arg.Key, arg => arg.Value.ToString()),
