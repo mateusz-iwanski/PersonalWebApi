@@ -1,38 +1,36 @@
 ﻿using Microsoft.AspNetCore.Mvc.Filters;
+using System.Security.Claims;
 
 namespace PersonalWebApi.ActionFilters
 {
     public class CheckConversationAccessFilter : IActionFilter
     {
-        public void OnActionExecuting(ActionExecutingContext context)
-        {
-            // Extract conversationUuid from action arguments and inject it into HttpContext.Items
-            if (context.ActionArguments.TryGetValue("conversationUuid", out var conversationUuid))
-            {
-                context.HttpContext.Items["conversationUuid"] = conversationUuid;
-            }
-            context.HttpContext.Items["sessionId"] = Guid.NewGuid().ToString();
+        private readonly ClaimsPrincipal _userClaimsPrincipal;
 
-            // Add logic to check access to the conversation
-            // For example, you can check if the user has access to the conversationUuid
-            // If not, you can set the result to a 403 Forbidden response
-            var userHasAccess = CheckUserAccessToConversation(context.HttpContext.User, conversationUuid?.ToString());
-            if (!userHasAccess)
-            {
-                context.Result = new Microsoft.AspNetCore.Mvc.ForbidResult();
-            }
+        public CheckConversationAccessFilter(IHttpContextAccessor httpContextAccessor)
+        {
+            _userClaimsPrincipal = httpContextAccessor.HttpContext?.User ?? throw new ArgumentNullException(nameof(httpContextAccessor.HttpContext.User));
         }
 
         public void OnActionExecuted(ActionExecutedContext context)
         {
-            // Do something after the action executes, if needed.
         }
 
-        private bool CheckUserAccessToConversation(System.Security.Claims.ClaimsPrincipal user, string? conversationUuid)
+        public void OnActionExecuting(ActionExecutingContext context)
         {
-            // Implement your logic to check if the user has access to the conversation
-            // This is just a placeholder implementation
-            return !string.IsNullOrEmpty(conversationUuid) && user.Identity?.IsAuthenticated == true;
+            if (context.ActionArguments.TryGetValue("conversationUuid", out var conversationUuid))
+            {
+
+                context.HttpContext.Items["conversationUuid"] = conversationUuid;
+                context.HttpContext.Items["sessionUuid"] = Guid.NewGuid().ToString();
+            }
+            else
+            {
+                context.Result = new Microsoft.AspNetCore.Mvc.BadRequestObjectResult("Conversation UUID is required.");
+                return;
+            }
+
+            // Additional logic to check access can be added here
         }
     }
 }
