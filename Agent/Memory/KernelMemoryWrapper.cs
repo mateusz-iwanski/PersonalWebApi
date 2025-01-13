@@ -1,4 +1,5 @@
-﻿using DocumentFormat.OpenXml.Office2010.Word;
+﻿using Amazon.Runtime.Internal.Transform;
+using DocumentFormat.OpenXml.Office2010.Word;
 using LLama.Common;
 using Microsoft.AspNetCore.Http;
 using Microsoft.IdentityModel.Tokens;
@@ -8,6 +9,8 @@ using MongoDB.Driver.Core.WireProtocol.Messages;
 using PersonalWebApi.Entities.System;
 using PersonalWebApi.Exceptions;
 using PersonalWebApi.Models.Models.Memory;
+using PersonalWebApi.Models.Storage;
+using PersonalWebApi.Services.Azure;
 using PersonalWebApi.Services.Services.History;
 using PersonalWebApi.Services.Services.System;
 using SharpCompress.Common;
@@ -16,6 +19,51 @@ using System.Security.Claims;
 
 namespace PersonalWebApi.Agent.MicrosoftKernelMemory
 {
+    public class FileStreamFormFile : IFormFile
+    {
+        private readonly string _filePath;
+        private readonly string _fileName;
+
+        public FileStreamFormFile(string filePath, string fileName)
+        {
+            _filePath = filePath;
+            _fileName = fileName;
+        }
+
+        public string ContentType => "application/octet-stream";
+
+        public string ContentDisposition => $"form-data; name=\"file\"; filename=\"{_fileName}\"";
+
+        public IHeaderDictionary Headers => new HeaderDictionary();
+
+        public long Length => new FileInfo(_filePath).Length;
+
+        public string Name => "file";
+
+        public string FileName => _fileName;
+
+        public void CopyTo(Stream target)
+        {
+            using (var stream = new FileStream(_filePath, FileMode.Open, FileAccess.Read))
+            {
+                stream.CopyTo(target);
+            }
+        }
+
+        public async Task CopyToAsync(Stream target, CancellationToken cancellationToken = default)
+        {
+            using (var stream = new FileStream(_filePath, FileMode.Open, FileAccess.Read))
+            {
+                await stream.CopyToAsync(target, cancellationToken);
+            }
+        }
+
+        public Stream OpenReadStream()
+        {
+            return new FileStream(_filePath, FileMode.Open, FileAccess.Read);
+        }
+    }
+
     /// <summary>
     /// The <see cref="KernelMemoryWrapper"/> class is a wrapper implementation of the <see cref="IKernelMemory"/> interface.
     /// It provides additional functionality for managing kernel memory operations, including document import, text import, and web page import.
@@ -88,12 +136,18 @@ namespace PersonalWebApi.Agent.MicrosoftKernelMemory
         private readonly IKernelMemory _innerKernelMemory;
         private readonly IAssistantHistoryManager _assistantHistoryManager;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IBlobStorageService _blobStorageService;
 
-        public KernelMemoryWrapper(IKernelMemory innerKernelMemory, IAssistantHistoryManager assistantHistoryManager, IHttpContextAccessor httpContextAccessor)
+        public KernelMemoryWrapper(
+            IKernelMemory innerKernelMemory, 
+            IAssistantHistoryManager assistantHistoryManager, 
+            IHttpContextAccessor httpContextAccessor,
+            IBlobStorageService blobStorageService)
         {
             _innerKernelMemory = innerKernelMemory;
             _assistantHistoryManager = assistantHistoryManager;
             _httpContextAccessor = httpContextAccessor;
+            _blobStorageService = blobStorageService;
         }
 
         /// <summary>
@@ -221,6 +275,8 @@ namespace PersonalWebApi.Agent.MicrosoftKernelMemory
         {
             (Guid conversationUuid, Guid sessionUuid) = ContextAccessorReader.RetrieveCrucialUuid(_httpContextAccessor);
 
+            var memoryActionName = "ImportDocumentAsFilePathToMemory";
+
             var defaultException = new ChatHistoryMessageException(
                     $@"""
                     <ChatHistoryMessageException>
@@ -259,26 +315,77 @@ namespace PersonalWebApi.Agent.MicrosoftKernelMemory
             // Store the document in the memory
             var result = await _innerKernelMemory.ImportDocumentAsync(filePath, documentId, tags, conversationUuid.ToString(), steps, context, cancellationToken);
 
-            // save action history
-            var chatMessage = new ChatHistoryShortTermFileMessageDto(conversationUuid, sessionUuid, fileId)
+            // ###### ADD HISTORY LOG FOR CHAT
+            // ######
+            var shortTermFileMessage = new ChatHistoryShortTermFileMessageDto(conversationUuid, sessionUuid, fileId)
             {
-                Action = "ImportDocumentAsFilePathToMemory",
+                Action = memoryActionName,
                 ActionMessage = "Document imported to short term memory",
-                Role = AuthorRole.User.ToString(),
+                Role = AuthorRole.User.ToString(),  // from memory always be user role
                 FileId = fileId,
                 MessageType = GetMessageType(),
-                FilePath = filePath,
+                //FilePath = filePath,
                 FileName = Path.GetFileName(filePath),
                 Tags = tags?.ToKeyValueList().Select(kv => kv.Value).ToList() ?? new List<string>(),
                 Metadata = new Dictionary<string, string>
                 {
                     { "memoryIndex", conversationUuid.ToString() },
                     { "steps", string.Join(", ", steps ?? Enumerable.Empty<string>()) },
-                    { "status", "Ended" }
+                    { "status", "Ended" },
+                    { "sourceFilePath", filePath }
                 },
             };
 
-            await _assistantHistoryManager.SaveAsync(chatMessage);
+            // ###### ADD STORAGE ACTION LOG
+            // ######
+            var storageEvent = new StorageEventsDto(conversationUuid, sessionUuid)
+            {
+                EventName = "upload",
+                ServiceName = "AzureBlobStorage",
+                IsSuccess = true,
+                ActionType = "Upload",
+                FileSize = new FileInfo(filePath).Length,
+                FileType = Path.GetExtension(filePath),
+                ErrorMessage = string.Empty
+            };
+
+            // ###### ADD FILE TO BLOB STORAGE
+            // ######
+            // Get the directory of the source file
+            string directory = Path.GetDirectoryName(filePath);
+            // Combine the directory with the new file name to get the new file path
+            string newFilePath = Path.Combine(directory, documentId);
+            // Move the file to the new file path (this effectively renames the file)
+            File.Move(filePath, newFilePath);
+            // Add file to blob storage
+            var formFile = new FileStreamFormFile(newFilePath, documentId);
+
+            // ###### SAVING FILE
+            // ######
+            // Save the file to the blob storage
+            var fileUri = await _blobStorageService.UploadToLibraryAsync(
+                formFile,
+                true,
+                new Dictionary<string, string>()
+                    {
+                        { "conversationUuid", conversationUuid.ToString() },
+                        { "sessionUuid", conversationUuid.ToString() },
+                        { "owner", shortTermFileMessage.CreatedBy },
+                        { "userRole", AuthorRole.User.ToString() },
+                        { "fileId",  fileId.ToString() },
+                        { "originalFileName", Path.GetFileName(filePath) },
+                        { "tags", tags?.ToKeyValueList().Select(kv => kv.Value).ToList().ToString() ?? "" },
+                        { "fileExtension", Path.GetExtension(filePath) }
+                    }
+                );
+
+            // set paths file for loggers
+            shortTermFileMessage.FilePath = fileUri.ToString();
+            storageEvent.FileUri = fileUri.ToString();
+
+            // save
+            await _assistantHistoryManager.SaveAsync(shortTermFileMessage);
+            await _assistantHistoryManager.SaveAsync(storageEvent);
 
             return result;
         }
