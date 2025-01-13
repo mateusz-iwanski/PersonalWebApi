@@ -11,7 +11,7 @@ using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
 using MongoDB.Bson;
 using PersonalWebApi.ActionFilters;
-using PersonalWebApi.Agent.MicrosoftKernelMemory;
+using PersonalWebApi.Agent.Memory.Observability;
 using PersonalWebApi.Controllers.Controllers.Qdrant;
 using PersonalWebApi.Exceptions;
 using PersonalWebApi.Extensions;
