@@ -3,7 +3,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.KernelMemory;
 using Microsoft.KernelMemory.DataFormats.AzureAIDocIntel;
 using Microsoft.KernelMemory.MemoryStorage;
-using PersonalWebApi.Agent.MicrosoftKernelMemory;
+using PersonalWebApi.Agent.Memory.Observability;
 using PersonalWebApi.Exceptions;
 using PersonalWebApi.Services.Azure;
 using PersonalWebApi.Services.Services.History;
