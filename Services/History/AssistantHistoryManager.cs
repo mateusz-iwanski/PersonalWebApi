@@ -81,7 +81,7 @@ namespace PersonalWebApi.Services.Services.History
         }
 
         /// <summary>
-        /// Loads the chat history for the specified conversation UUID into memory.
+        /// Loads the chat history by date add for the specified conversation UUID into memory.
         /// </summary>
         /// <param name="conversationUuid">The unique identifier for the conversation.</param>
         public async Task<List<T>> LoadAsync<T>(Guid conversationUuid) where T : CosmosDbDtoBase
