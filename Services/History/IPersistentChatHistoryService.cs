@@ -33,6 +33,11 @@ namespace PersonalWebApi.Services.Services.History
         void RemoveAt(int index);
         void RemoveRange(int index, int count);
         Task SaveChatAsync();
-        Task<ChatHistory> LoadConversationAsync();
+
+
+        // additional functionality
+        Task<ChatHistory> LoadPersistanceConversationAsync();
+        Task<ChatHistory> LoadStorageEventsAsync();
+        ChatHistory GetChatHistory();
     }
 }
