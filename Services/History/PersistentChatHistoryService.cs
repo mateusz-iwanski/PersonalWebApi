@@ -9,6 +9,7 @@ using PersonalWebApi.Models.Models.SemanticKernel;
 using PersonalWebApi.Services.Services.System;
 using OllamaSharp.Models.Chat;
 using OpenAI.Assistants;
+using PersonalWebApi.Models.Storage;
 
 namespace PersonalWebApi.Services.Services.History
 {
@@ -24,6 +25,8 @@ namespace PersonalWebApi.Services.Services.History
             _assistantHistoryManager = assistantHistoryManager;
             _httpContextAccessor = httpContextAccessor;
         }
+
+        public ChatHistory GetChatHistory() => _chatHistory;
 
         public int Count => _chatHistory.Count;
 
@@ -143,9 +146,8 @@ namespace PersonalWebApi.Services.Services.History
             }
         }
 
-
-        // load conversation 
-        public async Task<ChatHistory> LoadConversationAsync()
+        // load persistence conversation 
+        public async Task<ChatHistory> LoadPersistanceConversationAsync()
         {
             (Guid conversationUuid, Guid sessionUuid) = ContextAccessorReader.RetrieveCrucialUuid(_httpContextAccessor);
             
@@ -161,6 +163,49 @@ namespace PersonalWebApi.Services.Services.History
                     Encoding = Encoding.GetEncoding(message.Encoding)
                 };
                 _chatHistory.Add(chatMessageContent);
+            }
+
+            return _chatHistory;
+        }
+
+        // load StorageEventsDto events history
+        public async Task<ChatHistory> LoadStorageEventsAsync()
+        {
+            (Guid conversationUuid, Guid sessionUuid) = ContextAccessorReader.RetrieveCrucialUuid(_httpContextAccessor);
+
+            var messages = await _assistantHistoryManager.LoadAsync<StorageEventsDto>(conversationUuid);
+
+            foreach (var message in messages)
+            {
+                var contextInfo = new
+                {
+                    EventType = "StorageEvent",
+                    Timestamp = message.CreatedAt,
+                    CreatedBy = message.CreatedBy,
+                    FileExtension = message.FileType,
+                    Description = "A file has been sent.",
+                    FileDetails = new
+                    {
+                        Uri = message.FileUri,
+                        Metadata = message.Metadata
+                    }
+                };
+
+                string contextJson = JsonSerializer.Serialize(contextInfo, new JsonSerializerOptions
+                {
+                    WriteIndented = true // Makes the JSON output more readable
+                });
+
+                _chatHistory.Add(new ChatMessageContent
+                {
+                    Role = AuthorRole.Tool,
+                    Content = contextJson,
+                    Metadata = new Dictionary<string, object?>
+                    {
+                        { "ContextType", "StorageEvent" }
+                    }
+                    
+                });
             }
 
             return _chatHistory;
