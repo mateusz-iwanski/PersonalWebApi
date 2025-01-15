@@ -1,4 +1,5 @@
-﻿using Amazon.Runtime.Internal.Transform;
+﻿using Amazon.Runtime.Internal.Endpoints.StandardLibrary;
+using Amazon.Runtime.Internal.Transform;
 using DocumentFormat.OpenXml.Office2010.Word;
 using LLama.Common;
 using Microsoft.AspNetCore.Http;
@@ -125,7 +126,7 @@ namespace PersonalWebApi.Agent.Memory.Observability
     ///     var r5 = await _memory.AskAsync("Who has a long nose?", index: conversation_2Id);  // none - not in memory by index
     /// 
     /// // the same is with rest of the data you use
-    ///     await _memory.ImportDocumentAsync(filePath, tags: conversation_1_id_tags, index: conversation_1Id, documentId:Guid.NewGuid().ToString());
+    ///     await _memory.ImportDocumentAsync(fileUrl, tags: conversation_1_id_tags, index: conversation_1Id, documentId:Guid.NewGuid().ToString());
     ///     
     /// </code>
     /// </example>
@@ -258,7 +259,7 @@ namespace PersonalWebApi.Agent.Memory.Observability
         /// The method also saves the import history using the IAssistantHistoryManager.
         /// 
         /// </summary>
-        /// <param name="filePath">The file path of the document to be imported.</param>
+        /// <param name="fileUrl">The file url of the document to be imported.</param>
         /// <param name="documentId">The unique identifier of the document in UUID format.</param>
         /// <param name="tags">A collection of tags associated with the document.</param>
         /// <param name="index">The conversation UUID.</param>
@@ -271,49 +272,55 @@ namespace PersonalWebApi.Agent.Memory.Observability
         /// The 'index' parameter is used to identify the user owner of the document. 
         /// The memory will later use only data with this index for the user with this ID.
         /// </remarks>
-        public async Task<string> ImportDocumentAsync(string filePath, string? documentId = null, TagCollection? tags = null, string? index = null, IEnumerable<string>? steps = null, IContext? context = null, CancellationToken cancellationToken = default)
+        public async Task<string> ImportDocumentAsync(string fileUrl, string? documentId = null, TagCollection? tags = null, string? index = null, IEnumerable<string>? steps = null, IContext? context = null, CancellationToken cancellationToken = default)
         {
             (Guid conversationUuid, Guid sessionUuid) = ContextAccessorReader.RetrieveCrucialUuid(_httpContextAccessor);
 
-            var memoryActionName = "ImportDocumentAsFilePathToMemory";
+            var memoryActionName = "ImportDocumentFromUrlToKernelMemory";
 
             var defaultException = new ChatHistoryMessageException(
-                    $@"""
-                    <ChatHistoryMessageException>
-                        <action>ImportDocumentAsFilePathToMemory</action>
-                        <documentUuid>{documentId}</documentUuid>
-                        <message>
-                            Required - documentID, tags (TagCollection) withsessionUuid , index as conversation UUID.
-                            Please ensure the following:
-                            -The 'index' - exists and is a valid conversation UUID format
-                            -The 'documentId' - exists with valid UUID format.
-                        </message>
-                        <argumentSent>
-                            <conversationUuid>{conversationUuid.ToString()}</conversationUuid>
-                            <sessionUuid>{sessionUuid.ToString()}</sessionUuid>
-                            <documentId>{documentId}</documentId>
-                        </argumentSent>
-                        <details>
-                            <requiredKeys>
-                                <key>conversationUuid</key>
-                                <key>sessionUuid</key>
-                            </requiredKeys>
-                            <requiredDocumentField>
-                                <field>documentId</field>
-                                <format>UUID</format>
-                            </requiredDocumentField>
-                        </details>
-                    </ChatHistoryMessageException>
-                    """
-                );
-
+                $@"""
+                <ChatHistoryMessageException>
+                    <action>{ memoryActionName }</action>
+                    <documentUuid>{ documentId }</documentUuid>
+                    <message>
+                        Required - documentID, tags (TagCollection) with sessionUuid, index as conversation UUID.
+                        Please ensure the following:
+                        -The 'index' - exists and is a valid conversation UUID format
+                        -The 'sessionUuid' - keys exist in the TagCollection and is a valid session UUID format.
+                        -The 'documentId' - exists with valid UUID format.
+                    </message>
+                    <argumentSent>
+                        <conversationUuid>{ conversationUuid.ToString() }</conversationUuid>
+                        <sessionUuid>{ sessionUuid.ToString() }</sessionUuid>
+                        <documentId>{ documentId }</documentId>
+                    </argumentSent>
+                    <details>
+                        <requiredKeys>
+                            <key>conversationUuid</key>
+                            <key>sessionUuid</key>
+                        </requiredKeys>
+                        <requiredDocumentField>
+                            <field>documentId</field>
+                            <format>UUID</format>
+                        </requiredDocumentField>
+                    </details>
+                </ChatHistoryMessageException>
+                """
+            );
 
             Guid fileId = new Guid();
 
             if (!Guid.TryParse(documentId, out fileId)) throw defaultException;
 
-            // Store the document in the memory
-            var result = await _innerKernelMemory.ImportDocumentAsync(filePath, documentId, tags, conversationUuid.ToString(), steps, context, cancellationToken);
+            // Download the document from the URL
+            using var httpClient = new HttpClient();
+            var response = await httpClient.GetAsync(fileUrl, cancellationToken);
+            response.EnsureSuccessStatusCode();
+            var contentStream = await response.Content.ReadAsStreamAsync(cancellationToken);
+
+            // Call the existing ImportDocumentAsync method with the stream
+            var result = await _innerKernelMemory.ImportDocumentAsync(contentStream, Path.GetFileName(fileUrl), documentId, tags, index, steps, context, cancellationToken);
 
             // ###### ADD HISTORY LOG FOR CHAT
             // ######
@@ -324,68 +331,19 @@ namespace PersonalWebApi.Agent.Memory.Observability
                 Role = AuthorRole.User.ToString(),  // from memory always be user role
                 FileId = fileId,
                 MessageType = GetMessageType(),
-                //FilePath = filePath,
-                FileName = Path.GetFileName(filePath),
+                SourceFilePath = fileUrl,
+                SourceFileName = Path.GetFileName(fileUrl),
                 Tags = tags?.ToKeyValueList().Select(kv => kv.Value).ToList() ?? new List<string>(),
                 Metadata = new Dictionary<string, string>
                 {
                     { "memoryIndex", conversationUuid.ToString() },
                     { "steps", string.Join(", ", steps ?? Enumerable.Empty<string>()) },
                     { "status", "Ended" },
-                    { "sourceFilePath", filePath }
+                    { "sourceFilePath", fileUrl }
                 },
             };
 
-            // ###### ADD STORAGE ACTION LOG
-            // ######
-            var storageEvent = new StorageEventsDto(conversationUuid, sessionUuid)
-            {
-                EventName = "upload",
-                ServiceName = "AzureBlobStorage",
-                IsSuccess = true,
-                ActionType = "Upload",
-                FileSize = new FileInfo(filePath).Length,
-                FileType = Path.GetExtension(filePath),
-                ErrorMessage = string.Empty
-            };
-
-            // ###### ADD FILE TO BLOB STORAGE
-            // ######
-            // Get the directory of the source file
-            string directory = Path.GetDirectoryName(filePath);
-            // Combine the directory with the new file name to get the new file path
-            string newFilePath = Path.Combine(directory, documentId);
-            // Move the file to the new file path (this effectively renames the file)
-            File.Move(filePath, newFilePath);
-            // Add file to blob storage
-            var formFile = new FileStreamFormFile(newFilePath, documentId);
-
-            // ###### SAVING FILE
-            // ######
-            // Save the file to the blob storage
-            var fileUri = await _blobStorageService.UploadToLibraryAsync(
-                formFile,
-                true,
-                new Dictionary<string, string>()
-                    {
-                        { "conversationUuid", conversationUuid.ToString() },
-                        { "sessionUuid", conversationUuid.ToString() },
-                        { "owner", shortTermFileMessage.CreatedBy },
-                        { "userRole", AuthorRole.User.ToString() },
-                        { "fileId",  fileId.ToString() },
-                        { "originalFileName", Path.GetFileName(filePath) },
-                        { "tags", tags?.ToKeyValueList().Select(kv => kv.Value).ToList().ToString() ?? "" },
-                        { "fileExtension", Path.GetExtension(filePath) }
-                    }
-                );
-
-            // set paths file for loggers
-            shortTermFileMessage.FilePath = fileUri.ToString();
-            storageEvent.FileUri = fileUri.ToString();
-
-            // save
             await _assistantHistoryManager.SaveAsync(shortTermFileMessage);
-            await _assistantHistoryManager.SaveAsync(storageEvent);
 
             return result;
         }
@@ -397,11 +355,13 @@ namespace PersonalWebApi.Agent.Memory.Observability
         {
             (Guid conversationUuid, Guid sessionUuid) = ContextAccessorReader.RetrieveCrucialUuid(_httpContextAccessor);
 
+            var memoryActionName = "ImportDocumentFromStreamContentToKernelMemory";
+
             var defaultException = new ChatHistoryMessageException(
                 $@"""
                     <ChatHistoryMessageException>
-                        <action>ImportDocumentAsStreamContent</action>
-                        <documentUuid>{documentId}</documentUuid>
+                        <action>{ memoryActionName }</action>
+                        <documentUuid>{ documentId }</documentUuid>
                         <message>
                             Required - documentID, tags (TagCollection) withsessionUuid , index as conversation UUID.
                             Please ensure the following:
@@ -410,9 +370,9 @@ namespace PersonalWebApi.Agent.Memory.Observability
                             -The 'documentId' - exists with valid UUID format.
                         </message>
                         <argumentSent>
-                            <conversationUuid>{conversationUuid.ToString()}</conversationUuid>
-                            <sessionUuid>{sessionUuid.ToString()}</sessionUuid>
-                            <documentId>{documentId}</documentId>
+                            <conversationUuid>{ conversationUuid.ToString() }</conversationUuid>
+                            <sessionUuid>{ sessionUuid.ToString() }</sessionUuid>
+                            <documentId>{ documentId }</documentId>
                         </argumentSent>
                         <details>
                             <requiredKeys>
@@ -428,8 +388,6 @@ namespace PersonalWebApi.Agent.Memory.Observability
                     """
                     );
 
-
-
             Guid fileId = new Guid();
 
             if (!Guid.TryParse(documentId, out fileId)) throw defaultException;
@@ -439,13 +397,13 @@ namespace PersonalWebApi.Agent.Memory.Observability
             // Save action history
             var chatMessage = new ChatHistoryShortTermFileMessageDto(conversationUuid, sessionUuid, fileId)
             {
-                Action = "ImportDocumentAsStreamContent",
+                Action = memoryActionName,
                 ActionMessage = "Document imported to short term memory",
                 Role = AuthorRole.User.ToString(),
                 MessageType = GetMessageType(),
-                FilePath = fileName,
-                FileName = fileName,
-                Tags = tags.ToKeyValueList().Select(kv => kv.Value).ToList(),
+                SourceFilePath = fileName,
+                SourceFileName = fileName,
+                Tags = tags?.ToKeyValueList().Select(kv => kv.Value).ToList(),
                 Metadata = new Dictionary<string, string>
                 {
                     { "memoryIndex", conversationUuid.ToString() },
@@ -490,7 +448,7 @@ namespace PersonalWebApi.Agent.Memory.Observability
         /// <param name="steps">Optional steps to be taken during the import process.</param>
         /// <param name="context">Optional context for the import operation.</param>
         /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
-        /// <returns>A task representing the asynchronous operation, with a string result indicating the import status.</returns>
+        /// <returns>Document ID.</returns>
         /// <exception cref="ChatHistoryMessageException">Thrown to indicate validation errors or missing required parameters.</exception>
         /// <remarks>
         /// The 'index' parameter is used to identify the user owner of the text. 
@@ -500,10 +458,12 @@ namespace PersonalWebApi.Agent.Memory.Observability
         {
             (Guid conversationUuid, Guid sessionUuid) = ContextAccessorReader.RetrieveCrucialUuid(_httpContextAccessor);
 
+            string actionName = "ImportTextToKernelMemory";
+
             var defaultException = new ChatHistoryMessageException(
                 $@"""
                     <ChatHistoryMessageException>
-                        <action>ImportTextToMemory</action>
+                        <action>{actionName}</action>
                         <documentUuid>{documentId}</documentUuid>
                         <message>
                             Required - tags (TagCollection) withsessionUuid , index as conversation UUID.
@@ -536,11 +496,11 @@ namespace PersonalWebApi.Agent.Memory.Observability
 
             var chatMessage = new ChatHistoryShortTermMessageDto(conversationUuid, sessionUuid)
             {
-                Action = "ImportTextToMemory",
+                Action = actionName,
                 ActionMessage = "Text imported to short term memory",
                 Role = AuthorRole.User.ToString(),
                 MessageType = GetMessageType(),
-                Tags = tags.ToKeyValueList().Select(kv => kv.Value).ToList(),
+                Tags = tags?.ToKeyValueList().Select(kv => kv.Value).ToList(),
                 Metadata = new Dictionary<string, string>
                 {
                     { "memoryIndex", conversationUuid.ToString() },
@@ -583,10 +543,12 @@ namespace PersonalWebApi.Agent.Memory.Observability
         {
             (Guid conversationUuid, Guid sessionUuid) = ContextAccessorReader.RetrieveCrucialUuid(_httpContextAccessor);
 
+            string actionName = "ImportWebByUrlToKernelMemory";
+
             var defaultException = new ChatHistoryMessageException(
                  $@"""
                     <ChatHistoryMessageException>
-                        <action>ImportWebByUrlToMemory</action>
+                        <action>{actionName}</action>
                         <message>
                             Required - tags (TagCollection) withsessionUuid , index as conversation UUID.
                             Please ensure the following:
@@ -613,16 +575,15 @@ namespace PersonalWebApi.Agent.Memory.Observability
                     """
                     );
 
-
             var result = await _innerKernelMemory.ImportWebPageAsync(url, documentId, tags, index, steps, context, cancellationToken);
 
             var chatMessage = new ChatHistoryShortTermPageMessageDto(conversationUuid, sessionUuid)
             {
-                Action = "ImportWebByUrlToMemory",
+                Action = actionName,
                 ActionMessage = "Page imported to short term memory",
                 Role = AuthorRole.User.ToString(),
                 MessageType = GetMessageType(),
-                Tags = tags.ToKeyValueList().Select(kv => kv.Value).ToList(),
+                Tags = tags?.ToKeyValueList().Select(kv => kv.Value).ToList(),
                 Metadata = new Dictionary<string, string>
                 {
                     { "memoryIndex", conversationUuid.ToString() },
@@ -647,12 +608,14 @@ namespace PersonalWebApi.Agent.Memory.Observability
             if (string.IsNullOrEmpty(index)) throw new InvalidUuidException("Index (conversation UUID) must not be null or empty.");
 
             (Guid conversationUuid, Guid sessionUuid) = ContextAccessorReader.RetrieveCrucialUuid(_httpContextAccessor);
+            
+            string actionName = "DeleteIndexFromKernelMemoryByIndex";
 
             await _innerKernelMemory.DeleteIndexAsync(index, cancellationToken);
 
             var chatMessage = new ChatHistoryShortTermDeleteIndexDto(conversationUuid, sessionUuid)
             {
-                Action = "DeleteIndexFromMemoryByIndex",
+                Action = actionName,
                 ActionMessage = "Delete data from memory by index (conversation UUID)",
                 Role = AuthorRole.System.ToString(),  // only system should delete data from memory
                 MessageType = GetMessageType(),
@@ -686,10 +649,12 @@ namespace PersonalWebApi.Agent.Memory.Observability
         {
             if (string.IsNullOrEmpty(index)) throw new InvalidUuidException("Index (conversation UUID) must not be null or empty.");
 
+            string actionName = "DeleteDocumentFromKernelMemoryByDocumentId";
+
             var defaultException = new ChatHistoryMessageException(
                 $@"""
                     <ChatHistoryMessageException>
-                        <action>DeleteDocumentFromMemory</action>
+                        <action>{actionName}</action>
                         <documentUuid>{documentId}</documentUuid>
                         <message>
                             Please ensure the following:
@@ -717,7 +682,7 @@ namespace PersonalWebApi.Agent.Memory.Observability
 
             var chatMessage = new ChatHistoryShortTermDeleteDocumentDto(conversationUuid, sessionUuid)
             {
-                Action = "DeleteIndexFromMemoryByIndex",
+                Action = actionName,
                 ActionMessage = "Delete document from memory by document id",
                 Role = AuthorRole.System.ToString(),  // only system should delete data from memory
                 FileId = documentId,
