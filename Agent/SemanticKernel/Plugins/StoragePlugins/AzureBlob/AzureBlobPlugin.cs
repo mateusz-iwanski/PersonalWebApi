@@ -1,18 +1,25 @@
 ﻿using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Microsoft.SemanticKernel;
-using PersonalWebApi.Services.Azure;
+using PersonalWebApi.Exceptions;
+using PersonalWebApi.Services.FileStorage;
 using System.ComponentModel;
 
 namespace PersonalWebApi.Agent.SemanticKernel.Plugins.StoragePlugins.AzureBlob
 {
     public class AzureBlobPlugin
     {
-        private readonly IBlobStorageService _blobStorageService;
+        private readonly IFileStorageService _blobStorageService;
+        private readonly string _containerName;
 
-        public AzureBlobPlugin(IBlobStorageService blobStorageService)
+        public AzureBlobPlugin(IFileStorageService blobStorageService, IConfiguration configuration)
         {
             _blobStorageService = blobStorageService;
+
+            _containerName = configuration.GetSection("FileStorage:Container:DefaultName").Value ?? 
+                throw new SettingsException("FileStorage:Container:DefaultName not exists in appsettings.");
+
+            _blobStorageService.SetContainer(_containerName);
         }
 
         [KernelFunction("upload_to_library")]
@@ -20,7 +27,7 @@ namespace PersonalWebApi.Agent.SemanticKernel.Plugins.StoragePlugins.AzureBlob
         [return: Description("The URI of the uploaded file")]
         public async Task<Uri> UploadToLibraryAsync(IFormFile file, bool overwrite = false, Dictionary<string, string>? metadata = null, string fileId = "")
         {
-            return await _blobStorageService.UploadToLibraryAsync(file, overwrite, metadata, fileId);
+            return await _blobStorageService.UploadToContainerAsync(file, overwrite, metadata, fileId);
         }
 
         //[KernelFunction("delete_file_from_library")]
@@ -35,7 +42,7 @@ namespace PersonalWebApi.Agent.SemanticKernel.Plugins.StoragePlugins.AzureBlob
         [return: Description("The URI of the uploaded file")]
         public async Task<Uri> UploadFromUriToLibrary(string fileUri, string fileName, bool overwrite = false, Dictionary<string, string>? metadata = null)
         {
-            return await _blobStorageService.UploadFromUriToLibrary(fileUri, fileName, overwrite, metadata);
+            return await _blobStorageService.UploadFromUriAsync(fileUri, fileName, overwrite, metadata);
         }
 
         [KernelFunction("get_files_with_metadata")]
@@ -43,7 +50,7 @@ namespace PersonalWebApi.Agent.SemanticKernel.Plugins.StoragePlugins.AzureBlob
         [return: Description("A list of files with metadata")]
         public async Task<List<BlobItem>> GetFilesWithMetadataAsync(string containerName)
         {
-            return await _blobStorageService.GetFilesWithMetadataAsync(containerName);
+            return await _blobStorageService.GetFilesWithMetadataAsync();
         }
 
         [KernelFunction("get_containers")]
