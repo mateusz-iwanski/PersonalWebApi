@@ -34,6 +34,9 @@ using PersonalWebApi.Utilities.Kql;
 using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
 using PersonalWebApi.ActionFilters;
 using PersonalWebApi.Services.Services.History;
+using PersonalWebApi.Utilities.WebScrapper;
+using PersonalWebApi.Utilities.WebScrappers;
+using PersonalWebApi.Services.WebScrapper;
 
 namespace PersonalWebApi
 {
@@ -119,7 +122,7 @@ namespace PersonalWebApi
 
                
 
-                #region swagger inject
+                #region swagger inject + securiy
 
                 builder.Services.AddSwaggerGen(options =>
                 {
@@ -193,6 +196,9 @@ namespace PersonalWebApi
                 builder.Services.AddScoped<ICosmosDbService, AzureCosmosDbService>();
                 builder.Services.AddScoped<KqlApplicationInsightsApi>();
                 builder.Services.AddScoped<IPersistentChatHistoryService, PersistentChatHistoryService>();
+                builder.Services.AddScoped<IWebScrapperClient, Firecrawl>();
+                builder.Services.AddScoped<IWebScrapperService, WebScrapperService>();
+
 
                 // Register utils
                 builder.Services.AddScoped<IApiClient, ApiClient>();
