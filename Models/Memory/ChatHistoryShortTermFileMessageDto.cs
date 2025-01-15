@@ -21,10 +21,10 @@ namespace PersonalWebApi.Models.Models.Memory
         public Guid FileId { get; set; }
 
         [JsonProperty(PropertyName = "filePath")]
-        public string FilePath { get; set; } = string.Empty;
+        public string SourceFilePath { get; set; } = string.Empty;
 
         [JsonProperty(PropertyName = "fileName")]
-        public string FileName { get; set; } = string.Empty;
+        public string SourceFileName { get; set; } = string.Empty;
 
         public ChatHistoryShortTermFileMessageDto(Guid conversationUuid, Guid sessionUuid, Guid fileId)
             : base(conversationUuid, sessionUuid)
