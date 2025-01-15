@@ -11,7 +11,7 @@ using PersonalWebApi.Entities.System;
 using PersonalWebApi.Exceptions;
 using PersonalWebApi.Models.Models.Memory;
 using PersonalWebApi.Models.Storage;
-using PersonalWebApi.Services.Azure;
+using PersonalWebApi.Services.FileStorage;
 using PersonalWebApi.Services.Services.History;
 using PersonalWebApi.Services.Services.System;
 using SharpCompress.Common;
@@ -137,13 +137,13 @@ namespace PersonalWebApi.Agent.Memory.Observability
         private readonly IKernelMemory _innerKernelMemory;
         private readonly IAssistantHistoryManager _assistantHistoryManager;
         private readonly IHttpContextAccessor _httpContextAccessor;
-        private readonly IBlobStorageService _blobStorageService;
+        private readonly IFileStorageService _blobStorageService;
 
         public KernelMemoryWrapper(
             IKernelMemory innerKernelMemory,
             IAssistantHistoryManager assistantHistoryManager,
             IHttpContextAccessor httpContextAccessor,
-            IBlobStorageService blobStorageService)
+            IFileStorageService blobStorageService)
         {
             _innerKernelMemory = innerKernelMemory;
             _assistantHistoryManager = assistantHistoryManager;
