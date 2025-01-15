@@ -28,6 +28,22 @@ using static Microsoft.ApplicationInsights.MetricDimensionNames.TelemetryContext
 
 namespace PersonalWebApi.Controllers.Agent
 {
+
+    public class MessageRequest
+    {
+        public string Type { get; set; }
+        public From From { get; set; }
+        public string Text { get; set; }
+        public string Locale { get; set; }
+        public DateTime Timestamp { get; set; }
+    }
+
+    public class From
+    {
+        public string Id { get; set; }
+        public string Name { get; set; }
+    }
+
     [ApiController]
     [Route("api/agent")]
     public class Agent : ControllerBase
@@ -73,7 +89,7 @@ namespace PersonalWebApi.Controllers.Agent
         [HttpPost("chat/{conversationUuid}/{id:int}")]
         [Experimental("SKEXP0050")]
         [ServiceFilter(typeof(CheckConversationAccessFilter))]
-        public async Task<string> Chat(string conversationUuid = "30f4373b-5b18-41fd-8b40-5953825b3c0d", int id = 1)
+        public async Task<string> Chat([FromBody] MessageRequest request, string conversationUuid = "30f4373b-5b18-41fd-8b40-5953825b3c0d", int id = 1)
         {
             //_httpContextAccessor.HttpContext?.Items.Add("conversationUuid", conversationUuid);
 
@@ -81,8 +97,8 @@ namespace PersonalWebApi.Controllers.Agent
             await _persistentChatHistoryService.SaveChatAsync();
 
             var sessionId = Guid.NewGuid().ToString();
-            
 
+            var k = request;
             //await _chatRepo.LoadChatHistoryToMemoryAsync(User, Guid.Parse(conversationUuid), _memory);
 
             // Name of the plugin. This is the name you'll use in skPrompt, e.g. {{memory.ask ...}}
