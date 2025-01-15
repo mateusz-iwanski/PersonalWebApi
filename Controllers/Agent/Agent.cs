@@ -17,7 +17,7 @@ using PersonalWebApi.Exceptions;
 using PersonalWebApi.Extensions;
 using PersonalWebApi.Models.Agent;
 using PersonalWebApi.Models.Azure;
-using PersonalWebApi.Services.Azure;
+using PersonalWebApi.Services.FileStorage;
 using PersonalWebApi.Services.Services.History;
 using PersonalWebApi.Services.Services.Qdrant;
 using PersonalWebApi.Utilities.Utilities.DocumentReaders;
@@ -50,7 +50,7 @@ namespace PersonalWebApi.Controllers.Agent
     {
         private readonly Kernel _kernel;
         private readonly KernelMemoryWrapper _memory;  // IkernelMemory
-        private readonly IBlobStorageService _blobStorage;
+        private readonly IFileStorageService _blobStorage;
         private readonly IDocumentReaderDocx _documentReaderDocx;
         private readonly IQdrantFileService _qdrant;
         private readonly IConfiguration _configuration;
@@ -62,7 +62,7 @@ namespace PersonalWebApi.Controllers.Agent
         public Agent(
             Kernel kernel,
             KernelMemoryWrapper memory,
-            IBlobStorageService blobStorageService,
+            IFileStorageService blobStorageService,
             IDocumentReaderDocx documentReaderDocx,
             IQdrantFileService qdrant,
             IConfiguration configuration,
