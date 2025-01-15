@@ -4,7 +4,7 @@ using Microsoft.Extensions.AI;
 using Newtonsoft.Json;
 using PersonalWebApi.Models.Azure;
 using PersonalWebApi.Models.Models.Memory;
-using PersonalWebApi.Services.Azure;
+using PersonalWebApi.Services.NoSQLDB;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -19,13 +19,13 @@ namespace PersonalWebApi.Controllers.History
     [Route("api/chat/history/kernel-memory/short-term")]
     public class HistoryChatKernelMemoryShortTermDbController : ControllerBase
     {
-        private readonly ICosmosDbService _service;
+        private readonly INoSqlDbService _service;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="HistoryChatKernelMemoryShortTermDbController"/> class.
         /// </summary>
         /// <param name="service">Service for interacting with Cosmos DB.</param>
-        public HistoryChatKernelMemoryShortTermDbController(ICosmosDbService service)
+        public HistoryChatKernelMemoryShortTermDbController(INoSqlDbService service)
         {
             _service = service;
         }
