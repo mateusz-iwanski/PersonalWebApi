@@ -34,7 +34,7 @@ namespace PersonalWebApi.Controllers.Controllers.Qdrant
         /// <response code="400">If the input is invalid</response>
         /// <response code="500">If there is an internal server error</response>
         /// <remarks>
-        /// First upload to Azure Blob Storage, then add to Qdrant.
+        /// First uploadAsync to Azure Blob Storage, then add to Qdrant.
         /// Including embeddings and metadata with generated tags, summaries, and other useful information.
         /// The collection details are retrieved from the configuration settings.
         /// </remarks>
