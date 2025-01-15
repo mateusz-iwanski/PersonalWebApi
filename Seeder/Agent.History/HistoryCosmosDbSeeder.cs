@@ -1,6 +1,6 @@
 ﻿using PersonalWebApi.Exceptions;
 using PersonalWebApi.Models.Models.Memory;
-using PersonalWebApi.Services.Azure;
+using PersonalWebApi.Services.NoSQLDB;
 
 namespace PersonalWebApi.Seeder.Agent.History
 {
@@ -10,7 +10,7 @@ namespace PersonalWebApi.Seeder.Agent.History
     public class HistoryCosmosDbSeeder
     {
         private readonly IConfiguration _configuration;
-        private readonly ICosmosDbService _cosmosDbService;
+        private readonly INoSqlDbService _cosmosDbService;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="HistoryCosmosDbSeeder"/> class.
@@ -18,7 +18,7 @@ namespace PersonalWebApi.Seeder.Agent.History
         /// <param name="configuration">The configuration settings.</param>
         /// <param name="service">The Cosmos DB service.</param>
         /// <exception cref="ArgumentNullException">Thrown when configuration or service is null.</exception>
-        public HistoryCosmosDbSeeder(IConfiguration configuration, ICosmosDbService service)
+        public HistoryCosmosDbSeeder(IConfiguration configuration, INoSqlDbService service)
         {
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             _cosmosDbService = service ?? throw new ArgumentNullException(nameof(service));
