@@ -2,13 +2,13 @@
 using OpenTelemetry.Resources;
 using OpenTelemetry;
 using PersonalWebApi.Exceptions;
-using PersonalWebApi.Services.Azure;
 using static Microsoft.ApplicationInsights.MetricDimensionNames.TelemetryContext;
 using OpenTelemetry.Trace;
 using Azure.Monitor.OpenTelemetry.Exporter;
 using OpenTelemetry.Metrics;
 using PersonalWebApi.Agent.SemanticKernel.Observability;
 using PersonalWebApi.Services.Services.History;
+using PersonalWebApi.Services.NoSQLDB;
 
 namespace PersonalWebApi.Extensions
 {
@@ -63,7 +63,7 @@ namespace PersonalWebApi.Extensions
 
                 //kernelBuilder.Services.AddSingleton<IConfiguration>(builder.Configuration);
 
-                kernelBuilder.Services.AddScoped<ICosmosDbService, AzureCosmosDbService>();
+                kernelBuilder.Services.AddScoped<INoSqlDbService, AzureCosmosDbService>();
 
                 kernelBuilder.Services.AddScoped<IAssistantHistoryManager, AssistantHistoryManager>();
 
