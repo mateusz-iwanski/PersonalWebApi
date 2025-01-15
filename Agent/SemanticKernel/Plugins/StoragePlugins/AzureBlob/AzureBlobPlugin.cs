@@ -1,4 +1,5 @@
-﻿using Azure.Storage.Blobs.Models;
+﻿using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
 using Microsoft.SemanticKernel;
 using PersonalWebApi.Services.Azure;
 using System.ComponentModel;
@@ -22,12 +23,12 @@ namespace PersonalWebApi.Agent.SemanticKernel.Plugins.StoragePlugins.AzureBlob
             return await _blobStorageService.UploadToLibraryAsync(file, overwrite, metadata, fileId);
         }
 
-        [KernelFunction("delete_file_from_library")]
-        [Description("Deletes a file from the library container in Azure Blob Storage")]
-        public async Task DeleteFileFromLibrary(string fileName)
-        {
-            await _blobStorageService.DeleteFileFromLibrary(fileName);
-        }
+        //[KernelFunction("delete_file_from_library")]
+        //[Description("Deletes a file from the library container in Azure Blob Storage")]
+        //public async Task DeleteFileFromLibrary(string fileName)
+        //{
+        //    await _blobStorageService.DeleteFileFromLibrary(fileName);
+        //}
 
         [KernelFunction("upload_from_uri_to_library")]
         [Description("Uploads a file from a URI to the library container in Azure Blob Storage")]
@@ -48,17 +49,17 @@ namespace PersonalWebApi.Agent.SemanticKernel.Plugins.StoragePlugins.AzureBlob
         [KernelFunction("get_containers")]
         [Description("Gets a list of containers in Azure Blob Storage")]
         [return: Description("A list of container names")]
-        public async Task<List<string>> GetContainersAsync()
+        public async Task<List<BlobContainerItem>> GetContainersAsync()
         {
             return await _blobStorageService.GetContainersAsync();
         }
 
-        [KernelFunction("download_file")]
-        [Description("Downloads a file from the specified URI and returns it as a stream")]
-        [return: Description("A stream containing the file data")]
-        public async Task<Stream> DownloadFileAsync(Uri fileUri)
-        {
-            return await _blobStorageService.DownloadFileAsync(fileUri);
-        }
+        //[KernelFunction("download_file")]
+        //[Description("Downloads a file from the specified URI and returns it as a stream")]
+        //[return: Description("A stream containing the file data")]
+        //public async Task<Stream> DownloadFileAsync(Uri fileUri)
+        //{
+        //    return await _blobStorageService.DownloadFileAsync(fileUri);
+        //}
     }
 }
