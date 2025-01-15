@@ -5,7 +5,7 @@ using Microsoft.KernelMemory.DataFormats.AzureAIDocIntel;
 using Microsoft.KernelMemory.MemoryStorage;
 using PersonalWebApi.Agent.Memory.Observability;
 using PersonalWebApi.Exceptions;
-using PersonalWebApi.Services.Azure;
+using PersonalWebApi.Services.FileStorage;
 using PersonalWebApi.Services.Services.History;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection.PortableExecutable;
@@ -44,7 +44,7 @@ namespace PersonalWebApi.Extensions
                 var innerKernelMemory = provider.GetRequiredService<IKernelMemory>();
                 var assistantHistoryManager = provider.GetRequiredService<IAssistantHistoryManager>();
                 var httpContextAccessor = provider.GetRequiredService<IHttpContextAccessor>();
-                var blobStorageService = provider.GetRequiredService<IBlobStorageService>();
+                var blobStorageService = provider.GetRequiredService<IFileStorageService>();
 
                 return new KernelMemoryWrapper(innerKernelMemory, assistantHistoryManager, httpContextAccessor, blobStorageService);
             });
