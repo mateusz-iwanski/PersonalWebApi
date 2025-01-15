@@ -71,7 +71,7 @@ namespace PersonalWebApi.Utilities.Utilities.HttUtils
         }
 
         /// <summary>
-        /// Sends a POST request to upload a file along with additional model data.
+        /// Sends a POST request to uploadAsync a file along with additional model data.
         /// </summary>
         public async Task<HttpResponseMessage> PostFileAsync(string url, Stream fileStream, string fileName, string model, string mediaType = "multipart/form-data")
         {
