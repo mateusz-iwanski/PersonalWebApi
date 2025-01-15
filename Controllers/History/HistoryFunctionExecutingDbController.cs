@@ -2,7 +2,7 @@
 using Microsoft.Azure.Cosmos;
 using Newtonsoft.Json;
 using PersonalWebApi.Models.Models.SemanticKernel;
-using PersonalWebApi.Services.Azure;
+using PersonalWebApi.Services.NoSQLDB;
 
 namespace PersonalWebApi.Controllers.History
 {
@@ -14,13 +14,13 @@ namespace PersonalWebApi.Controllers.History
     [Route("api/function-execution/history")]
     public class HistoryFunctionExecutingDbController : ControllerBase
     {
-        private readonly ICosmosDbService _service;
+        private readonly INoSqlDbService _service;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="FunctionExecutingHistoryController"/> class.
         /// </summary>
         /// <param name="service">Service for interacting with Cosmos DB.</param>
-        public HistoryFunctionExecutingDbController(ICosmosDbService service)
+        public HistoryFunctionExecutingDbController(INoSqlDbService service)
         {
             _service = service;
         }
