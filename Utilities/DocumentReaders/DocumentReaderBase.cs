@@ -1,13 +1,13 @@
 ﻿using DocumentFormat.OpenXml.Packaging;
-using PersonalWebApi.Services.Azure;
+using PersonalWebApi.Services.FileStorage;
 
 namespace PersonalWebApi.Utilities.Utilities.DocumentReaders
 {
     public class DocumentReaderBase
     {
-        protected readonly IBlobStorageService _blobService;
+        protected readonly IFileStorageService _blobService;
 
-        public DocumentReaderBase(IBlobStorageService blobService)
+        public DocumentReaderBase(IFileStorageService blobService)
         {
             _blobService = blobService;
         }

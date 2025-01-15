@@ -15,7 +15,6 @@ using System.Text;
 using Microsoft.Extensions.Options;
 using PersonalWebApi.Middleware;
 using Microsoft.EntityFrameworkCore;
-using PersonalWebApi.Services.Azure;
 using Microsoft.SemanticKernel;
 using PersonalWebApi.Extensions;
 using System.Diagnostics.CodeAnalysis;
@@ -37,6 +36,8 @@ using PersonalWebApi.Services.Services.History;
 using PersonalWebApi.Utilities.WebScrapper;
 using PersonalWebApi.Utilities.WebScrappers;
 using PersonalWebApi.Services.WebScrapper;
+using PersonalWebApi.Services.FileStorage;
+using PersonalWebApi.Services.NoSQLDB;
 
 namespace PersonalWebApi
 {
@@ -173,12 +174,8 @@ namespace PersonalWebApi
                     .AddSemanticKernelServices()
                     .AddKernelMemoryServices();
 
-                // Register filters
-                builder.Services.AddControllersWithViews(options =>
-                {
-                    options.Filters.Add<CheckConversationAccessFilter>();
-                });
                 builder.Services.AddHttpContextAccessor();
+                
                 builder.Services.AddScoped<CheckConversationAccessFilter>(); // Register the action filter
 
                 // Register Seeder
@@ -188,12 +185,12 @@ namespace PersonalWebApi
 
                 // Configure services for controllers
                 builder.Services.AddScoped<IAccountService, AccountService>();
-                builder.Services.AddScoped<IBlobStorageService, AzureBlobStorageService>();
+                builder.Services.AddScoped<IFileStorageService, AzureBlobStorageService>();
                 builder.Services.AddScoped<IDocumentReaderDocx, DocumentReaderDocx>();
                 builder.Services.AddScoped<IQdrantFileService, QdrantFileService>();
                 builder.Services.AddScoped<QdrantRestApiClient>();
                 builder.Services.AddScoped<IEmbedding, EmbeddingOpenAi>();
-                builder.Services.AddScoped<ICosmosDbService, AzureCosmosDbService>();
+                builder.Services.AddScoped<INoSqlDbService, AzureCosmosDbService>();
                 builder.Services.AddScoped<KqlApplicationInsightsApi>();
                 builder.Services.AddScoped<IPersistentChatHistoryService, PersistentChatHistoryService>();
                 builder.Services.AddScoped<IWebScrapperClient, Firecrawl>();

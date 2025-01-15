@@ -1,6 +1,6 @@
 ﻿using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Wordprocessing;
-using PersonalWebApi.Services.Azure;
+using PersonalWebApi.Services.FileStorage;
 using System.Text;
 
 namespace PersonalWebApi.Utilities.Utilities.DocumentReaders
@@ -12,7 +12,7 @@ namespace PersonalWebApi.Utilities.Utilities.DocumentReaders
     /// </summary>
     public class DocumentReaderDocx : DocumentReaderBase, IDocumentReaderDocx
     {
-        public DocumentReaderDocx(IBlobStorageService blobService) : base(blobService)
+        public DocumentReaderDocx(IFileStorageService blobService) : base(blobService)
         {
         }
 

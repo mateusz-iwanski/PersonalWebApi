@@ -1,7 +1,6 @@
 ﻿using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Newtonsoft.Json;
-using PersonalWebApi.Services.Azure;
 using System.Diagnostics.CodeAnalysis;
 using PersonalWebApi.Services.Services.Agent;
 using System.Security.Claims;
@@ -10,12 +9,13 @@ using Elastic.Clients.Elasticsearch.IndexManagement;
 using PersonalWebApi.Utilities.Utilities.Qdrant;
 using PersonalWebApi.Utilities.Utilities.DocumentReaders;
 using PersonalWebApi.Utilities.Utilities.Models;
+using PersonalWebApi.Services.FileStorage;
 
 namespace PersonalWebApi.Services.Services.Qdrant
 {
     public class QdrantFileService : IQdrantFileService
     {
-        private readonly IBlobStorageService _blobStorage;
+        private readonly IFileStorageService _blobStorage;
         private readonly IDocumentReaderDocx _documentReaderDocx;
         private readonly Kernel _kernel;
         private readonly IEmbedding _embeddingOpenAi;
@@ -29,7 +29,7 @@ namespace PersonalWebApi.Services.Services.Qdrant
 
         public QdrantFileService(
             Kernel kernel,
-            IBlobStorageService blobStorageService,
+            IFileStorageService blobStorageService,
             IDocumentReaderDocx documentReaderDocx,
             IEmbedding embeddingOpenAi
             )
@@ -106,7 +106,7 @@ namespace PersonalWebApi.Services.Services.Qdrant
         {
             var fileUuid = Guid.NewGuid();
 
-            var uri = await _blobStorage.UploadToLibraryAsync(document, _overwrite, fileId: fileUuid.ToString());
+            var uri = await _blobStorage.UploadToContainerAsync(document, _overwrite, fileId: fileUuid.ToString());
             var reader = await _documentReaderDocx.ReadAsync(uri);
 
             var chunker = new SemanticKernelTextChunker(_modelEmbedding);

@@ -3,7 +3,7 @@ using Microsoft.Azure.Cosmos;
 using Microsoft.KernelMemory;
 using PersonalWebApi.Models.Models.Azure;
 using PersonalWebApi.Models.Models.Memory;
-using PersonalWebApi.Services.Azure;
+using PersonalWebApi.Services.NoSQLDB;
 using System.Reflection;
 using System.Security.Claims;
 
@@ -17,7 +17,7 @@ namespace PersonalWebApi.Services.Services.History
     /// </summary>
     public class AssistantHistoryManager : IAssistantHistoryManager
     {
-        private readonly ICosmosDbService _service;
+        private readonly INoSqlDbService _service;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly string _user;
 
@@ -26,7 +26,7 @@ namespace PersonalWebApi.Services.Services.History
         /// </summary>
         /// <param name="service">The Cosmos DB service for data operations.</param>
         /// <param name="httpContextAccessor">The HTTP context accessor to retrieve user information.</param>
-        public AssistantHistoryManager(ICosmosDbService service, IHttpContextAccessor httpContextAccessor)
+        public AssistantHistoryManager(INoSqlDbService service, IHttpContextAccessor httpContextAccessor)
         {
             _service = service;
             _httpContextAccessor = httpContextAccessor;
