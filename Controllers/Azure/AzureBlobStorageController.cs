@@ -25,7 +25,7 @@ namespace PersonalWebApi.Controllers.Azure
         /// <param name="request">The request containing the file, TTL in days, overwrite flag, and metadata.</param>
         /// <returns>IActionResult with the URI of the uploaded file.</returns>
         /// <remarks>The file will be automatically deleted after the specified TTL in days.</remarks>
-        [HttpPost("upload-to-temp")]
+        [HttpPost("uploadAsync-to-temp")]
         public async Task<IActionResult> UploadToTempAsync([FromForm] UploadFileToTempRequestDto request)
         {
             var uri = await _service.UploadToTempAsync(request.File, request.TtlInDays, request.Overwrite, request.Metadata);
@@ -38,7 +38,7 @@ namespace PersonalWebApi.Controllers.Azure
         /// <param name="request">The request containing the file, overwrite flag, and metadata.</param>
         /// <returns>IActionResult with the URI of the uploaded file.</returns>
         /// <remarks>The file will not be automatically deleted.</remarks>
-        [HttpPost("upload-to-library")]
+        [HttpPost("uploadAsync-to-library")]
         public async Task<IActionResult> UploadToLibrary([FromForm] UploadFileToLibraryRequestDto request)
         {
             var uri = await _service.UploadToLibraryAsync(request.File, request.Overwrite, request.Metadata);
@@ -75,7 +75,7 @@ namespace PersonalWebApi.Controllers.Azure
         /// <param name="request">The request containing the file URI, file name, TTL in days, overwrite flag, and metadata.</param>
         /// <returns>IActionResult with the URI of the uploaded file.</returns>
         /// <remarks>The file will be automatically deleted after the specified TTL in days.</remarks>
-        [HttpPost("upload-from-uri-to-temp")]
+        [HttpPost("uploadAsync-from-uri-to-temp")]
         public async Task<IActionResult> UploadFromUriToTemp([FromBody] UploadFileFromUriToTempRequestDto request)
         {
             var uri = await _service.UploadFromUriToTemp(request.FileUri, request.FileName, request.TtlInDays, request.Overwrite, request.Metadata);
@@ -88,7 +88,7 @@ namespace PersonalWebApi.Controllers.Azure
         /// <param name="request">The request containing the file URI, file name, overwrite flag, and metadata.</param>
         /// <returns>IActionResult with the URI of the uploaded file.</returns>
         /// <remarks>The file will not be automatically deleted.</remarks>
-        [HttpPost("upload-from-uri-to-library")]
+        [HttpPost("uploadAsync-from-uri-to-library")]
         public async Task<IActionResult> UploadFromUriToLibrary([FromBody] UploadFileFromUriToLibraryRequestDto request)
         {
             var uri = await _service.UploadFromUriToLibrary(request.FileUri, request.FileName, request.Overwrite, request.Metadata);
