@@ -13,6 +13,7 @@ appsettings.SemanticKernel.json
 appsettings.OpenAi.json
 appsettings.Azure.json
 appsettings.Telemetry.json
+appsettings.Firecrawl.json
 
 PersonalWebApi.db
 PersonalWebApi.db-shm
