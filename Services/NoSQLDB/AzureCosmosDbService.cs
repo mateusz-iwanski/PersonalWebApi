@@ -2,7 +2,6 @@
 using MongoDB.Driver.Core.Configuration;
 using Newtonsoft.Json;
 using PersonalWebApi.Models;
-using PersonalWebApi.Models.Azure;
 using PersonalWebApi.Models.Models.Azure;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
