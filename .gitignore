@@ -14,6 +14,7 @@ appsettings.OpenAi.json
 appsettings.Azure.json
 appsettings.Telemetry.json
 appsettings.Firecrawl.json
+appsettings.FileStorage.json
 
 PersonalWebApi.db
 PersonalWebApi.db-shm
