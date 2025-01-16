@@ -1,5 +1,4 @@
 ﻿using Microsoft.Azure.Cosmos;
-using PersonalWebApi.Models.Azure;
 using PersonalWebApi.Models.Models.Azure;
 
 namespace PersonalWebApi.Services.NoSQLDB
