@@ -1,0 +1,8 @@
+Generate tags for the following text in a comma-separated list format.
+<text>
+{{$textContent}}
+</text>
+Output must be a comma-separated list of tags. If there are no tags, return an empty list.
+<output>
+tag1, tag2
+</output>
