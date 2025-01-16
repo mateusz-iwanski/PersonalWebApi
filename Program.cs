@@ -56,6 +56,7 @@ namespace PersonalWebApi
                                  .AddJsonFile("appsettings.Telemetry.json", optional: true, reloadOnChange: true)
                                  .AddJsonFile("appsettings.Qdrant.json", optional: true, reloadOnChange: true)
                                  .AddJsonFile("appsettings.Azure.json", optional: true, reloadOnChange: true)
+                                 .AddJsonFile("appsettings.FileStorage.json", optional: true, reloadOnChange: true)
                                  //.AddJsonFile("semantickernelsettings.json", optional: true, reloadOnChange: true)
                                  .AddUserSecrets<Program>()
                                  .AddEnvironmentVariables();
