@@ -16,7 +16,6 @@ using PersonalWebApi.Controllers.Controllers.Qdrant;
 using PersonalWebApi.Exceptions;
 using PersonalWebApi.Extensions;
 using PersonalWebApi.Models.Agent;
-using PersonalWebApi.Models.Azure;
 using PersonalWebApi.Services.FileStorage;
 using PersonalWebApi.Services.Services.History;
 using PersonalWebApi.Services.Services.Qdrant;
