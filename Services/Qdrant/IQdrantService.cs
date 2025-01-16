@@ -1,11 +1,11 @@
 ﻿using PersonalWebApi.Utilities.Utilities.Qdrant;
 using Qdrant.Client.Grpc;
 using System.Security.Claims;
-using static PersonalWebApi.Services.Services.Qdrant.QdrantFileService;
+using static PersonalWebApi.Services.Services.Qdrant.QdrantService;
 
 namespace PersonalWebApi.Services.Services.Qdrant
 {
-    public interface IQdrantFileService
+    public interface IQdrantService
     {
         //void Setup(
         //    string modelEmbedding,

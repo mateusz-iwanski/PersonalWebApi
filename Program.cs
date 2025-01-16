@@ -188,7 +188,7 @@ namespace PersonalWebApi
                 builder.Services.AddScoped<IAccountService, AccountService>();
                 builder.Services.AddScoped<IFileStorageService, AzureBlobStorageService>();
                 builder.Services.AddScoped<IDocumentReaderDocx, DocumentReaderDocx>();
-                builder.Services.AddScoped<IQdrantFileService, QdrantFileService>();
+                builder.Services.AddScoped<IQdrantService, QdrantService>();
                 builder.Services.AddScoped<QdrantRestApiClient>();
                 builder.Services.AddScoped<IEmbedding, EmbeddingOpenAi>();
                 builder.Services.AddScoped<INoSqlDbService, AzureCosmosDbService>();

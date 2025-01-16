@@ -20,7 +20,7 @@ public abstract class FileStorageServiceBase : IFileStorageService
 {
     protected readonly IAssistantHistoryManager _assistantHistoryManager;
     private readonly IHttpContextAccessor _httpContextAccessor;
-    //private readonly IQdrantFileService _qdrantFileService;
+    //private readonly IQdrantService _qdrantFileService;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="FileStorageServiceBase"/> class.

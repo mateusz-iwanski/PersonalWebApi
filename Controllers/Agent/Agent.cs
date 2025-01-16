@@ -51,7 +51,7 @@ namespace PersonalWebApi.Controllers.Agent
         private readonly KernelMemoryWrapper _memory;  // IkernelMemory
         private readonly IFileStorageService _blobStorage;
         private readonly IDocumentReaderDocx _documentReaderDocx;
-        private readonly IQdrantFileService _qdrant;
+        private readonly IQdrantService _qdrant;
         private readonly IConfiguration _configuration;
         IHttpContextAccessor _httpContextAccessor;
         private readonly IPersistentChatHistoryService _persistentChatHistoryService;
@@ -63,7 +63,7 @@ namespace PersonalWebApi.Controllers.Agent
             KernelMemoryWrapper memory,
             IFileStorageService blobStorageService,
             IDocumentReaderDocx documentReaderDocx,
-            IQdrantFileService qdrant,
+            IQdrantService qdrant,
             IConfiguration configuration,
             IHttpContextAccessor httpContextAccessor,
             IAssistantHistoryManager assistantHistoryManager,

@@ -19,7 +19,7 @@ using Microsoft.SemanticKernel.Process.Runtime;
 
 namespace PersonalWebApi.Services.Services.Qdrant
 {
-    public class QdrantFileService : IQdrantFileService
+    public class QdrantService : IQdrantService
     {
         private readonly string _collectionName;
 
@@ -37,7 +37,7 @@ namespace PersonalWebApi.Services.Services.Qdrant
         private bool _overwrite { get; set; }
 
 
-        public QdrantFileService(
+        public QdrantService(
             Kernel kernel,
             IFileStorageService blobStorageService,
             IDocumentReaderDocx documentReaderDocx,
@@ -96,7 +96,7 @@ namespace PersonalWebApi.Services.Services.Qdrant
         }
 
         /// <summary>
-        /// Sets up the QdrantFileService with the necessary parameters.
+        /// Sets up the QdrantService with the necessary parameters.
         /// </summary>
         /// <param name="modelEmbedding">The model embedding to use.</param>
         /// <param name="modelEmbeddingApiKey">The API key for the model embedding.</param>
@@ -199,7 +199,7 @@ namespace PersonalWebApi.Services.Services.Qdrant
         /// <code>
         /// public async Task ExampleUsage(IFormFile document, Guid conversationUuid)
         /// {
-        ///     var qdrantFileService = new QdrantFileService(kernel, blobStorageService, documentReaderDocx, embeddingOpenAi);
+        ///     var qdrantFileService = new QdrantService(kernel, blobStorageService, documentReaderDocx, embeddingOpenAi);
         ///     qdrantFileService.Setup("modelEmbedding", "modelEmbeddingApiKey", "qdrantUri", "qdrantApiKey", "qdrantCollectionName", Distance.Cosine, 1000, true, user);
         ///     var fileUuid = await qdrantFileService.AddAsync(document, conversationUuid);
         ///     Console.WriteLine($"File added with UUID: {fileUuid}");
@@ -301,7 +301,7 @@ namespace PersonalWebApi.Services.Services.Qdrant
         /// <code>
         /// public async Task ExampleSearchUsage()
         /// {
-        ///     var qdrantFileService = new QdrantFileService(kernel, blobStorageService, documentReaderDocx, embeddingOpenAi);
+        ///     var qdrantFileService = new QdrantService(kernel, blobStorageService, documentReaderDocx, embeddingOpenAi);
         ///     qdrantFileService.Setup("modelEmbedding", "modelEmbeddingApiKey", "qdrantUri", "qdrantApiKey", "qdrantCollectionName", Distance.Cosine, 1000, true, user);
         ///     var results = await qdrantFileService.SearchAsync(new List<string> { "kto złamał nogę", "query2" }, null, 5);
         ///     foreach (var result in results)

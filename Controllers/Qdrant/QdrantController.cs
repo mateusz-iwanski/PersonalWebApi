@@ -5,7 +5,7 @@ using PersonalWebApi.Exceptions;
 using PersonalWebApi.Services.Services.Qdrant;
 using Qdrant.Client.Grpc;
 using System.Security.Claims;
-using static PersonalWebApi.Services.Services.Qdrant.QdrantFileService;
+using static PersonalWebApi.Services.Services.Qdrant.QdrantService;
 
 namespace PersonalWebApi.Controllers.Controllers.Qdrant
 {
@@ -13,10 +13,10 @@ namespace PersonalWebApi.Controllers.Controllers.Qdrant
     [ApiController]
     public class QdrantController : ControllerBase
     {
-        private readonly IQdrantFileService _qdrant;
+        private readonly IQdrantService _qdrant;
         private readonly IConfiguration _configuration;
 
-        public QdrantController(IQdrantFileService qdrant, IConfiguration configuration)
+        public QdrantController(IQdrantService qdrant, IConfiguration configuration)
         {
             _qdrant = qdrant;
             _configuration = configuration;
