@@ -10,15 +10,24 @@ using PersonalWebApi.Utilities.Utilities.Qdrant;
 using PersonalWebApi.Utilities.Utilities.DocumentReaders;
 using PersonalWebApi.Utilities.Utilities.Models;
 using PersonalWebApi.Services.FileStorage;
+using PersonalWebApi.Exceptions;
+using System.Collections;
+using PersonalWebApi.Agent;
+using Microsoft.SemanticKernel.Connectors.OpenAI;
+using PersonalWebApi.Agent.SemanticKernel.Plugins.DataGathererPlugin;
+using Microsoft.SemanticKernel.Process.Runtime;
 
 namespace PersonalWebApi.Services.Services.Qdrant
 {
     public class QdrantFileService : IQdrantFileService
     {
+        private readonly string _collectionName;
+
         private readonly IFileStorageService _blobStorage;
         private readonly IDocumentReaderDocx _documentReaderDocx;
         private readonly Kernel _kernel;
         private readonly IEmbedding _embeddingOpenAi;
+        private readonly IConfiguration _configuration;
 
         private QdrantApi _qdrantApi { get; set; }
         private ClaimsPrincipal _userClaimsPrincipal { get; set; }
@@ -27,17 +36,63 @@ namespace PersonalWebApi.Services.Services.Qdrant
         private ulong _qdrantCollectionSize { get; set; }
         private bool _overwrite { get; set; }
 
+
         public QdrantFileService(
             Kernel kernel,
             IFileStorageService blobStorageService,
             IDocumentReaderDocx documentReaderDocx,
-            IEmbedding embeddingOpenAi
+            IEmbedding embeddingOpenAi,
+            IConfiguration configuration
+            //IHttpContextAccessor httpContextAccessor
             )
         {
+            _configuration = configuration;
+
             _blobStorage = blobStorageService;
             _documentReaderDocx = documentReaderDocx;
             _kernel = kernel;
             _embeddingOpenAi = embeddingOpenAi;
+
+            //_userClaimsPrincipal = httpContextAccessor.HttpContext?.User ?? throw new ArgumentNullException(nameof(httpContextAccessor.HttpContext.User));
+
+            _collectionName = _configuration.GetSection("Qdrant:FileCollection:Name").Value ??
+               throw new SettingsException("Qdrant:FileCollection:Name not exists in appsettings");
+
+            var collectionDistance = _configuration.GetSection("Qdrant:FileCollection:Distance").Value ??
+                throw new SettingsException("Qdrant:FileCollection:Distance not exists in appsettings");
+
+            var collectionSize = ulong.Parse(_configuration.GetSection("Qdrant:FileCollection:Size").Value ??
+                throw new SettingsException("Qdrant:FileCollection:Size not exists in appsettings"));
+
+            var modelEmbedding = _configuration.GetSection("Qdrant:FileCollection:OpenAiModelEmbedding").Value ??
+                throw new SettingsException("Qdrant:FileCollection:OpenAiModelEmbedding not exists in appsettings");
+
+            var modelApiKey = _configuration.GetSection("OpenAI:Access:ApiKey").Value ??
+                throw new SettingsException("OpenAI:Access:ApiKey not exists in appsettings");
+
+            var qdrantApiKey = _configuration.GetSection("Qdrant:Access:Key").Value ??
+                throw new SettingsException("Qdrant:Access:Key not exists in appsettings");
+
+            var qdrantUrl = _configuration.GetSection("Qdrant:Access:Uri").Value ??
+                throw new SettingsException("Qdrant:Access:Uri not exists in appsettings");
+
+            var maxTokenFileChunked = _configuration.GetSection("Qdrant:MaxTokenFileChunked").Value ??
+                throw new SettingsException("Qdrant:MaxTokenFileChunked not exists in appsettings");
+
+            var maxSummaryFileCharacters = int.Parse(_configuration.GetSection("Qdrant:MaxSummaryFileCharacters").Value ??
+                throw new SettingsException("Qdrant:MaxSummaryFileCharacters not exists in appsettings"));
+
+            Setup(
+                modelEmbedding: modelEmbedding,
+                modelEmbeddingApiKey: modelApiKey,
+                qdrantUri: qdrantUrl,
+                qdrantApiKey: qdrantApiKey,
+                qdrantCollectionName: _collectionName,
+                qdrantCollectionDistance: Distance.Cosine,
+                qdrantCollectionSize: collectionSize,
+                overwrite: true,
+                user: _userClaimsPrincipal
+                );
         }
 
         /// <summary>
@@ -52,7 +107,7 @@ namespace PersonalWebApi.Services.Services.Qdrant
         /// <param name="qdrantCollectionSize">The size of the Qdrant collection.</param>
         /// <param name="overwrite">Whether to overwrite existing files.</param>
         /// <param name="user">The user making the request.</param>
-        public void Setup(
+        protected void Setup(
             string modelEmbedding,
             string modelEmbeddingApiKey,
             string qdrantUri,
@@ -74,6 +129,56 @@ namespace PersonalWebApi.Services.Services.Qdrant
             _embeddingOpenAi.Setup(modelEmbedding, modelEmbeddingApiKey);
 
             _qdrantApi = new QdrantApi(_embeddingOpenAi, qdrantUri, qdrantApiKey, _qdrantCollectionSize, qdrantCollectionDistance);
+        }
+
+        public static class ProcessEvents
+        {
+            public const string StartProcess = nameof(StartProcess);
+        }
+
+        [Experimental("SKEXP0080")]
+        public async Task test()
+        {
+            Kernel kernel = new AgentCollection(_configuration).AddOpenAIChatCompletion();
+            //IChatCompletionService chatCompletionService = kernel.GetRequiredService<IChatCompletionService>();
+            // To enable manual function invocation, set the `autoInvoke` parameter to `false`.
+            KernelPlugin getTag = kernel.ImportPluginFromType<TagCollectorPlugin>();
+
+            var k = new PromptExecutionSettings() { ModelId = "defasssult" };
+
+
+            FunctionResult summary = await kernel.InvokeAsync(
+                    getTag["generate_tag_for_text_content"], new KernelArguments(k) { ["textContent"] = "samochód to fajny pojazd" });
+
+            // Use the ToString() method to get the result as a string
+            string resultString = summary.ToString();
+
+            foreach (var item in summary.GetValue<List<string>>())
+            {
+                Console.WriteLine(item);
+            }
+
+            //
+
+            ProcessBuilder process = new("ChatBot");
+            var startStep = process.AddStepFromType<Steps>();
+            var doSomeWorkStep = process.AddStepFromType<NextSteps>();
+            // Define the process flow
+            process
+                .OnInputEvent(ProcessEvents.StartProcess)
+                .SendEventTo(new ProcessFunctionTargetBuilder(startStep));
+
+            KernelProcess kernelProcess = process.Build();
+            using var runningProcess = await kernelProcess.StartAsync(
+                kernel,
+               new KernelProcessEvent()
+               {
+                   Id = ProcessEvents.StartProcess,
+                   Data = null
+               });
+
+
+
         }
 
         /// <summary>
@@ -104,7 +209,11 @@ namespace PersonalWebApi.Services.Services.Qdrant
         [Experimental("SKEXP0050")]  // for SemanticKernelTextChunker
         public async Task<Guid> AddAsync(IFormFile document, Guid conversationUuid, int maxTokensPerLine=200, int maxSummaryCharacters = 100)
         {
+            await test();
+
             var fileUuid = Guid.NewGuid();
+
+            _blobStorage.SetContainer("qdrant");
 
             var uri = await _blobStorage.UploadToContainerAsync(document, _overwrite, fileId: fileUuid.ToString());
             var reader = await _documentReaderDocx.ReadAsync(uri);
@@ -120,6 +229,7 @@ namespace PersonalWebApi.Services.Services.Qdrant
 
             var tasks = chunks.Select(async chunk =>
             {
+
                 var tagAsString = await chat.GetChatMessageContentAsync(
                     @$"""Generate tags for the following text in a comma-separated list format.
 
@@ -150,13 +260,15 @@ namespace PersonalWebApi.Services.Services.Qdrant
 
                 var tagList = tagAsString.Content.Split(", ").ToList();
 
+                var uploadedBy = _userClaimsPrincipal?.FindFirstValue(ClaimTypes.Name) ?? ClaimTypes.Anonymous;
+
                 await _qdrantApi.AddEmbeddingToQdrantAsync(Guid.NewGuid(), _qdrantCollectionName, chunk.line, new Dictionary<string, object>
                 {
                     { "Title", Path.GetFileNameWithoutExtension(document.FileName) },
                     { "Author", authorName },
                     { "Text", chunk.line },
                     { "CreatedAt", DateTime.Now.ToString("o") },
-                    { "UploadedBy", _userClaimsPrincipal.FindFirstValue(ClaimTypes.Name) ?? ClaimTypes.Anonymous },
+                    { "UploadedBy", uploadedBy },
                     { "SourceFileName", document.FileName },
                     { "ConversationId", conversationUuid },
                     { "BlobUri", uri.ToString() },
@@ -169,6 +281,7 @@ namespace PersonalWebApi.Services.Services.Qdrant
                     { "EndPosition", chunk.endPosition },
                     { "DataType", QdrantDataType.Document }
                 });
+
             });
 
             await Task.WhenAll(tasks);
@@ -190,7 +303,7 @@ namespace PersonalWebApi.Services.Services.Qdrant
         /// {
         ///     var qdrantFileService = new QdrantFileService(kernel, blobStorageService, documentReaderDocx, embeddingOpenAi);
         ///     qdrantFileService.Setup("modelEmbedding", "modelEmbeddingApiKey", "qdrantUri", "qdrantApiKey", "qdrantCollectionName", Distance.Cosine, 1000, true, user);
-        ///     var results = await qdrantFileService.SearchAsync("collectionName", new List<string> { "kto złamał nogę", "query2" }, null, 5);
+        ///     var results = await qdrantFileService.SearchAsync(new List<string> { "kto złamał nogę", "query2" }, null, 5);
         ///     foreach (var result in results)
         ///     {
         ///         Console.WriteLine($"Found result with ID: {result.Id}");
@@ -198,10 +311,10 @@ namespace PersonalWebApi.Services.Services.Qdrant
         /// }
         /// </code>
         /// </example>
-        public async Task<List<QdrantFileSearchResultType>> SearchAsync(string collectionName, List<string> queries, Dictionary<string, string> filter = null, int limit = 5)
+        public async Task<List<QdrantFileSearchResultType>> SearchAsync(List<string> queries, Dictionary<string, string> filter = null, int limit = 5)
         {
             var searchResults = await Task.WhenAll(queries.Select(query =>
-                _qdrantApi.SearchAsync(collectionName, query, filter, limit)
+                _qdrantApi.SearchAsync(_collectionName, query, filter, limit)
             ));
 
             var results = new List<QdrantFileSearchResultType>();
