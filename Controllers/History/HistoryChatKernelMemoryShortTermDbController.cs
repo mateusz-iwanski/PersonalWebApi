@@ -2,7 +2,6 @@
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.AI;
 using Newtonsoft.Json;
-using PersonalWebApi.Models.Azure;
 using PersonalWebApi.Models.Models.Memory;
 using PersonalWebApi.Services.NoSQLDB;
 using System;
