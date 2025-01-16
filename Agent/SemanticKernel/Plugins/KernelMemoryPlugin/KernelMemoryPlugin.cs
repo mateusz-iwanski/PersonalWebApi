@@ -5,7 +5,6 @@ using Microsoft.SemanticKernel.Connectors.OpenAI;
 using PersonalWebApi.Agent.Memory.Observability;
 using PersonalWebApi.Exceptions;
 using PersonalWebApi.Models.Models.Memory;
-using PersonalWebApi.Services.Azure;
 using PersonalWebApi.Services.Services.System;
 using System.ComponentModel;
 
