@@ -38,11 +38,13 @@ using PersonalWebApi.Utilities.WebScrappers;
 using PersonalWebApi.Services.WebScrapper;
 using PersonalWebApi.Services.FileStorage;
 using PersonalWebApi.Services.NoSQLDB;
+using PersonalWebApi.Services.Agent;
 
 namespace PersonalWebApi
 {
     public class Program
     {
+        [Experimental("SKEXP0050")]  // for SemanticKernelTextChunker
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
@@ -186,6 +188,7 @@ namespace PersonalWebApi
 
                 // Configure services for controllers
                 builder.Services.AddScoped<IAccountService, AccountService>();
+                builder.Services.AddScoped<ITextChunker, SemanticKernelTextChunker>();
                 builder.Services.AddScoped<IFileStorageService, AzureBlobStorageService>();
                 builder.Services.AddScoped<IDocumentReaderDocx, DocumentReaderDocx>();
                 builder.Services.AddScoped<IQdrantService, QdrantService>();
