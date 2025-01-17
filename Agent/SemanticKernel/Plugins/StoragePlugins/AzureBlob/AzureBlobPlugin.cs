@@ -25,9 +25,9 @@ namespace PersonalWebApi.Agent.SemanticKernel.Plugins.StoragePlugins.AzureBlob
         [KernelFunction("upload_to_library")]
         [Description("Uploads a file to the library container in Azure Blob Storage")]
         [return: Description("The URI of the uploaded file")]
-        public async Task<Uri> UploadToLibraryAsync(IFormFile file, bool overwrite = false, Dictionary<string, string>? metadata = null, string fileId = "")
+        public async Task<Uri> UploadToLibraryAsync(Guid fileId, IFormFile file, bool overwrite = false, Dictionary<string, string>? metadata = null)
         {
-            return await _blobStorageService.UploadToContainerAsync(file, overwrite, metadata, fileId);
+            return await _blobStorageService.UploadToContainerAsync(fileId, file, overwrite, metadata);
         }
 
         //[KernelFunction("delete_file_from_library")]
@@ -40,9 +40,9 @@ namespace PersonalWebApi.Agent.SemanticKernel.Plugins.StoragePlugins.AzureBlob
         [KernelFunction("upload_from_uri_to_library")]
         [Description("Uploads a file from a URI to the library container in Azure Blob Storage")]
         [return: Description("The URI of the uploaded file")]
-        public async Task<Uri> UploadFromUriToLibrary(string fileUri, string fileName, bool overwrite = false, Dictionary<string, string>? metadata = null)
+        public async Task<Uri> UploadFromUriToLibrary(Guid fileId, string fileUri, string fileName, bool overwrite = false, Dictionary<string, string>? metadata = null)
         {
-            return await _blobStorageService.UploadFromUriAsync(fileUri, fileName, overwrite, metadata);
+            return await _blobStorageService.UploadFromUriAsync(fileId, fileUri, fileName, overwrite, metadata);
         }
 
         [KernelFunction("get_files_with_metadata")]
