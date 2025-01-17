@@ -9,7 +9,7 @@ namespace PersonalWebApi.Models.FileStorage
     /// This DTO stores the main information about the content being uploaded to the system.
     /// </summary>
     /// <example>
-    /// Example of a FileContentMetadataDto:
+    /// Example of a FileContentDto:
     /// {
     ///   "id": "b1f1e3b2-3d7f-488b-97f3-2a4c5f6d8a7c",
     ///   "fileName": "Company_Policy_2025.pdf",
@@ -29,7 +29,7 @@ namespace PersonalWebApi.Models.FileStorage
     ///   ...
     /// }
     /// </example>
-    public class FileContentMetadataDto : CosmosDbDtoBase
+    public class FileContentDto : CosmosDbDtoBase
     {
         [JsonProperty(PropertyName = "fileId")]
         public Guid FileId { get; set; }
@@ -91,7 +91,7 @@ namespace PersonalWebApi.Models.FileStorage
         [JsonProperty(PropertyName = "userDescription")]
         public string UserDescription { get; set; } = string.Empty;
 
-        public FileContentMetadataDto(Guid conversationUuid, Guid sessionUuid, Guid fileId)
+        public FileContentDto(Guid conversationUuid, Guid sessionUuid, Guid fileId)
             : base(conversationUuid, sessionUuid)
         {
             FileId = fileId;

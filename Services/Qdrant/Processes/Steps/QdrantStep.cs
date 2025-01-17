@@ -47,7 +47,7 @@ namespace PersonalWebApi.Services.Qdrant.Processes.Steps
 
             var uploadedBy = userClaimsPrincipal?.FindFirstValue(ClaimTypes.Name) ?? ClaimTypes.Anonymous;
 
-            var generatedMetadata = await historyManger.LoadItemsAsync<FileContentMetadataDto>(new Dictionary<string, object> { { "FileId", "1" } });
+            var generatedMetadata = await historyManger.LoadItemsAsync<FileContentDto>(new Dictionary<string, object> { { "FileId", "1" } });
 
             if (generatedMetadata == null || !generatedMetadata.Any())
             {

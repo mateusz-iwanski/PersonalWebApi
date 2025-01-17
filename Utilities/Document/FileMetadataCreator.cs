@@ -36,17 +36,17 @@ namespace PersonalWebApi.Utilities.Document
         /// <param name="fileId">The unique identifier for the file.</param>
         /// <param name="conversationUuid">The unique identifier for the conversation.</param>
         /// <param name="sessionId">The unique identifier for the session.</param>
-        /// <returns>A <see cref="FileContentMetadataDto"/> containing the metadata of the file.</returns>
+        /// <returns>A <see cref="FileContentDto"/> containing the metadata of the file.</returns>
         /// <example>
         /// <code>
         /// var metadata = FileMetadataCreator.CreateMetadata("path/to/file.pdf", Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid());
         /// Console.WriteLine(metadata.FileName);
         /// </code>
         /// </example>
-        public static FileContentMetadataDto CreateMetadata(string filePath, Guid fileId, Guid conversationUuid, Guid sessionId)
+        public static FileContentDto CreateMetadata(string filePath, Guid fileId, Guid conversationUuid, Guid sessionId)
         {
             var fileInfo = new FileInfo(filePath);
-            var metadata = new FileContentMetadataDto(conversationUuid, sessionId, fileId)
+            var metadata = new FileContentDto(conversationUuid, sessionId, fileId)
             {
                 FileName = fileInfo.Name,
                 ContentType = GetContentType(filePath),
@@ -89,14 +89,14 @@ namespace PersonalWebApi.Utilities.Document
         /// <param name="fileId">The unique identifier for the file.</param>
         /// <param name="conversationUuid">The unique identifier for the conversation.</param>
         /// <param name="sessionUuid">The unique identifier for the session.</param>
-        /// <returns>A <see cref="FileContentMetadataDto"/> containing the metadata of the file.</returns>
+        /// <returns>A <see cref="FileContentDto"/> containing the metadata of the file.</returns>
         /// <example>
         /// <code>
         /// var metadata = await FileMetadataCreator.CreateMetadataFromUrlAsync("https://example.com/file.pdf", Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid());
         /// Console.WriteLine(metadata.FileName);
         /// </code>
         /// </example>
-        public static async Task<FileContentMetadataDto> CreateMetadataFromUrlAsync(string fileUrl, Guid fileId, Guid conversationUuid, Guid sessionUuid)
+        public static async Task<FileContentDto> CreateMetadataFromUrlAsync(string fileUrl, Guid fileId, Guid conversationUuid, Guid sessionUuid)
         {
             using (var httpClient = new HttpClient())
             {
@@ -120,14 +120,14 @@ namespace PersonalWebApi.Utilities.Document
         /// <param name="fileId">The unique identifier for the file.</param>
         /// <param name="conversationUuid">The unique identifier for the conversation.</param>
         /// <param name="sessionUuid">The unique identifier for the session.</param>
-        /// <returns>A <see cref="FileContentMetadataDto"/> containing the metadata of the file.</returns>
+        /// <returns>A <see cref="FileContentDto"/> containing the metadata of the file.</returns>
         /// <example>
         /// <code>
         /// var metadata = await FileMetadataCreator.CreateMetadataFromFormFileAsync(formFile, Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid());
         /// Console.WriteLine(metadata.FileName);
         /// </code>
         /// </example>
-        public static async Task<FileContentMetadataDto> CreateMetadataFromFormFileAsync(IFormFile formFile, Guid fileId, Guid conversationUuid, Guid sessionUuid)
+        public static async Task<FileContentDto> CreateMetadataFromFormFileAsync(IFormFile formFile, Guid fileId, Guid conversationUuid, Guid sessionUuid)
         {
             var tempFilePath = Path.GetTempFileName();
             await using (var fileStream = new FileStream(tempFilePath, FileMode.Create, FileAccess.Write))
@@ -171,7 +171,7 @@ namespace PersonalWebApi.Utilities.Document
         /// </summary>
         /// <param name="filePath">The path to the PDF file.</param>
         /// <param name="metadata">The metadata object to populate.</param>
-        private static void ExtractPdfMetadata(string filePath, FileContentMetadataDto metadata)
+        private static void ExtractPdfMetadata(string filePath, FileContentDto metadata)
         {
             using (var pdfReader = new PdfReader(filePath))
             {
@@ -187,7 +187,7 @@ namespace PersonalWebApi.Utilities.Document
         /// </summary>
         /// <param name="filePath">The path to the OpenXML document.</param>
         /// <param name="metadata">The metadata object to populate.</param>
-        private static void ExtractOpenXmlMetadata(string filePath, FileContentMetadataDto metadata)
+        private static void ExtractOpenXmlMetadata(string filePath, FileContentDto metadata)
         {
             using (var document = WordprocessingDocument.Open(filePath, false))
             {
@@ -202,7 +202,7 @@ namespace PersonalWebApi.Utilities.Document
         /// </summary>
         /// <param name="filePath">The path to the audio file.</param>
         /// <param name="metadata">The metadata object to populate.</param>
-        private static void ExtractAudioMetadata(string filePath, FileContentMetadataDto metadata)
+        private static void ExtractAudioMetadata(string filePath, FileContentDto metadata)
         {
             var file = TagLib.File.Create(filePath);
             metadata.Description = file.Tag.Title;
@@ -232,7 +232,7 @@ namespace PersonalWebApi.Utilities.Document
         /// </summary>
         /// <param name="filePath">The path to the file.</param>
         /// <param name="metadata">The metadata object to populate.</param>
-        private static void ExtractAdditionalMetadata(string filePath, FileContentMetadataDto metadata)
+        private static void ExtractAdditionalMetadata(string filePath, FileContentDto metadata)
         {
             try
             {

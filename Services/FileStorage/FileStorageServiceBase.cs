@@ -100,7 +100,7 @@ public abstract class FileStorageServiceBase : IFileStorageService
         };
 
 
-        FileContentMetadataDto fileContentMetadataDto = await FileMetadataCreator.CreateMetadataFromUrlAsync(fileUri, fileId, conversationUuid, sessionUuid);
+        FileContentDto fileContentMetadataDto = await FileMetadataCreator.CreateMetadataFromUrlAsync(fileUri, fileId, conversationUuid, sessionUuid);
 
         await _assistantHistoryManager.SaveAsync(storageEvent);
         await _assistantHistoryManager.SaveAsync(fileContentMetadataDto);
@@ -135,7 +135,7 @@ public abstract class FileStorageServiceBase : IFileStorageService
             ErrorMessage = string.Empty,
         };
 
-        FileContentMetadataDto fileContentMetadataDto = await FileMetadataCreator.CreateMetadataFromFormFileAsync(file, fileId, conversationUuid, sessionUuid);
+        FileContentDto fileContentMetadataDto = await FileMetadataCreator.CreateMetadataFromFormFileAsync(file, fileId, conversationUuid, sessionUuid);
 
         await _assistantHistoryManager.SaveAsync(storageEvent);
         await _assistantHistoryManager.SaveAsync(fileContentMetadataDto);
