@@ -11,7 +11,7 @@ namespace PersonalWebApi.Services.FileStorage
         Task<List<BlobItem>> GetFilesWithMetadataAsync();
         Task<string> GetFileUrlAsync(string fileName);
         void SetContainer(string name);
-        Task<Uri> UploadFromUriAsync(string fileUri, string fileName, bool overwrite = false, Dictionary<string, string>? metadata = null);
-        Task<Uri> UploadToContainerAsync(IFormFile file, bool overwrite = false, Dictionary<string, string>? metadata = null, string fileId = "");
+        Task<Uri> UploadFromUriAsync(Guid fileId, string fileUri, string fileName, bool overwrite = false, Dictionary<string, string>? metadata = null);
+        Task<Uri> UploadToContainerAsync(Guid fileId, IFormFile file, bool overwrite = false, Dictionary<string, string>? metadata = null);
     }
 }
