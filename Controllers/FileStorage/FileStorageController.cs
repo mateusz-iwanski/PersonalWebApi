@@ -24,15 +24,17 @@ namespace PersonalWebApi.Controllers.Azure
         /// Uploads a file to the Azure Blob Storage Account in the `containerName` container.
         /// </summary>
         /// <param name="request">The request containing the file, overwrite flag, and metadata.</param>
-        /// <returns>IActionResult with the URI of the uploaded file.</returns>
+        /// <returns>File id.</returns>
         /// <remarks>The file will not be automatically deleted.</remarks>
         [ServiceFilter(typeof(CheckConversationAccessFilter))]
         [HttpPost("container/{containerName}/upload")]
         public async Task<IActionResult> Upload([FromForm] UploadFileToFileStorageRequestDto request, [Required][FromRoute] string containerName)
         {
+            var fileId = Guid.NewGuid();
+
             _service.SetContainer(containerName);
-            var uri = await _service.UploadToContainerAsync(request.File, request.Overwrite, request.Metadata);
-            return Ok(uri);
+            var uri = await _service.UploadToContainerAsync(fileId, request.File, request.Overwrite, request.Metadata);
+            return Ok(fileId);
         }
 
         /// <summary>
@@ -52,14 +54,15 @@ namespace PersonalWebApi.Controllers.Azure
         /// Uploads a file from a given URI to the Azure Blob Storage Account in the `containerName` container.
         /// </summary>
         /// <param name="request">The request containing the file URI, file name, TTL in days, overwrite flag, and metadata.</param>
-        /// <returns>IActionResult with the URI of the uploaded file.</returns>
+        /// <returns>File ID.</returns>
         /// <remarks>The file will be automatically deleted after the specified TTL in days.</remarks>
         [HttpPost("container/{containerName}/upload/uri")]
         public async Task<IActionResult> UploadFromUri([FromBody][Required] UploadFileFromUriToFileStorageRequestDto request, [Required][FromRoute] string containerName)
         {
+            var fileId = Guid.NewGuid();
             _service.SetContainer(containerName);
-            var uri = await _service.UploadFromUriAsync(request.FileUri, request.FileName, request.Overwrite, request.Metadata);
-            return Ok(uri);
+            var uri = await _service.UploadFromUriAsync(fileId , request.FileUri, request.FileName, request.Overwrite, request.Metadata);
+            return Ok(fileId);
         }
 
 
