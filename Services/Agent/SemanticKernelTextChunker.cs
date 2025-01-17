@@ -11,30 +11,39 @@ using SQLitePCL;
 namespace PersonalWebApi.Services.Agent
 {
     /// <summary>
+    /// Represents a chunk of text with metadata.
+    /// </summary>
+    /// <param name="conversationId">The ID of the conversation.</param>
+    /// <param name="startPosition">The start position of the chunk in the original text.</param>
+    /// <param name="endPosition">The end position of the chunk in the original text.</param>
+    /// <param name="line">The chunked line of text.</param>
+    public record StringChunkerFormat(int startPosition, int endPosition, string line);
+
+    /// <summary>
     /// Provides functionality to chunk text into smaller segments based on token count.
     /// </summary>
     [Experimental("SKEXP0050")]
     public class SemanticKernelTextChunker : ITextChunker
     {
-        private readonly Tokenizer _tokenizer;
-
-        /// <summary>
-        /// Represents a chunk of text with metadata.
-        /// </summary>
-        /// <param name="conversationId">The ID of the conversation.</param>
-        /// <param name="startPosition">The start position of the chunk in the original text.</param>
-        /// <param name="endPosition">The end position of the chunk in the original text.</param>
-        /// <param name="line">The chunked line of text.</param>
-        public record StringChunkerFormat(string conversationId, int startPosition, int endPosition, string line);
+        private Tokenizer _tokenizer { get; set; }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SemanticKernelTextChunker"/> class.
         /// </summary>
         /// <param name="tiktokenizerModel">The model to be used by the tokenizer.</param>
-        public SemanticKernelTextChunker(string tiktokenizerModel)
-        {
-            _tokenizer = TiktokenTokenizer.CreateForModel(tiktokenizerModel);
-        }
+        public SemanticKernelTextChunker() { }
+
+        /// <summary>
+        /// Object is injected, after initialization has to be setup
+        /// </summary>
+        /// <param name="tiktokenierModel"></param>
+        public void Setup(string tiktokenierModel) => _tokenizer = TiktokenTokenizer.CreateForModel(tiktokenierModel);
+
+        /// <summary>
+        /// Checks if the client is set up.
+        /// </summary>
+        /// <returns>True if the client is set up, otherwise false.</returns>
+        public bool IsSetup() => _tokenizer != default;
 
         /// <summary>
         /// Chunks the given text into smaller segments based on the maximum number of tokens per line.
@@ -56,8 +65,10 @@ namespace PersonalWebApi.Services.Agent
         /// <remarks>
         /// This method splits the text into lines where each line contains a maximum number of tokens specified by <paramref name="maxTokensPerLine"/>.
         /// </remarks>
-        public List<StringChunkerFormat> ChunkText(string conversationId, int maxTokensPerLine, string text)
+        public List<StringChunkerFormat> ChunkText(int maxTokensPerLine, string text)
         {
+            if (IsSetup() == false) throw new InvalidOperationException("The TextChunker is not initialized. Call Setup method first.");
+
             var lines = getChunk(text, maxTokensPerLine);
 
             var result = new List<StringChunkerFormat>();
@@ -68,7 +79,7 @@ namespace PersonalWebApi.Services.Agent
             {
                 int endPosition = startPosition + line.Length;
                 result.Add(
-                    new StringChunkerFormat(conversationId, startPosition, endPosition, line)
+                    new StringChunkerFormat(startPosition, endPosition, line)
                 );
 
                 startPosition = endPosition + 1; // +1 to account for the newline character
@@ -85,6 +96,8 @@ namespace PersonalWebApi.Services.Agent
         /// <returns>An enumerable of chunked text lines.</returns>
         private IEnumerable<string> getChunk(string chunkedText, int maxTokensPerLine)
         {
+            if (IsSetup() == false) throw new InvalidOperationException("The TextChunker is not initialized. Call Setup method first.");
+
             var lines = TextChunker.SplitPlainTextLines(chunkedText, maxTokensPerLine, text => _tokenizer.CountTokens(text));
 
             foreach (var line in lines)
