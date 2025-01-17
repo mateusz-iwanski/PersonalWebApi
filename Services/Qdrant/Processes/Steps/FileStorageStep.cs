@@ -8,12 +8,12 @@ namespace PersonalWebApi.Services.Qdrant.Processes.Steps
 {
     public record FileStorageIFormFileStepItem(IFormFile Document, bool Overwrite, Guid FileId);
 
-    public static class FileFunctions
+    public static class FileStorageFunctions
     {
         public const string UploadIFormFile = nameof(UploadIFormFile);
     }
 
-    public static class FileOutputEvents
+    public static class FileStorageEvents
     {
         public const string Uploaded = nameof(Uploaded);
     }
@@ -22,7 +22,7 @@ namespace PersonalWebApi.Services.Qdrant.Processes.Steps
     public sealed class FileStorageStep : KernelProcessStep
     {
 
-        [KernelFunction(FileFunctions.UploadIFormFile)]
+        [KernelFunction(FileStorageFunctions.UploadIFormFile)]
         public async ValueTask UploadIFormFileAsync(KernelProcessStepContext context, Kernel kernel, FileStorageIFormFileStepItem fileStorageStepItem)
         {
             var fileStorageService = kernel.GetRequiredService<IFileStorageService>();
@@ -35,10 +35,10 @@ namespace PersonalWebApi.Services.Qdrant.Processes.Steps
             var uri = await fileStorageService.UploadToContainerAsync(
                 file: fileStorageStepItem.Document, 
                 overwrite: fileStorageStepItem.Overwrite, 
-                fileId: fileStorageStepItem.FileId.ToString()
+                fileId: fileStorageStepItem.FileId
                 );
 
-            await context.EmitEventAsync(new() { Id = FileOutputEvents.Uploaded, Data = uri });
+            await context.EmitEventAsync(new() { Id = FileStorageEvents.Uploaded, Data = uri });
         }
     }
 }
