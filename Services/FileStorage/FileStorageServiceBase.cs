@@ -1,9 +1,13 @@
 ﻿using Azure.Storage.Blobs.Models;
+using DocumentFormat.OpenXml.Bibliography;
+using iText.Commons.Utils;
+using PersonalWebApi.Models.FileStorage;
 using PersonalWebApi.Models.Storage;
 using PersonalWebApi.Services.FileStorage;
 using PersonalWebApi.Services.Services.History;
 using PersonalWebApi.Services.Services.Qdrant;
 using PersonalWebApi.Services.Services.System;
+using PersonalWebApi.Utilities.Document;
 
 /// <summary>
 /// Serves as a versatile and extensible foundation for file storage services, encapsulating 
@@ -71,14 +75,21 @@ public abstract class FileStorageServiceBase : IFileStorageService
     }
 
     /// <inheritdoc />
-    public async Task<Uri> UploadFromUriAsync(string fileUri, string fileName, bool overwrite = false, Dictionary<string, string>? metadata = null)
+    public async Task<Uri> UploadFromUriAsync(Guid fileId, string fileUri, string fileName, bool overwrite = false, Dictionary<string, string>? metadata = null)
     {
         (Guid conversationUuid, Guid sessionUuid) = ContextAccessorReader.RetrieveCrucialUuid(_httpContextAccessor);
 
-        var result = await UploadFromUriAsyncImpl(fileUri, fileName, overwrite, metadata);
+        // file ID must be in metadata
+        if (!string.IsNullOrEmpty(fileId.ToString()))
+            if (metadata != null)
+                metadata["fileId"] = fileId.ToString();
+            else
+                metadata = new Dictionary<string, string> { { "fileId", fileId.ToString() } };
+
+        var result = await UploadFromUriAsyncImpl(fileId, fileUri, fileName, overwrite, metadata);
 
         // Log the upload event
-        var storageEvent = new StorageEventsDto(conversationUuid, sessionUuid)
+        var storageEvent = new StorageEventsDto(conversationUuid, sessionUuid, fileId)
         {
             EventName = "upload",
             ServiceName = "FileStore",
@@ -88,24 +99,33 @@ public abstract class FileStorageServiceBase : IFileStorageService
             ErrorMessage = string.Empty,
         };
 
+
+        FileContentMetadataDto fileContentMetadataDto = await FileMetadataCreator.CreateMetadataFromUrlAsync(fileUri, fileId, conversationUuid, sessionUuid);
+
         await _assistantHistoryManager.SaveAsync(storageEvent);
+        await _assistantHistoryManager.SaveAsync(fileContentMetadataDto);
 
         return result;
     }
 
     /// <inheritdoc />
-    public async Task<Uri> UploadToContainerAsync(IFormFile file, bool overwrite = false, Dictionary<string, string>? metadata = null, string fileId = "")
+    public async Task<Uri> UploadToContainerAsync(Guid fileId, IFormFile file, bool overwrite = false, Dictionary<string, string>? metadata = null)
     {
         //(Guid conversationUuid, Guid sessionUuid) = ContextAccessorReader.RetrieveCrucialUuid(_httpContextAccessor);
         var conversationUuid = Guid.NewGuid();
         var sessionUuid = Guid.NewGuid();
 
-        //await _qdrantFileService.AddAsync(file, conversationUuid, 200, 100);
+        // file ID must be in metadata
+        if (!string.IsNullOrEmpty(fileId.ToString()))
+            if (metadata != null)
+                metadata["fileId"] = fileId.ToString();
+            else
+                metadata = new Dictionary<string, string> { { "fileId", fileId.ToString() } };
 
-        var serverUri = await UploadToContainerAsyncImpl(file, overwrite, metadata, fileId);
+        var serverUri = await UploadToContainerAsyncImpl(fileId, file, overwrite, metadata);
 
         // Log the upload event
-        var storageEvent = new StorageEventsDto(conversationUuid, sessionUuid)
+        var storageEvent = new StorageEventsDto(conversationUuid, sessionUuid, fileId)
         {
             EventName = "upload",
             ServiceName = "FileStore",
@@ -115,7 +135,10 @@ public abstract class FileStorageServiceBase : IFileStorageService
             ErrorMessage = string.Empty,
         };
 
+        FileContentMetadataDto fileContentMetadataDto = await FileMetadataCreator.CreateMetadataFromFormFileAsync(file, fileId, conversationUuid, sessionUuid);
+
         await _assistantHistoryManager.SaveAsync(storageEvent);
+        await _assistantHistoryManager.SaveAsync(fileContentMetadataDto);
 
         return serverUri;
     }
@@ -161,7 +184,7 @@ public abstract class FileStorageServiceBase : IFileStorageService
     /// <param name="fileName">The name of the file.</param>
     /// <param name="overwrite">Whether to overwrite the file if it already exists.</param>
     /// <param name="metadata">Optional metadata for the file.</param>
-    protected abstract Task<Uri> UploadFromUriAsyncImpl(string fileUri, string fileName, bool overwrite = false, Dictionary<string, string>? metadata = null);
+    protected abstract Task<Uri> UploadFromUriAsyncImpl(Guid fileId, string fileUri, string fileName, bool overwrite = false, Dictionary<string, string>? metadata = null);
 
     /// <summary>
     /// Uploads a file to the container. This method must be implemented by derived classes.
@@ -170,5 +193,5 @@ public abstract class FileStorageServiceBase : IFileStorageService
     /// <param name="overwrite">Whether to overwrite the file if it already exists.</param>
     /// <param name="metadata">Optional metadata for the file.</param>
     /// <param name="fileId">Optional file identifier.</param>
-    protected abstract Task<Uri> UploadToContainerAsyncImpl(IFormFile file, bool overwrite = false, Dictionary<string, string>? metadata = null, string fileId = "");
+    protected abstract Task<Uri> UploadToContainerAsyncImpl(Guid fileId, IFormFile file, bool overwrite = false, Dictionary<string, string>? metadata = null);
 }
