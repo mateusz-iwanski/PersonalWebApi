@@ -1,11 +1,13 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.Azure.Cosmos;
+using Microsoft.Data.SqlClient;
 using Microsoft.KernelMemory;
 using PersonalWebApi.Models.Models.Azure;
 using PersonalWebApi.Models.Models.Memory;
 using PersonalWebApi.Services.NoSQLDB;
 using System.Reflection;
 using System.Security.Claims;
+using System.Text;
 
 namespace PersonalWebApi.Services.Services.History
 {
@@ -86,11 +88,11 @@ namespace PersonalWebApi.Services.Services.History
         /// <param name="conversationUuid">The unique identifier for the conversation.</param>
         public async Task<List<T>> LoadAsync<T>(Guid conversationUuid) where T : CosmosDbDtoBase
         {
-            await checkHistoryAccessForUserAsync<T>(conversationUuid); 
+            await checkHistoryAccessForUserAsync<T>(conversationUuid);
 
             var query = $"SELECT * FROM c WHERE c.conversationUuid = '{conversationUuid}' ORDER BY c.createdAt ASC";
             var queryDefinition = new QueryDefinition(query);
-            
+
             // Use reflection to call the static method ContainerNameStatic on type T
             var containerName = (string)typeof(T).GetMethod("ContainerNameStatic", BindingFlags.Static | BindingFlags.Public).Invoke(null, null);
 
@@ -109,5 +111,79 @@ namespace PersonalWebApi.Services.Services.History
             historyDto.CreatedBy = _user;
             return await _service.CreateItemAsync(historyDto);
         }
+
+        /// <summary>
+        /// Retrieves a list of items from the Cosmos DB container based on the specified conversation UUID.
+        /// This method uses a generic type parameter to support various DTO types that inherit from <see cref="CosmosDbDtoBase"/>.
+        /// It constructs a query to select items where the conversation UUID matches the provided value.
+        /// The container name is dynamically determined using reflection to call the static method <c>ContainerNameStatic</c> on the specified type.
+        /// </summary>
+        /// <typeparam name="T">The type of the items to retrieve, which must inherit from <see cref="CosmosDbDtoBase"/>.</typeparam>
+        /// <param name="conversationUuid">The unique identifier for the conversation.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains a list of items of the specified type.</returns>
+        /// <exception cref="UnauthorizedAccessException">Thrown if the current user does not have access to the specified chat history.</exception>
+        /// <example>
+        /// <code>
+        /// // load data by CosmosDbDtoBase objects
+        /// var ShortTermDeleteDocument = await assistantHistoryManager.LoadItemsAsync<ChatHistoryShortTermDeleteDocumentDto>(conversationUuid);
+        /// var StorageEvents = await assistantHistoryManager.LoadItemsAsync<StorageEventsDto>(conversationUuid);
+        /// </code>
+        /// </example>
+        /// <example>      
+        public async Task<List<T>> LoadItemsAsync<T>(Guid conversationUuid) where T : CosmosDbDtoBase
+        {
+            var query = new QueryDefinition("SELECT * FROM c WHERE c.conversationUuid = @conversationUuid")
+                .WithParameter("@conversationUuid", conversationUuid.ToString());
+
+            // Use reflection to call the static method ContainerNameStatic on type T
+            var containerName = (string)typeof(T).GetMethod("ContainerNameStatic", BindingFlags.Static | BindingFlags.Public).Invoke(null, null);
+
+            return await _service.GetByQueryAsync<T>(query, containerName);
+        }
+
+        /// <summary>
+        /// Retrieves a list of items from the Cosmos DB container based on the specified field criteria.
+        /// This method uses a generic type parameter to support various DTO types that inherit from <see cref="CosmosDbDtoBase"/>.
+        /// It constructs a query to select items where the specified fields match the provided values.
+        /// The container name is dynamically determined using reflection to call the static method <c>ContainerNameStatic</c> on the specified type.
+        /// </summary>
+        /// <typeparam name="T">The type of the items to retrieve, which must inherit from <see cref="CosmosDbDtoBase"/>.</typeparam>
+        /// <param name="fieldCriteria">A dictionary of field names and values to filter the items.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains a list of items of the specified type.</returns>
+        /// <exception cref="UnauthorizedAccessException">Thrown if the current user does not have access to the specified chat history.</exception>
+        /// <example>
+        /// <code>
+        /// // load data by CosmosDbDtoBase objects
+        /// var criteria = new Dictionary<string, object> { { "conversationUuid", conversationUuid }, { "createdBy", "user@example.com" } };
+        /// var items = await assistantHistoryManager.LoadItemsAsync<ChatHistoryShortTermDeleteDocumentDto>(criteria);
+        /// </code>
+        /// </example>
+        public async Task<List<T>> LoadItemsAsync<T>(Dictionary<string, object> fieldCriteria) where T : CosmosDbDtoBase
+        {
+            var queryBuilder = new StringBuilder("SELECT * FROM c WHERE ");
+            var queryParameters = new List<(string Name, object Value)>();
+
+            foreach (var field in fieldCriteria)
+            {
+                queryBuilder.Append($"c.{field.Key} = @{field.Key} AND ");
+                queryParameters.Add((field.Key, field.Value));
+            }
+
+            // Remove the trailing " AND "
+            queryBuilder.Length -= 5;
+
+            var queryDefinition = new QueryDefinition(queryBuilder.ToString());
+            foreach (var param in queryParameters)
+            {
+                queryDefinition.WithParameter(param.Name, param.Value);
+            }
+
+            // Use reflection to call the static method ContainerNameStatic on type T
+            var containerName = (string)typeof(T).GetMethod("ContainerNameStatic", BindingFlags.Static | BindingFlags.Public).Invoke(null, null);
+
+            return await _service.GetByQueryAsync<T>(queryDefinition, containerName);
+        }
+
+
     }
 }
