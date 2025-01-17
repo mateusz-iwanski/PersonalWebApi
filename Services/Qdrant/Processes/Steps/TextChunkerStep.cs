@@ -1,11 +1,12 @@
-﻿using Microsoft.SemanticKernel;
+﻿using DocumentFormat.OpenXml.Office2013.Drawing.ChartStyle;
+using Microsoft.SemanticKernel;
 using PersonalWebApi.Services.Agent;
 using PersonalWebApi.Utilities.Utilities.DocumentReaders;
 using System.Diagnostics.CodeAnalysis;
 
 namespace PersonalWebApi.Services.Qdrant.Processes.Steps
 {
-    public record TextChunkerStepItem(string ConversationId, string Text, int MaxTokensPerLine, string ModelEmbedding);
+    public record TextChunkerStepItem(string Content, int MaxTokensPerLine, string ModelEmbedding);
 
     public static class TextChunkerStepFunctions
     {
@@ -17,21 +18,18 @@ namespace PersonalWebApi.Services.Qdrant.Processes.Steps
         public const string Chunked = nameof(Chunked);
     }
 
-    [Experimental("SKEXP0080")]
+    [Experimental("SKEXP0080")] 
     public sealed class TextChunkerStep : KernelProcessStep
     {
-        private readonly SemanticKernelTextChunker _textChunker;
-
-        public TextChunkerStep(SemanticKernelTextChunker textChunker)
-        {
-            _textChunker = textChunker;
-        }
 
         [KernelFunction(TextChunkerStepFunctions.ChunkText)]
-        public async ValueTask ChunkTextAsync(KernelProcessStepContext context, Kernel kernel, TextChunkerStepItem textChunkerStepItem)
+        public async ValueTask ChunkTextAsync(KernelProcessStepContext context, Kernel kernel, string content)
         {
-            var chunker = new SemanticKernelTextChunker(textChunkerStepItem.ModelEmbedding);
-            var chunks = _textChunker.ChunkText(textChunkerStepItem.ConversationId, textChunkerStepItem.MaxTokensPerLine, textChunkerStepItem.Text);
+            var chunker = kernel.GetRequiredService<ITextChunker>();
+            chunker.Setup("text-embedding-3-small");
+
+            // todo tu inaczejto zrobić
+            List<StringChunkerFormat> chunks = chunker.ChunkText(100, content);
 
             await context.EmitEventAsync(new() { Id = TextChunkerStepOutputEvents.Chunked, Data = chunks });
         }
