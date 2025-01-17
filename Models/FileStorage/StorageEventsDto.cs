@@ -20,6 +20,9 @@ namespace PersonalWebApi.Models.Storage
         [JsonProperty(PropertyName = "fileUri")]
         public string FileUri { get; set; } = string.Empty;
 
+        [JsonProperty(PropertyName = "fileId")]
+        public string FileId { get; set; } = string.Empty;
+
         [JsonProperty(PropertyName = "isSuccess")]
         public bool IsSuccess { get; set; } = true;
 
@@ -35,9 +38,10 @@ namespace PersonalWebApi.Models.Storage
         [JsonProperty(PropertyName = "errorMessage")]
         public string ErrorMessage { get; set; } = string.Empty;
 
-        public StorageEventsDto(Guid conversationUuid, Guid sessionUuid)
+        public StorageEventsDto(Guid conversationUuid, Guid sessionUuid, Guid fileId)
             : base(conversationUuid, sessionUuid)
         {
+            FileId = fileId.ToString();
         }
 
         /// <summary>
@@ -45,7 +49,7 @@ namespace PersonalWebApi.Models.Storage
         /// This method returns the name of the container where chat message content records are stored.
         /// </summary>
         /// <returns>The name of the container.</returns>
-        public static string ContainerNameStatic() => "Event-storage-action";
+        public static string ContainerNameStatic() => "event-storage-action";
 
         /// <summary>
         /// Gets the static partition key name for the Cosmos DB.
