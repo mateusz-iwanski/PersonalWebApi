@@ -216,7 +216,7 @@ namespace PersonalWebApi.Services.FileStorage
         /// <param name="overwrite">Whether to overwrite the file if it already exists.</param>
         /// <param name="metadata">The metadata to add to the file.</param>
         /// <returns>The URI of the uploaded file.</returns>
-        protected override async Task<Uri> UploadFromUriAsyncImpl(string fileUri, string fileName, bool overwrite = false, Dictionary<string, string>? metadata = null)
+        protected override async Task<Uri> UploadFromUriAsyncImpl(Guid fileId, string fileUri, string fileName, bool overwrite = false, Dictionary<string, string>? metadata = null)
         {
             ensureContainerIsSet();
             return await uploadFromUriAsync(fileUri, fileName, _containerName, null, overwrite, metadata);
@@ -230,15 +230,9 @@ namespace PersonalWebApi.Services.FileStorage
         /// <param name="metadata">The metadata to add to the file.</param>
         /// <param name="fileId">The file ID.</param>
         /// <returns>The URI of the uploaded file.</returns>
-        protected override async Task<Uri> UploadToContainerAsyncImpl(IFormFile file, bool overwrite = false, Dictionary<string, string>? metadata = null, string fileId = "")
+        protected override async Task<Uri> UploadToContainerAsyncImpl(Guid fileId, IFormFile file, bool overwrite = false, Dictionary<string, string>? metadata = null)
         {
             ensureContainerIsSet();
-            if (!string.IsNullOrEmpty(fileId))
-                if (metadata != null)
-                    metadata["fileId"] = fileId;
-                else
-                    metadata = new Dictionary<string, string> { { "fileId", fileId } };
-
             return await uploadAsync(file, null, overwrite, _containerName, metadata);
         }
 
