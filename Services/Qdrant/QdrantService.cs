@@ -8,7 +8,6 @@ using Qdrant.Client.Grpc;
 using Elastic.Clients.Elasticsearch.IndexManagement;
 using PersonalWebApi.Utilities.Utilities.Qdrant;
 using PersonalWebApi.Utilities.Utilities.DocumentReaders;
-using PersonalWebApi.Utilities.Utilities.Models;
 using PersonalWebApi.Services.FileStorage;
 using PersonalWebApi.Exceptions;
 using System.Collections;
@@ -19,6 +18,9 @@ using Microsoft.SemanticKernel.Process.Runtime;
 using PersonalWebApi.Services.Qdrant.Processes;
 using DocumentFormat.OpenXml.Wordprocessing;
 using PersonalWebApi.Services.Qdrant.Processes.Steps;
+using PersonalWebApi.Services.Agent;
+using System;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace PersonalWebApi.Services.Services.Qdrant
 {
@@ -58,7 +60,7 @@ namespace PersonalWebApi.Services.Services.Qdrant
 
             //_userClaimsPrincipal = httpContextAccessor.HttpContext?.User ?? throw new ArgumentNullException(nameof(httpContextAccessor.HttpContext.User));
 
-            _collectionName = _configuration.GetSection("Qdrant:Container:Name").Value ?? throw new SettingsException("Qdrant:Container:defaultName not exists");
+            _collectionName = _configuration.GetSection("Qdrant:Container:Name").Value ?? throw new SettingsException("Qdrant:Container:Name not exists");
 
             var collectionDistance = _configuration.GetSection("Qdrant:Container:Distance").Value ??
                 throw new SettingsException("Qdrant:Container:Distance not exists in appsettings");
@@ -210,56 +212,85 @@ namespace PersonalWebApi.Services.Services.Qdrant
             //       Id = ProcessEvents.StartProcess,
             //       Data = null
             //   });
-
-
-            ProcessBuilder process = new("ChatBot");
-            var introStep = process.AddStepFromType<TestIntroStep>();
-            var startStep = process.AddStepFromType<TestStepsOne>();
-            var stopStep = process.AddStepFromType<TestSteps2>();
-            // Define the process flow
-            Kernel kernel = new AgentCollection(_configuration).AddOpenAIChatCompletion();
-
-            const string SetMessage = nameof(SetMessage);
+            //#################
+            //ProcessBuilder process = new("QdrantAction");
+            //var uploadSourceFileToStorageStep = process.AddStepFromType<FileStorageStep>();
+            //var reader = process.AddStepFromType<DocumentReaderStep>();
+            //var chunker = process.AddStepFromType<TextChunkerStep>();
+            ////var tagify = process.AddStepFromType<TagifyStep>();
+            //var qdrant = process.AddStepFromType<QdrantStep>();
 
             //process
-            //   .OnInputEvent(ChatBotEvents.StartProcess)
-            //   .SendEventTo(new ProcessFunctionTargetBuilder(introStep));
+            //    .OnInputEvent(ProcessEvents.StartProcess)
+            //    .SendEventTo(new ProcessFunctionTargetBuilder(uploadSourceFileToStorageStep, nameof(FileStorageFunctions.UploadIFormFile)));
 
-            process
-                .OnInputEvent(ChatBotEvents.StartProcess)
-                .SendEventTo(new ProcessFunctionTargetBuilder(introStep, nameof(TestIntroStep.PrintIntroMessage)));
+            //uploadSourceFileToStorageStep.OnEvent(FileStorageEvents.Uploaded)
+            //    .SendEventTo(new ProcessFunctionTargetBuilder(reader, parameterName: "uri"));
 
-            introStep
-                .OnFunctionResult(nameof(TestIntroStep.PrintIntroMessage))
-                .SendEventTo(new ProcessFunctionTargetBuilder(introStep, nameof(SetMessage)));
+            //reader.OnEvent(DocumentReaderStepOutputEvents.Readed)
+            //    .SendEventTo(new ProcessFunctionTargetBuilder(chunker, parameterName: "content"));
+
+            //chunker.OnEvent(TextChunkerStepOutputEvents.Chunked)
+            //    .SendEventTo(new ProcessFunctionTargetBuilder(qdrant, parameterName: "chunks"));
+
+            //KernelProcess kernelProcess = process.Build();
+
+            //using var runningProcess = await kernelProcess.StartAsync(
+            //    _kernel,
+            //   new KernelProcessEvent()
+            //   {
+            //       Id = ProcessEvents.StartProcess,
+            //       Data = new FileStorageIFormFileStepItem()
+            //   });
+
+            //ProcessBuilder process = new("ChatBot");
+            //var introStep = process.AddStepFromType<TestIntroStep>();
+            //var startStep = process.AddStepFromType<TestStepsOne>();
+            //var stopStep = process.AddStepFromType<TestSteps2>();
+            //// Define the process flow
+            //Kernel kernel = new AgentCollection(_configuration).AddOpenAIChatCompletion();
+
+            //const string SetMessage = nameof(SetMessage);
+
+            ////process
+            ////   .OnInputEvent(ChatBotEvents.StartProcess)
+            ////   .SendEventTo(new ProcessFunctionTargetBuilder(introStep));
+
+            //process
+            //    .OnInputEvent(ChatBotEvents.StartProcess)
+            //    .SendEventTo(new ProcessFunctionTargetBuilder(introStep, nameof(TestIntroStep.PrintIntroMessage)));
+
+            //introStep
+            //    .OnFunctionResult(nameof(TestIntroStep.PrintIntroMessage))
+            //    .SendEventTo(new ProcessFunctionTargetBuilder(introStep, nameof(SetMessage)));
 
              
 
-            introStep
-                .OnEvent(ChatBotEvents2.UserInputReceived)
-                .SendEventTo(new ProcessFunctionTargetBuilder(startStep, parameterName: "userMessage"));
+            //introStep
+            //    .OnEvent(ChatBotEvents2.UserInputReceived)
+            //    .SendEventTo(new ProcessFunctionTargetBuilder(startStep, parameterName: "userMessage"));
 
-            //process
-            //    .OnFunctionResult(nameof(TestIntroStep.PrintIntroMessage))
-            //    .SendEventTo(new ProcessFunctionTargetBuilder(introStep));
+            ////process
+            ////    .OnFunctionResult(nameof(TestIntroStep.PrintIntroMessage))
+            ////    .SendEventTo(new ProcessFunctionTargetBuilder(introStep));
 
 
-            //process
-            //    .OnFunctionResult(nameof(TestIntroStep.PrintIntroMessage))
-            //    .SendEventTo(new ProcessFunctionTargetBuilder(stopStep, nameof(TestSteps2.MyExecute), "message"));
+            ////process
+            ////    .OnFunctionResult(nameof(TestIntroStep.PrintIntroMessage))
+            ////    .SendEventTo(new ProcessFunctionTargetBuilder(stopStep, nameof(TestSteps2.MyExecute), "message"));
 
-            //process.OnFunctionResult(nameof(ChatBotEvents2.Exit)).SendEventTo(new ProcessFunctionTargetBuilder(exitStep));
-            //   .StopProcess(); 
+            ////process.OnFunctionResult(nameof(ChatBotEvents2.Exit)).SendEventTo(new ProcessFunctionTargetBuilder(exitStep));
+            ////   .StopProcess(); 
 
-            KernelProcess kernelProcess = process.Build();
+            //KernelProcess kernelProcess = process.Build();
 
-            using var runningProcess = await kernelProcess.StartAsync(
-                kernel,
-               new KernelProcessEvent()
-               {
-                   Id = ProcessEvents.StartProcess,
-                   Data = "Kij w dupie"
-               });
+            //using var runningProcess = await kernelProcess.StartAsync(
+            //    kernel,
+            //   new KernelProcessEvent()
+            //   {
+            //       Id = ProcessEvents.StartProcess,
+            //       Data = "Kij w dupie"
+            //   });
 
 
 
@@ -304,105 +335,137 @@ namespace PersonalWebApi.Services.Services.Qdrant
         [Experimental("SKEXP0050")]  // for SemanticKernelTextChunker
         public async Task<Guid> AddAsync(IFormFile document, Guid conversationUuid, int maxTokensPerLine=200, int maxSummaryCharacters = 100)
         {
-            await test();
+            //await test();
 
             var fileUuid = Guid.NewGuid();
 
-            //_blobStorage.SetContainer("qdrant");
 
-            Kernel kernel = new AgentCollection(_configuration).AddOpenAIChatCompletion();
-            ProcessBuilder process = new("ChatBot");
+            ProcessBuilder process = new("QdrantAction");
             var uploadSourceFileToStorageStep = process.AddStepFromType<FileStorageStep>();
-            //var doSomeWorkStep = process.AddStepFromType<NextSteps>();
-            // Define the process flow
-            process 
+            var reader = process.AddStepFromType<DocumentReaderStep>();
+            var chunker = process.AddStepFromType<TextChunkerStep>();
+            //var tagify = process.AddStepFromType<TagifyStep>();
+            var qdrant = process.AddStepFromType<QdrantStep>();
+
+            process
                 .OnInputEvent(ProcessEvents.StartProcess)
-                .SendEventTo(new ProcessFunctionTargetBuilder(uploadSourceFileToStorageStep));
+                .SendEventTo(new ProcessFunctionTargetBuilder(uploadSourceFileToStorageStep, nameof(FileStorageFunctions.UploadIFormFile)));
+
+            uploadSourceFileToStorageStep.OnEvent(FileStorageEvents.Uploaded)
+                .SendEventTo(new ProcessFunctionTargetBuilder(reader, parameterName: "uri"));
+
+            reader.OnEvent(DocumentReaderStepOutputEvents.Readed)
+                .SendEventTo(new ProcessFunctionTargetBuilder(chunker, parameterName: "content"));
+
+            chunker.OnEvent(TextChunkerStepOutputEvents.Chunked)
+                .SendEventTo(new ProcessFunctionTargetBuilder(qdrant, parameterName: "chunks"));
 
             KernelProcess kernelProcess = process.Build();
+
             using var runningProcess = await kernelProcess.StartAsync(
-                kernel,
+                _kernel,
                new KernelProcessEvent()
                {
                    Id = ProcessEvents.StartProcess,
-                   Data = null
+                   Data = new FileStorageIFormFileStepItem(document, true, fileUuid)
                });
 
+            //_blobStorage.SetContainer("qdrant");
+
+            //Kernel kernel = new AgentCollection(_configuration).AddOpenAIChatCompletion();
+            //ProcessBuilder process = new("ChatBot");
+            //var uploadSourceFileToStorageStep = process.AddStepFromType<FileStorageStep>();
+            ////var doSomeWorkStep = process.AddStepFromType<NextSteps>();
+            //// Define the process flow
+            //process 
+            //    .OnInputEvent(ProcessEvents.StartProcess)
+            //    .SendEventTo(new ProcessFunctionTargetBuilder(uploadSourceFileToStorageStep));
+
+            //KernelProcess kernelProcess = process.Build();
+            //using var runningProcess = await kernelProcess.StartAsync(
+            //    kernel,
+            //   new KernelProcessEvent()
+            //   {
+            //       Id = ProcessEvents.StartProcess,
+            //       Data = null
+            //   });
 
 
 
-            var uri = await _blobStorage.UploadToContainerAsync(document, _overwrite, fileId: fileUuid.ToString());
+
+            //var uri = await _blobStorage.UploadToContainerAsync(Guid.NewGuid(), document, _overwrite);
             
-            var reader = await _documentReaderDocx.ReadAsync(uri);
+            //var reader = await _documentReaderDocx.ReadAsync(uri);
 
-            var chunker = new SemanticKernelTextChunker(_modelEmbedding);
-            var chunks = chunker.ChunkText(conversationUuid.ToString(), maxTokensPerLine, reader);
+            //var chunker = new SemanticKernelTextChunker();
+            //chunker.Setup("text-embedding-3-small");
+            //var chunks = chunker.ChunkText(maxTokensPerLine, reader);
 
 
-            var chat = _kernel.GetRequiredService<IChatCompletionService>();
+            //var chat = _kernel.GetRequiredService<IChatCompletionService>();
 
-            string authorName = DocumentReaderBase.GetAuthorNameFromDocument(document);
+            //string authorName = DocumentReaderBase.GetAuthorNameFromDocument(document);
 
-            await _qdrantApi.CheckCollectionExists(_qdrantCollectionName);
+            //await _qdrantApi.CheckCollectionExists(_qdrantCollectionName);
 
-            var tasks = chunks.Select(async chunk =>
-            {
+            //var tasks = chunks.Select(async chunk =>
+            //{
 
-                var tagAsString = await chat.GetChatMessageContentAsync(
-                    @$"""Generate tags for the following text in a comma-separated list format.
+            //    var tagAsString = await chat.GetChatMessageContentAsync(
+            //        @$"""Generate tags for the following text in a comma-separated list format.
 
-                    <text>
-                    {chunk.line}
-                    </text>
+            //        <text>
+            //        {chunk.line}
+            //        </text>
 
-                    Output must be a comma-separated list of tags. If there are no tags, return an empty list.
+            //        Output must be a comma-separated list of tags. If there are no tags, return an empty list.
 
-                    <output>
-                    tag1, tag2
-                    </output>
+            //        <output>
+            //        tag1, tag2
+            //        </output>
 
-                    """);
+            //        """);
 
-                var summary = await chat.GetChatMessageContentAsync(
-                    $@"""
+            //    var summary = await chat.GetChatMessageContentAsync(
+            //        $@"""
 
-                    Summarize the following text in no more than {maxSummaryCharacters} characters for use in a vector database. 
-                    The summary must remain in the same language as the original text, focusing on semantic clarity and key ideas that 
-                    can aid similarity search. 
+            //        Summarize the following text in no more than {maxSummaryCharacters} characters for use in a vector database. 
+            //        The summary must remain in the same language as the original text, focusing on semantic clarity and key ideas that 
+            //        can aid similarity search. 
                         
-                    <text> 
-                    {chunk.line}    
-                    </text>
+            //        <text> 
+            //        {chunk.line}    
+            //        </text>
 
-                    """);
+            //        """);
 
-                var tagList = tagAsString.Content.Split(", ").ToList();
+            //    var tagList = tagAsString.Content.Split(", ").ToList();
 
-                var uploadedBy = _userClaimsPrincipal?.FindFirstValue(ClaimTypes.Name) ?? ClaimTypes.Anonymous;
+            //    var uploadedBy = _userClaimsPrincipal?.FindFirstValue(ClaimTypes.Name) ?? ClaimTypes.Anonymous;
 
-                await _qdrantApi.AddEmbeddingToQdrantAsync(Guid.NewGuid(), _qdrantCollectionName, chunk.line, new Dictionary<string, object>
-                {
-                    { "Title", Path.GetFileNameWithoutExtension(document.FileName) },
-                    { "Author", authorName },
-                    { "Text", chunk.line },
-                    { "CreatedAt", DateTime.Now.ToString("o") },
-                    { "UploadedBy", uploadedBy },
-                    { "SourceFileName", document.FileName },
-                    { "ConversationId", conversationUuid },
-                    { "BlobUri", uri.ToString() },
-                    { "FileId", fileUuid.ToString() },
-                    { "MimeType", document.ContentType },
-                    { "Tags", string.Join(", ", tagList) },
-                    { "Summary", summary.Content },
-                    { "EmbeddingModel", _modelEmbedding },
-                    { "StartPosition", chunk.startPosition },
-                    { "EndPosition", chunk.endPosition },
-                    { "DataType", QdrantDataType.Document }
-                });
+            //    await _qdrantApi.AddEmbeddingToQdrantAsync(Guid.NewGuid(), _qdrantCollectionName, chunk.line, new Dictionary<string, object>
+            //    {
+            //        { "Title", Path.GetFileNameWithoutExtension(document.FileName) },
+            //        { "Author", authorName },
+            //        { "Text", chunk.line },
+            //        { "CreatedAt", DateTime.Now.ToString("o") },
+            //        { "UploadedBy", uploadedBy },
+            //        { "SourceFileName", document.FileName },
+            //        { "ConversationId", conversationUuid },
+            //        { "BlobUri", uri.ToString() },
+            //        { "FileId", fileUuid.ToString() },
+            //        { "MimeType", document.ContentType },
+            //        { "Tags", string.Join(", ", tagList) },
+            //        { "Summary", summary.Content },
+            //        { "EmbeddingModel", _modelEmbedding },
+            //        { "StartPosition", chunk.startPosition },
+            //        { "EndPosition", chunk.endPosition },
+            //        { "DataType", QdrantDataType.Document }
+            //    });
 
-            });
+            //});
 
-            await Task.WhenAll(tasks);
+            //await Task.WhenAll(tasks);
 
             return fileUuid;
         }
