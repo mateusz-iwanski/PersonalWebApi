@@ -16,6 +16,9 @@ using PersonalWebApi.Agent;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
 using PersonalWebApi.Agent.SemanticKernel.Plugins.DataGathererPlugin;
 using Microsoft.SemanticKernel.Process.Runtime;
+using PersonalWebApi.Services.Qdrant.Processes;
+using DocumentFormat.OpenXml.Wordprocessing;
+using PersonalWebApi.Services.Qdrant.Processes.Steps;
 
 namespace PersonalWebApi.Services.Services.Qdrant
 {
@@ -55,17 +58,16 @@ namespace PersonalWebApi.Services.Services.Qdrant
 
             //_userClaimsPrincipal = httpContextAccessor.HttpContext?.User ?? throw new ArgumentNullException(nameof(httpContextAccessor.HttpContext.User));
 
-            _collectionName = _configuration.GetSection("Qdrant:FileCollection:Name").Value ??
-               throw new SettingsException("Qdrant:FileCollection:Name not exists in appsettings");
+            _collectionName = _configuration.GetSection("Qdrant:Container:Name").Value ?? throw new SettingsException("Qdrant:Container:defaultName not exists");
 
-            var collectionDistance = _configuration.GetSection("Qdrant:FileCollection:Distance").Value ??
-                throw new SettingsException("Qdrant:FileCollection:Distance not exists in appsettings");
+            var collectionDistance = _configuration.GetSection("Qdrant:Container:Distance").Value ??
+                throw new SettingsException("Qdrant:Container:Distance not exists in appsettings");
 
-            var collectionSize = ulong.Parse(_configuration.GetSection("Qdrant:FileCollection:Size").Value ??
-                throw new SettingsException("Qdrant:FileCollection:Size not exists in appsettings"));
+            var collectionSize = ulong.Parse(_configuration.GetSection("Qdrant:Container:Size").Value ??
+                throw new SettingsException("Qdrant:Container:Size not exists in appsettings"));
 
-            var modelEmbedding = _configuration.GetSection("Qdrant:FileCollection:OpenAiModelEmbedding").Value ??
-                throw new SettingsException("Qdrant:FileCollection:OpenAiModelEmbedding not exists in appsettings");
+            var modelEmbedding = _configuration.GetSection("Qdrant:Container:OpenAiModelEmbedding").Value ??
+                throw new SettingsException("Qdrant:Container:OpenAiModelEmbedding not exists in appsettings");
 
             var modelApiKey = _configuration.GetSection("OpenAI:Access:ApiKey").Value ??
                 throw new SettingsException("OpenAI:Access:ApiKey not exists in appsettings");
@@ -131,55 +133,148 @@ namespace PersonalWebApi.Services.Services.Qdrant
             _qdrantApi = new QdrantApi(_embeddingOpenAi, qdrantUri, qdrantApiKey, _qdrantCollectionSize, qdrantCollectionDistance);
         }
 
-        public static class ProcessEvents
-        {
-            public const string StartProcess = nameof(StartProcess);
-        }
-
         [Experimental("SKEXP0080")]
         public async Task test()
         {
-            Kernel kernel = new AgentCollection(_configuration).AddOpenAIChatCompletion();
-            //IChatCompletionService chatCompletionService = kernel.GetRequiredService<IChatCompletionService>();
-            // To enable manual function invocation, set the `autoInvoke` parameter to `false`.
-            KernelPlugin getTag = kernel.ImportPluginFromType<TagCollectorPlugin>();
+            //Kernel kernel = new AgentCollection(_configuration).AddOpenAIChatCompletion();
+            ////IChatCompletionService chatCompletionService = kernel.GetRequiredService<IChatCompletionService>();
+            //// To enable manual function invocation, set the `autoInvoke` parameter to `false`.
+            //KernelPlugin getTag = kernel.ImportPluginFromType<TagCollectorPlugin>();
 
-            var k = new PromptExecutionSettings() { ModelId = "defasssult" };
+            //var k = new PromptExecutionSettings() { ModelId = "defasssult" };
 
 
-            FunctionResult summary = await kernel.InvokeAsync(
-                    getTag["generate_tag_for_text_content"], new KernelArguments(k) { ["textContent"] = "samochód to fajny pojazd" });
+            //FunctionResult summary = await kernel.InvokeAsync(
+            //        getTag["generate_tag_for_text_content"], new KernelArguments(k) { ["textContent"] = "samochód to fajny pojazd" });
 
-            // Use the ToString() method to get the result as a string
-            string resultString = summary.ToString();
+            //// Use the ToString() method to get the result as a string
+            //string resultString = summary.ToString();
 
-            foreach (var item in summary.GetValue<List<string>>())
-            {
-                Console.WriteLine(item);
-            }
+            //foreach (var item in summary.GetValue<List<string>>())
+            //{
+            //    Console.WriteLine(item);
+            //}
 
-            //
+
+            //ProcessBuilder process = new("AdvancedChatBot");
+
+            //var introStep = process.AddStepFromType<IntroStep>();
+            //var userInputStep = process.AddStepFromType<UserInputStep>();
+            //var responseStep = process.AddStepFromType<ChatBotResponseStep>();
+            //var exitStep = process.AddStepFromType<ExitStep>();
+
+            //// Start with the intro step
+            //process.OnInputEvent(ChatBotEvents.StartProcess)
+            //    .SendEventTo(new ProcessFunctionTargetBuilder(introStep));  // 3 - IntroStep.PrintIntroMessage
+
+            //// After intro, proceed to user input
+            //introStep.OnFunctionResult(nameof(IntroStep.PrintIntroMessage))
+            //    .SendEventTo(new ProcessFunctionTargetBuilder(userInputStep));  // 1 - inicjalizacja UserInputState  UserInputStep : KernelProcessStep<UserInputState>
+
+            //// When user input is received, process it
+            //userInputStep.OnEvent(ChatBotEvents.UserInputReceived)
+            //    .SendEventTo(new ProcessFunctionTargetBuilder(responseStep, parameterName: "userMessage"));  // 2 - inicjalizacja ChatBotState ChatBotResponseStep : KernelProcessStep<ChatBotState>
+
+            //// After bot response, loop back to user input
+            //responseStep.OnEvent(ChatBotEvents.ResponseGenerated)
+            //    .SendEventTo(new ProcessFunctionTargetBuilder(userInputStep));  // ublic override ValueTask ActivateAsync(KernelProcessStepState<UserInputState> state)
+
+            //// Handle exit event
+            //userInputStep.OnEvent(ChatBotEvents.Exit)
+            //    .SendEventTo(new ProcessFunctionTargetBuilder(exitStep));
+
+            //// Stop process after exit step
+            //exitStep.OnFunctionResult(nameof(ExitStep.HandleExit))
+            //    .StopProcess();
+
+            //KernelProcess kernelProcess = process.Build();  // ## 0
+
+            //await kernelProcess.StartAsync(kernel, new KernelProcessEvent { Id = ChatBotEvents.StartProcess });
+
+            ///////
+
+            //ProcessBuilder process = new("ChatBot");
+            //var startStep = process.AddStepFromType<Steps>();
+            ////var doSomeWorkStep = process.AddStepFromType<NextSteps>();
+            //// Define the process flow
+            //process
+            //    .OnInputEvent(ProcessEvents.StartProcess)
+            //    .SendEventTo(new ProcessFunctionTargetBuilder(startStep, functionName: Steps.Functions.MyExecute, "i"));
+
+            //KernelProcess kernelProcess = process.Build();
+
+            //using var runningProcess = await kernelProcess.StartAsync(
+            //    kernel,
+            //   new KernelProcessEvent()
+            //   {
+            //       Id = ProcessEvents.StartProcess,
+            //       Data = null
+            //   });
+
 
             ProcessBuilder process = new("ChatBot");
-            var startStep = process.AddStepFromType<Steps>();
-            var doSomeWorkStep = process.AddStepFromType<NextSteps>();
+            var introStep = process.AddStepFromType<TestIntroStep>();
+            var startStep = process.AddStepFromType<TestStepsOne>();
+            var stopStep = process.AddStepFromType<TestSteps2>();
             // Define the process flow
+            Kernel kernel = new AgentCollection(_configuration).AddOpenAIChatCompletion();
+
+            const string SetMessage = nameof(SetMessage);
+
+            //process
+            //   .OnInputEvent(ChatBotEvents.StartProcess)
+            //   .SendEventTo(new ProcessFunctionTargetBuilder(introStep));
+
             process
-                .OnInputEvent(ProcessEvents.StartProcess)
-                .SendEventTo(new ProcessFunctionTargetBuilder(startStep));
+                .OnInputEvent(ChatBotEvents.StartProcess)
+                .SendEventTo(new ProcessFunctionTargetBuilder(introStep, nameof(TestIntroStep.PrintIntroMessage)));
+
+            introStep
+                .OnFunctionResult(nameof(TestIntroStep.PrintIntroMessage))
+                .SendEventTo(new ProcessFunctionTargetBuilder(introStep, nameof(SetMessage)));
+
+             
+
+            introStep
+                .OnEvent(ChatBotEvents2.UserInputReceived)
+                .SendEventTo(new ProcessFunctionTargetBuilder(startStep, parameterName: "userMessage"));
+
+            //process
+            //    .OnFunctionResult(nameof(TestIntroStep.PrintIntroMessage))
+            //    .SendEventTo(new ProcessFunctionTargetBuilder(introStep));
+
+
+            //process
+            //    .OnFunctionResult(nameof(TestIntroStep.PrintIntroMessage))
+            //    .SendEventTo(new ProcessFunctionTargetBuilder(stopStep, nameof(TestSteps2.MyExecute), "message"));
+
+            //process.OnFunctionResult(nameof(ChatBotEvents2.Exit)).SendEventTo(new ProcessFunctionTargetBuilder(exitStep));
+            //   .StopProcess(); 
 
             KernelProcess kernelProcess = process.Build();
+
             using var runningProcess = await kernelProcess.StartAsync(
                 kernel,
                new KernelProcessEvent()
                {
                    Id = ProcessEvents.StartProcess,
-                   Data = null
+                   Data = "Kij w dupie"
                });
 
 
 
         }
+
+        /// <summary>
+        /// The state object for the <see cref="ScriptedUserInputStep"/>
+        /// </summary>
+        public record UserInputState
+        {
+            public List<string> UserInputs { get; init; } = [];
+
+            public int CurrentInputIndex { get; set; } = 0;
+        }
+
 
         /// <summary>
         /// Asynchronously adds a file to the Qdrant database.
@@ -213,13 +308,36 @@ namespace PersonalWebApi.Services.Services.Qdrant
 
             var fileUuid = Guid.NewGuid();
 
-            _blobStorage.SetContainer("qdrant");
+            //_blobStorage.SetContainer("qdrant");
+
+            Kernel kernel = new AgentCollection(_configuration).AddOpenAIChatCompletion();
+            ProcessBuilder process = new("ChatBot");
+            var uploadSourceFileToStorageStep = process.AddStepFromType<FileStorageStep>();
+            //var doSomeWorkStep = process.AddStepFromType<NextSteps>();
+            // Define the process flow
+            process 
+                .OnInputEvent(ProcessEvents.StartProcess)
+                .SendEventTo(new ProcessFunctionTargetBuilder(uploadSourceFileToStorageStep));
+
+            KernelProcess kernelProcess = process.Build();
+            using var runningProcess = await kernelProcess.StartAsync(
+                kernel,
+               new KernelProcessEvent()
+               {
+                   Id = ProcessEvents.StartProcess,
+                   Data = null
+               });
+
+
+
 
             var uri = await _blobStorage.UploadToContainerAsync(document, _overwrite, fileId: fileUuid.ToString());
+            
             var reader = await _documentReaderDocx.ReadAsync(uri);
 
             var chunker = new SemanticKernelTextChunker(_modelEmbedding);
             var chunks = chunker.ChunkText(conversationUuid.ToString(), maxTokensPerLine, reader);
+
 
             var chat = _kernel.GetRequiredService<IChatCompletionService>();
 
