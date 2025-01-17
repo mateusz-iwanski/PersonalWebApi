@@ -59,7 +59,7 @@ namespace PersonalWebApi.Models.Models.SemanticKernel
         /// This method returns the name of the container where chat message content records are stored.
         /// </summary>
         /// <returns>The name of the container.</returns>
-        public static string ContainerNameStatic() => "history-chat-persisistence-messages";
+        public static string ContainerNameStatic() => "history-chat-persistence-messages";
 
         /// <summary>
         /// Gets the static partition key name for the Cosmos DB.
