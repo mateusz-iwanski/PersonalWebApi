@@ -9,6 +9,8 @@ using OpenTelemetry.Metrics;
 using PersonalWebApi.Agent.SemanticKernel.Observability;
 using PersonalWebApi.Services.Services.History;
 using PersonalWebApi.Services.NoSQLDB;
+using PersonalWebApi.Utilities.Utilities.DocumentReaders;
+using PersonalWebApi.Services.FileStorage;
 
 namespace PersonalWebApi.Extensions
 {
@@ -59,9 +61,11 @@ namespace PersonalWebApi.Extensions
                 // Register IHttpContextAccessor early
                 kernelBuilder.Services.AddHttpContextAccessor();
 
-
-
                 //kernelBuilder.Services.AddSingleton<IConfiguration>(builder.Configuration);
+
+                kernelBuilder.Services.AddScoped<IFileStorageService, AzureBlobStorageService>();
+
+                kernelBuilder.Services.AddScoped<IDocumentReaderDocx, DocumentReaderDocx>();
 
                 kernelBuilder.Services.AddScoped<INoSqlDbService, AzureCosmosDbService>();
 
@@ -69,6 +73,8 @@ namespace PersonalWebApi.Extensions
 
                 // Add the RenderedPromptFilterHandler as a service
                 kernelBuilder.Services.AddScoped<IPromptRenderFilter, RenderedPromptFilterHandler>();
+
+               
 
                 return kernelBuilder.Build();
             });
