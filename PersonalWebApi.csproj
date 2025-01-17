@@ -72,6 +72,7 @@
     <Folder Include="Processes\" />
     <Folder Include="Services\Telemetry\" />
     <Folder Include="Services\Document\" />
+    <Folder Include="Utilities\Models\" />
   </ItemGroup>
 
   <ItemGroup>

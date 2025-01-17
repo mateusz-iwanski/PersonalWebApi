@@ -8,13 +8,13 @@ using Microsoft.SemanticKernel.Text;
 using Newtonsoft.Json;
 using SQLitePCL;
 
-namespace PersonalWebApi.Utilities.Utilities.Models
+namespace PersonalWebApi.Services.Agent
 {
     /// <summary>
     /// Provides functionality to chunk text into smaller segments based on token count.
     /// </summary>
     [Experimental("SKEXP0050")]
-    public class SemanticKernelTextChunker
+    public class SemanticKernelTextChunker : ITextChunker
     {
         private readonly Tokenizer _tokenizer;
 

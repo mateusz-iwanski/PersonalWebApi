@@ -1,6 +1,6 @@
 ﻿using Microsoft.SemanticKernel;
+using PersonalWebApi.Services.Agent;
 using PersonalWebApi.Utilities.Utilities.DocumentReaders;
-using PersonalWebApi.Utilities.Utilities.Models;
 using System.Diagnostics.CodeAnalysis;
 
 namespace PersonalWebApi.Services.Qdrant.Processes.Steps
