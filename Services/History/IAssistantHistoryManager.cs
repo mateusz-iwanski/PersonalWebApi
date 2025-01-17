@@ -7,5 +7,6 @@ namespace PersonalWebApi.Services.Services.History
     {
         Task<List<T>> LoadAsync<T>(Guid conversationUuid) where T : CosmosDbDtoBase;
         Task<T> SaveAsync<T>(T historyDto) where T : CosmosDbDtoBase;
+        Task<List<T>> LoadItemsAsync<T>(Dictionary<string, object> fieldCriteria) where T : CosmosDbDtoBase;
     }
 }
