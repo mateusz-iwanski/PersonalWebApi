@@ -10,10 +10,16 @@ namespace PersonalWebApi.Services.FileStorage
     [Experimental("SKEXP0080")]
     public sealed class NextSteps : KernelProcessStep
     {
+        //[KernelFunction]
+        //public async ValueTask ExecuteAsync(KernelProcessStepContext context, int i)
+        //{
+        //    Debug.WriteLine($"Step {i} - Doing Some Work...\n");
+        //}
+
         [KernelFunction]
         public async ValueTask ExecuteAsync(KernelProcessStepContext context)
         {
-            Debug.WriteLine("Step 2 - Doing Some Work...\n");
+            Debug.WriteLine($"Step 2 - Doing Some Work...\n");
         }
     }
 }
