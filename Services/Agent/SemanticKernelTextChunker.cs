@@ -6,18 +6,12 @@ using System.Threading.Tasks;
 using Microsoft.ML.Tokenizers;
 using Microsoft.SemanticKernel.Text;
 using Newtonsoft.Json;
+using PersonalWebApi.Processes.Qdrant.Models;
 using SQLitePCL;
 
 namespace PersonalWebApi.Services.Agent
 {
-    /// <summary>
-    /// Represents a chunk of text with metadata.
-    /// </summary>
-    /// <param name="conversationId">The ID of the conversation.</param>
-    /// <param name="startPosition">The start position of the chunk in the original text.</param>
-    /// <param name="endPosition">The end position of the chunk in the original text.</param>
-    /// <param name="line">The chunked line of text.</param>
-    public record StringChunkerFormat(int startPosition, int endPosition, string line);
+    
 
     /// <summary>
     /// Provides functionality to chunk text into smaller segments based on token count.
@@ -65,13 +59,13 @@ namespace PersonalWebApi.Services.Agent
         /// <remarks>
         /// This method splits the text into lines where each line contains a maximum number of tokens specified by <paramref name="maxTokensPerLine"/>.
         /// </remarks>
-        public List<StringChunkerFormat> ChunkText(int maxTokensPerLine, string text)
+        public List<DocumentChunkerDto> ChunkText(int maxTokensPerLine, string text)
         {
             if (IsSetup() == false) throw new InvalidOperationException("The TextChunker is not initialized. Call Setup method first.");
 
             var lines = getChunk(text, maxTokensPerLine);
 
-            var result = new List<StringChunkerFormat>();
+            var result = new List<DocumentChunkerDto>();
 
             int startPosition = 0;
 
@@ -79,7 +73,12 @@ namespace PersonalWebApi.Services.Agent
             {
                 int endPosition = startPosition + line.Length;
                 result.Add(
-                    new StringChunkerFormat(startPosition, endPosition, line)
+                    new DocumentChunkerDto()
+                    {
+                        StartPosition = startPosition,
+                        EndPosition = endPosition,
+                        Content = line
+                    }
                 );
 
                 startPosition = endPosition + 1; // +1 to account for the newline character
