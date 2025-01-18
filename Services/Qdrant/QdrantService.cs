@@ -15,12 +15,19 @@ using PersonalWebApi.Agent;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
 using PersonalWebApi.Agent.SemanticKernel.Plugins.DataGathererPlugin;
 using Microsoft.SemanticKernel.Process.Runtime;
-using PersonalWebApi.Services.Qdrant.Processes;
 using DocumentFormat.OpenXml.Wordprocessing;
-using PersonalWebApi.Services.Qdrant.Processes.Steps;
 using PersonalWebApi.Services.Agent;
 using System;
 using Microsoft.EntityFrameworkCore.Storage;
+using PersonalWebApi.Processes.FileStorage.Steps;
+using PersonalWebApi.Processes.Document.Steps;
+using PersonalWebApi.Processes.Qdrant.Events;
+using PersonalWebApi.Processes.Qdrant.Pipelines;
+using iText.Commons.Utils;
+using static Microsoft.KernelMemory.Constants.CustomContext;
+using YamlDotNet.Core;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Azure.Cosmos.Linq;
 
 namespace PersonalWebApi.Services.Services.Qdrant
 {
@@ -28,9 +35,6 @@ namespace PersonalWebApi.Services.Services.Qdrant
     {
         private readonly string _collectionName;
 
-        private readonly IFileStorageService _blobStorage;
-        private readonly IDocumentReaderDocx _documentReaderDocx;
-        private readonly Kernel _kernel;
         private readonly IEmbedding _embeddingOpenAi;
         private readonly IConfiguration _configuration;
 
@@ -43,19 +47,12 @@ namespace PersonalWebApi.Services.Services.Qdrant
 
 
         public QdrantService(
-            Kernel kernel,
-            IFileStorageService blobStorageService,
-            IDocumentReaderDocx documentReaderDocx,
             IEmbedding embeddingOpenAi,
             IConfiguration configuration
-            //IHttpContextAccessor httpContextAccessor
             )
         {
             _configuration = configuration;
 
-            _blobStorage = blobStorageService;
-            _documentReaderDocx = documentReaderDocx;
-            _kernel = kernel;
             _embeddingOpenAi = embeddingOpenAi;
 
             //_userClaimsPrincipal = httpContextAccessor.HttpContext?.User ?? throw new ArgumentNullException(nameof(httpContextAccessor.HttpContext.User));
@@ -138,7 +135,7 @@ namespace PersonalWebApi.Services.Services.Qdrant
         [Experimental("SKEXP0080")]
         public async Task test()
         {
-            //Kernel kernel = new AgentCollection(_configuration).AddOpenAIChatCompletion();
+            //Kernel kernel = new AgentRouter(_configuration).AddOpenAIChatCompletion();
             ////IChatCompletionService chatCompletionService = kernel.GetRequiredService<IChatCompletionService>();
             //// To enable manual function invocation, set the `autoInvoke` parameter to `false`.
             //KernelPlugin getTag = kernel.ImportPluginFromType<TagCollectorPlugin>();
@@ -200,7 +197,7 @@ namespace PersonalWebApi.Services.Services.Qdrant
             ////var doSomeWorkStep = process.AddStepFromType<NextSteps>();
             //// Define the process flow
             //process
-            //    .OnInputEvent(ProcessEvents.StartProcess)
+            //    .OnInputEvent(QdrantEvents.StartProcess)
             //    .SendEventTo(new ProcessFunctionTargetBuilder(startStep, functionName: Steps.Functions.MyExecute, "i"));
 
             //KernelProcess kernelProcess = process.Build();
@@ -209,7 +206,7 @@ namespace PersonalWebApi.Services.Services.Qdrant
             //    kernel,
             //   new KernelProcessEvent()
             //   {
-            //       Id = ProcessEvents.StartProcess,
+            //       Id = QdrantEvents.StartProcess,
             //       Data = null
             //   });
             //#################
@@ -221,10 +218,10 @@ namespace PersonalWebApi.Services.Services.Qdrant
             //var qdrant = process.AddStepFromType<QdrantStep>();
 
             //process
-            //    .OnInputEvent(ProcessEvents.StartProcess)
+            //    .OnInputEvent(QdrantEvents.StartProcess)
             //    .SendEventTo(new ProcessFunctionTargetBuilder(uploadSourceFileToStorageStep, nameof(FileStorageFunctions.UploadIFormFile)));
 
-            //uploadSourceFileToStorageStep.OnEvent(FileStorageEvents.Uploaded)
+            //uploadSourceFileToStorageStep.OnEvent(FileEvents.Uploaded)
             //    .SendEventTo(new ProcessFunctionTargetBuilder(reader, parameterName: "uri"));
 
             //reader.OnEvent(DocumentReaderStepOutputEvents.Readed)
@@ -239,7 +236,7 @@ namespace PersonalWebApi.Services.Services.Qdrant
             //    _kernel,
             //   new KernelProcessEvent()
             //   {
-            //       Id = ProcessEvents.StartProcess,
+            //       Id = QdrantEvents.StartProcess,
             //       Data = new FileStorageIFormFileStepItem()
             //   });
 
@@ -248,7 +245,7 @@ namespace PersonalWebApi.Services.Services.Qdrant
             //var startStep = process.AddStepFromType<TestStepsOne>();
             //var stopStep = process.AddStepFromType<TestSteps2>();
             //// Define the process flow
-            //Kernel kernel = new AgentCollection(_configuration).AddOpenAIChatCompletion();
+            //Kernel kernel = new AgentRouter(_configuration).AddOpenAIChatCompletion();
 
             //const string SetMessage = nameof(SetMessage);
 
@@ -288,7 +285,7 @@ namespace PersonalWebApi.Services.Services.Qdrant
             //    kernel,
             //   new KernelProcessEvent()
             //   {
-            //       Id = ProcessEvents.StartProcess,
+            //       Id = QdrantEvents.StartProcess,
             //       Data = "Kij w dupie"
             //   });
 
@@ -332,69 +329,25 @@ namespace PersonalWebApi.Services.Services.Qdrant
         /// }
         /// </code>
         /// </example>
-        [Experimental("SKEXP0050")]  // for SemanticKernelTextChunker
+
+
+
+        public async Task AddAsync(
+            string chunk,
+            Dictionary<string, string> metadata, 
+            Guid conversationUuid, 
+            Guid fileId
+            )
+        {
+            await _qdrantApi.CheckCollectionExists("personalagent");
+            await _qdrantApi.AddEmbeddingToQdrantAsync(_qdrantCollectionName, chunk, metadata);
+        }
+        
+        [Experimental("SKEXP0080")]  // for semantic kernel
         public async Task<Guid> AddAsync(IFormFile document, Guid conversationUuid, int maxTokensPerLine=200, int maxSummaryCharacters = 100)
         {
-            //await test();
-
-            var fileUuid = Guid.NewGuid();
-
-
-            ProcessBuilder process = new("QdrantAction");
-            var uploadSourceFileToStorageStep = process.AddStepFromType<FileStorageStep>();
-            var reader = process.AddStepFromType<DocumentReaderStep>();
-            var chunker = process.AddStepFromType<TextChunkerStep>();
-            //var tagify = process.AddStepFromType<TagifyStep>();
-            var qdrant = process.AddStepFromType<QdrantStep>();
-
-            process
-                .OnInputEvent(ProcessEvents.StartProcess)
-                .SendEventTo(new ProcessFunctionTargetBuilder(uploadSourceFileToStorageStep, nameof(FileStorageFunctions.UploadIFormFile)));
-
-            uploadSourceFileToStorageStep.OnEvent(FileStorageEvents.Uploaded)
-                .SendEventTo(new ProcessFunctionTargetBuilder(reader, parameterName: "uri"));
-
-            reader.OnEvent(DocumentReaderStepOutputEvents.Readed)
-                .SendEventTo(new ProcessFunctionTargetBuilder(chunker, parameterName: "content"));
-
-            chunker.OnEvent(TextChunkerStepOutputEvents.Chunked)
-                .SendEventTo(new ProcessFunctionTargetBuilder(qdrant, parameterName: "chunks"));
-
-            KernelProcess kernelProcess = process.Build();
-
-            using var runningProcess = await kernelProcess.StartAsync(
-                _kernel,
-               new KernelProcessEvent()
-               {
-                   Id = ProcessEvents.StartProcess,
-                   Data = new FileStorageIFormFileStepItem(document, true, fileUuid)
-               });
-
-            //_blobStorage.SetContainer("qdrant");
-
-            //Kernel kernel = new AgentCollection(_configuration).AddOpenAIChatCompletion();
-            //ProcessBuilder process = new("ChatBot");
-            //var uploadSourceFileToStorageStep = process.AddStepFromType<FileStorageStep>();
-            ////var doSomeWorkStep = process.AddStepFromType<NextSteps>();
-            //// Define the process flow
-            //process 
-            //    .OnInputEvent(ProcessEvents.StartProcess)
-            //    .SendEventTo(new ProcessFunctionTargetBuilder(uploadSourceFileToStorageStep));
-
-            //KernelProcess kernelProcess = process.Build();
-            //using var runningProcess = await kernelProcess.StartAsync(
-            //    kernel,
-            //   new KernelProcessEvent()
-            //   {
-            //       Id = ProcessEvents.StartProcess,
-            //       Data = null
-            //   });
-
-
-
-
             //var uri = await _blobStorage.UploadToContainerAsync(Guid.NewGuid(), document, _overwrite);
-            
+
             //var reader = await _documentReaderDocx.ReadAsync(uri);
 
             //var chunker = new SemanticKernelTextChunker();
@@ -432,7 +385,7 @@ namespace PersonalWebApi.Services.Services.Qdrant
             //        Summarize the following text in no more than {maxSummaryCharacters} characters for use in a vector database. 
             //        The summary must remain in the same language as the original text, focusing on semantic clarity and key ideas that 
             //        can aid similarity search. 
-                        
+
             //        <text> 
             //        {chunk.line}    
             //        </text>
@@ -453,7 +406,7 @@ namespace PersonalWebApi.Services.Services.Qdrant
             //        { "SourceFileName", document.FileName },
             //        { "ConversationId", conversationUuid },
             //        { "BlobUri", uri.ToString() },
-            //        { "FileId", fileUuid.ToString() },
+            //        { "FileId", "" },
             //        { "MimeType", document.ContentType },
             //        { "Tags", string.Join(", ", tagList) },
             //        { "Summary", summary.Content },
@@ -467,8 +420,17 @@ namespace PersonalWebApi.Services.Services.Qdrant
 
             //await Task.WhenAll(tasks);
 
+            var fileUuid = Guid.NewGuid();
+
+            //QdrantPipelines qdrantPipelines = new QdrantPipelines();
+            //await qdrantPipelines.Add(
+            //    _kernel,
+            //    new FileStorageIFormFileStepItem(document, true, fileUuid)
+            //    );
+
             return fileUuid;
         }
+
 
         /// <summary>
         /// Asynchronously searches for similar vectors in a Qdrant collection.
@@ -492,40 +454,27 @@ namespace PersonalWebApi.Services.Services.Qdrant
         /// }
         /// </code>
         /// </example>
-        public async Task<List<QdrantFileSearchResultType>> SearchAsync(List<string> queries, Dictionary<string, string> filter = null, int limit = 5)
+        public async Task<List<Dictionary<string, object>>> SearchAsync(List<string> queries, Dictionary<string, string> filter = null, int limit = 5)
         {
             var searchResults = await Task.WhenAll(queries.Select(query =>
                 _qdrantApi.SearchAsync(_collectionName, query, filter, limit)
             ));
 
-            var results = new List<QdrantFileSearchResultType>();
+            var results = new List<Dictionary<string, object>>();
 
             foreach (var result in searchResults.SelectMany(r => r))
             {
-                var searchResult = new QdrantFileSearchResultType
+                var payload = result.Payload.ToDictionary(
+                kvp => kvp.Key,
+                    kvp => kvp.Value ?? ""
+                );
+
+                var searchResult = new Dictionary<string, object>
                 {
-                    Id = result.Id.Uuid,
-                    Payload = new QdrantFilePayloadType
-                    {
-                        BlobUri = result.Payload["BlobUri"].StringValue,
-                        Text = result.Payload["Text"].StringValue,
-                        ConversationId = result.Payload["ConversationId"].StringValue,
-                        EndPosition = result.Payload["EndPosition"].StringValue,
-                        UploadedBy = result.Payload["UploadedBy"].StringValue,
-                        EmbeddingModel = result.Payload["EmbeddingModel"].StringValue,
-                        StartPosition = result.Payload["StartPosition"].StringValue,
-                        Author = result.Payload["Author"].StringValue,
-                        FileName = result.Payload["SourceFileName"].StringValue,
-                        CreatedAt = result.Payload["CreatedAt"].StringValue,
-                        FileId = result.Payload["FileId"].StringValue,
-                        Summary = result.Payload["Summary"].StringValue,
-                        Tags = result.Payload["Tags"].StringValue,
-                        Title = result.Payload["Title"].StringValue,
-                        MimeType = result.Payload["MimeType"].StringValue,
-                        DataType = Enum.Parse<QdrantDataType>(result.Payload["DataType"].StringValue)
-                    },
-                    Score = result.Score,
-                    Version = result.Version.ToString()
+                    { "Id", result.Id.Uuid },
+                    { "Payload", payload },
+                    { "Score", result.Score },
+                    { "Version", result.Version.ToString() }
                 };
 
                 results.Add(searchResult);
