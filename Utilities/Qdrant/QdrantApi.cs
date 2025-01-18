@@ -59,7 +59,7 @@ namespace PersonalWebApi.Utilities.Utilities.Qdrant
         /// <param name="input">The input string to embed.</param>
         /// <param name="metadata">The metadata to associate with the point.</param>
         /// <returns>The result of the update operation.</returns>
-        public async Task<UpdateResult> AddEmbeddingToQdrantAsync(Guid pointId, string collectionName, string input, object metadata)
+        public async Task<UpdateResult> AddEmbeddingToQdrantAsync(string collectionName, string input, Dictionary<string, string> metadata)
         {
             await CheckCollectionExists(collectionName);
 
@@ -67,24 +67,23 @@ namespace PersonalWebApi.Utilities.Utilities.Qdrant
 
             var point = new PointStruct
             {
+                
                 Id = new PointId { Uuid = Guid.NewGuid().ToString() },
                 Vectors = new Vectors { Vector = new Vector { Data = { embeddedData.ToArray() } } }
             };
 
-            foreach (var kvp in (Dictionary<string, object>)metadata)
+            foreach (var kvp in metadata)
             {
-                var value = kvp.Value != null ? kvp.Value.ToString() : "";
-                point.Payload.Add(kvp.Key, new Value { StringValue = value });
+                point.Payload.Add(kvp.Key, new Value { StringValue = kvp.Value ?? "" });
             }
-
-            var points = new List<PointStruct> {
-                point,
-            };
+           
+            var points = new List<PointStruct> { point };
 
             var response = await _qdrantClient.UpsertAsync(collectionName, points);
 
             return response;
         }
+
 
         /// <summary>
         /// Deletes a collection from Qdrant.
