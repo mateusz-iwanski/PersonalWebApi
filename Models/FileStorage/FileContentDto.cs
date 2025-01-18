@@ -90,6 +90,9 @@ namespace PersonalWebApi.Models.FileStorage
 
         [JsonProperty(PropertyName = "userDescription")]
         public string UserDescription { get; set; } = string.Empty;
+        
+        [JsonProperty(PropertyName = "generatedDescription")]
+        public string GeneratedDescription { get; set; } = string.Empty;
 
         public FileContentDto(Guid conversationUuid, Guid sessionUuid, Guid fileId)
             : base(conversationUuid, sessionUuid)
