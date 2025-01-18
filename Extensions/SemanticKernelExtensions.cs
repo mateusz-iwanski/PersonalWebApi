@@ -11,6 +11,7 @@ using PersonalWebApi.Services.Services.History;
 using PersonalWebApi.Services.NoSQLDB;
 using PersonalWebApi.Utilities.Utilities.DocumentReaders;
 using PersonalWebApi.Services.FileStorage;
+using PersonalWebApi.Services.Services.Qdrant;
 
 namespace PersonalWebApi.Extensions
 {
@@ -58,17 +59,13 @@ namespace PersonalWebApi.Extensions
 
                 kernelBuilder.Services.AddSingleton<IConfiguration>(builder.Configuration);
 
-                // Register IHttpContextAccessor early
                 kernelBuilder.Services.AddHttpContextAccessor();
 
-                //kernelBuilder.Services.AddSingleton<IConfiguration>(builder.Configuration);
-
+                // register services
+                kernelBuilder.Services.AddScoped<IQdrantService, QdrantService>();
                 kernelBuilder.Services.AddScoped<IFileStorageService, AzureBlobStorageService>();
-
                 kernelBuilder.Services.AddScoped<IDocumentReaderDocx, DocumentReaderDocx>();
-
                 kernelBuilder.Services.AddScoped<INoSqlDbService, AzureCosmosDbService>();
-
                 kernelBuilder.Services.AddScoped<IAssistantHistoryManager, AssistantHistoryManager>();
 
                 // Add the RenderedPromptFilterHandler as a service
