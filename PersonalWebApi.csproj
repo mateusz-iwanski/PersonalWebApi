@@ -72,7 +72,7 @@
 
   <ItemGroup>
     <Folder Include="Controllers\KernelMemory\" />
-    <Folder Include="Processes\" />
+    <Folder Include="Processes\Document\Process\" />
     <Folder Include="Services\Telemetry\" />
     <Folder Include="Services\Document\" />
     <Folder Include="Utilities\Models\" />
