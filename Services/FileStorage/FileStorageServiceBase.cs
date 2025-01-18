@@ -3,11 +3,12 @@ using DocumentFormat.OpenXml.Bibliography;
 using iText.Commons.Utils;
 using PersonalWebApi.Models.FileStorage;
 using PersonalWebApi.Models.Storage;
+using PersonalWebApi.Processes.Document.Models;
+using PersonalWebApi.Processes.Qdrant.Pipelines;
 using PersonalWebApi.Services.FileStorage;
 using PersonalWebApi.Services.Services.History;
 using PersonalWebApi.Services.Services.Qdrant;
 using PersonalWebApi.Services.Services.System;
-using PersonalWebApi.Utilities.Document;
 
 /// <summary>
 /// Serves as a versatile and extensible foundation for file storage services, encapsulating 
@@ -31,7 +32,7 @@ public abstract class FileStorageServiceBase : IFileStorageService
     /// </summary>
     /// <param name="assistantHistoryManager">The assistant history manager for logging storage events.</param>
     /// <param name="httpContextAccessor">The HTTP context accessor for retrieving context information.</param>
-    protected FileStorageServiceBase(IAssistantHistoryManager assistantHistoryManager, IHttpContextAccessor httpContextAccessor)
+    protected FileStorageServiceBase(Kernel kernel,IAssistantHistoryManager assistantHistoryManager, IHttpContextAccessor httpContextAccessor)
     {
         _assistantHistoryManager = assistantHistoryManager;
         _httpContextAccessor = httpContextAccessor;
@@ -100,10 +101,10 @@ public abstract class FileStorageServiceBase : IFileStorageService
         };
 
 
-        FileContentDto fileContentMetadataDto = await FileMetadataCreator.CreateMetadataFromUrlAsync(fileUri, fileId, conversationUuid, sessionUuid);
+        //FileContentDto fileContentMetadataDto = await FileMetadataCreator.CreateMetadataFromUrlAsync(fileUri, fileId, conversationUuid, sessionUuid);
 
         await _assistantHistoryManager.SaveAsync(storageEvent);
-        await _assistantHistoryManager.SaveAsync(fileContentMetadataDto);
+        //await _assistantHistoryManager.SaveAsync(fileContentMetadataDto);
 
         return result;
     }
@@ -111,34 +112,13 @@ public abstract class FileStorageServiceBase : IFileStorageService
     /// <inheritdoc />
     public async Task<Uri> UploadToContainerAsync(Guid fileId, IFormFile file, bool overwrite = false, Dictionary<string, string>? metadata = null)
     {
-        //(Guid conversationUuid, Guid sessionUuid) = ContextAccessorReader.RetrieveCrucialUuid(_httpContextAccessor);
-        var conversationUuid = Guid.NewGuid();
-        var sessionUuid = Guid.NewGuid();
+        (Guid conversationUuid, Guid sessionUuid) = ContextAccessorReader.RetrieveCrucialUuid(_httpContextAccessor);
 
-        // file ID must be in metadata
-        if (!string.IsNullOrEmpty(fileId.ToString()))
-            if (metadata != null)
-                metadata["fileId"] = fileId.ToString();
-            else
-                metadata = new Dictionary<string, string> { { "fileId", fileId.ToString() } };
-
-        var serverUri = await UploadToContainerAsyncImpl(fileId, file, overwrite, metadata);
-
-        // Log the upload event
-        var storageEvent = new StorageEventsDto(conversationUuid, sessionUuid, fileId)
-        {
-            EventName = "upload",
-            ServiceName = "FileStore",
-            IsSuccess = true,
-            ActionType = "Upload",
-            FileUri = serverUri.AbsoluteUri,
-            ErrorMessage = string.Empty,
-        };
-
-        FileContentDto fileContentMetadataDto = await FileMetadataCreator.CreateMetadataFromFormFileAsync(file, fileId, conversationUuid, sessionUuid);
-
-        await _assistantHistoryManager.SaveAsync(storageEvent);
-        await _assistantHistoryManager.SaveAsync(fileContentMetadataDto);
+        QdrantPipelines qdrantPipelines = new QdrantPipelines();
+        await qdrantPipelines.Add(
+            _testConfig.Kernel,
+            new DocumentStepDto(fileId, file, conversationUuid, sessionUuid) { Overwrite = true }
+            );
 
         return serverUri;
     }
