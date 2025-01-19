@@ -41,7 +41,7 @@ namespace PersonalWebApi.Processes.FileStorage.Steps
                 );
 
             documentStepItem.Uri = uri;
-            documentStepItem.Events.Add("Uploaded on external server, look on Uri");
+            documentStepItem.Events.Add("Uploaded on external server");
 
             await context.EmitEventAsync(
                 new() 
