@@ -12,6 +12,9 @@ using PersonalWebApi.Services.NoSQLDB;
 using PersonalWebApi.Utilities.Utilities.DocumentReaders;
 using PersonalWebApi.Services.FileStorage;
 using PersonalWebApi.Services.Services.Qdrant;
+using PersonalWebApi.Agent.SemanticKernel.Plugins.DataGathererPlugin;
+using PersonalWebApi.Agent.SemanticKernel.Plugins.KernelMemoryPlugin;
+using PersonalWebApi.Agent.SemanticKernel.Plugins.StoragePlugins.AzureBlob;
 
 namespace PersonalWebApi.Extensions
 {
@@ -71,7 +74,11 @@ namespace PersonalWebApi.Extensions
                 // Add the RenderedPromptFilterHandler as a service
                 kernelBuilder.Services.AddScoped<IPromptRenderFilter, RenderedPromptFilterHandler>();
 
-               
+                // add plugin
+                //kernelBuilder.Plugins.AddFromType<KernelMemoryPlugin>();
+                //kernelBuilder.Plugins.AddFromType<AzureBlobPlugin>();
+                //kernelBuilder.Plugins.AddFromType<TagCollectorPlugin>();
+
 
                 return kernelBuilder.Build();
             });
