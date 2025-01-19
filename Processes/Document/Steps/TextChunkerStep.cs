@@ -26,7 +26,9 @@ namespace PersonalWebApi.Services.Qdrant.Processes.Steps
             chunker.Setup("text-embedding-3-small");
 
             documentStepDto.ChunkerCollection = chunker.ChunkText(100, documentStepDto.Content);
-            
+
+            documentStepDto.Events.Add("content chunked");
+
             await context.EmitEventAsync(
                 new KernelProcessEvent() 
                 { 
