@@ -1,5 +1,13 @@
-﻿using Microsoft.SemanticKernel;
+﻿using Microsoft.KernelMemory;
+using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
+using Microsoft.SemanticKernel.Connectors.OpenAI;
+using Newtonsoft.Json;
+using PersonalWebApi.Agent.SemanticKernel.Plugins.DataGathererPlugin;
+using PersonalWebApi.Controllers.Agent;
+using PersonalWebApi.Processes.Document.Models;
+using PersonalWebApi.Processes.Metadata.Events;
+using PersonalWebApi.Processes.Qdrant.Events;
 using System.Diagnostics.CodeAnalysis;
 
 namespace PersonalWebApi.Processes.Metadata.Steps
@@ -7,39 +15,29 @@ namespace PersonalWebApi.Processes.Metadata.Steps
     public static class TagifyStepFunctions
     {
         public const string GenerateTags = nameof(GenerateTags);
+        public const string GenerateChunksTags = nameof(GenerateChunksTags);
     }
 
-    public static class TagifyStepOutputEvents
-    {
-        public const string TagsGenerated = nameof(TagsGenerated);
-    }
-
+    /// <summary>
+    /// Generate tag for file content
+    /// </summary>
     [Experimental("SKEXP0080")]
     public sealed class TagifyStep : KernelProcessStep
     {
         [KernelFunction(TagifyStepFunctions.GenerateTags)]
-        public async ValueTask GenerateTagsAsync(KernelProcessStepContext context, Kernel kernel, string content)
+        public async ValueTask GenerateTagsAsync(KernelProcessStepContext context, Kernel kernel, DocumentStepDto documentStepDto)
         {
-            var chat = kernel.GetRequiredService<IChatCompletionService>();
+            var tagifyPlugin = new TagCollectorPlugin();
+            var result = await tagifyPlugin.GenerateTags(documentStepDto.Content, kernel);
+            
+            foreach (var tag in result)
+            {
+                documentStepDto.Tags.Add(tag);
+            }
 
-            var tagAsString = await chat.GetChatMessageContentAsync(
-                @$"""Generate tags for the following text in a comma-separated list format.
+            documentStepDto.Events.Add("file tugified");
 
-                <text>
-                {content}
-                </text>
-
-                Output must be a comma-separated list of tags. If there are no tags, return an empty list.
-
-                <output>
-                tag1, tag2
-                </output>
-
-                """);
-
-            var tagList = tagAsString.Content.Split(", ").ToList();
-
-            await context.EmitEventAsync(new() { Id = TagifyStepOutputEvents.TagsGenerated, Data = tagList });
+            await context.EmitEventAsync(new() { Id = TagifyStepEvents.TagsGenerated, Data = documentStepDto });
         }
     }
 }
