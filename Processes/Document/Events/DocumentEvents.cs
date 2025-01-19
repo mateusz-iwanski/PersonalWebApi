@@ -12,5 +12,10 @@
 
         // docuent chunker step
         public const string Chunked = nameof(Chunked);
+
+        // specify document type
+        public const string SpecifiedDocumentType = nameof(SpecifiedDocumentType);
+
+        public const string SpecifiedDocumentLanguage = nameof(SpecifiedDocumentLanguage);
     }
 }
