@@ -32,11 +32,10 @@ public abstract class FileStorageServiceBase : IFileStorageService
     /// </summary>
     /// <param name="assistantHistoryManager">The assistant history manager for logging storage events.</param>
     /// <param name="httpContextAccessor">The HTTP context accessor for retrieving context information.</param>
-    protected FileStorageServiceBase(Kernel kernel,IAssistantHistoryManager assistantHistoryManager, IHttpContextAccessor httpContextAccessor)
+    protected FileStorageServiceBase(IAssistantHistoryManager assistantHistoryManager, IHttpContextAccessor httpContextAccessor)
     {
         _assistantHistoryManager = assistantHistoryManager;
         _httpContextAccessor = httpContextAccessor;
-        //_qdrantFileService = qdrantFileService;
     }
 
     /// <inheritdoc />
@@ -87,40 +86,25 @@ public abstract class FileStorageServiceBase : IFileStorageService
             else
                 metadata = new Dictionary<string, string> { { "fileId", fileId.ToString() } };
 
-        var result = await UploadFromUriAsyncImpl(fileId, fileUri, fileName, overwrite, metadata);
-
-        // Log the upload event
-        var storageEvent = new StorageEventsDto(conversationUuid, sessionUuid, fileId)
-        {
-            EventName = "upload",
-            ServiceName = "FileStore",
-            IsSuccess = true,
-            ActionType = "Upload",
-            FileUri = result.AbsoluteUri,
-            ErrorMessage = string.Empty,
-        };
-
-
-        //FileContentDto fileContentMetadataDto = await FileMetadataCreator.CreateMetadataFromUrlAsync(fileUri, fileId, conversationUuid, sessionUuid);
-
-        await _assistantHistoryManager.SaveAsync(storageEvent);
-        //await _assistantHistoryManager.SaveAsync(fileContentMetadataDto);
-
-        return result;
+        return await UploadFromUriAsyncImpl(fileId, fileUri, fileName, overwrite, metadata);
     }
 
     /// <inheritdoc />
     public async Task<Uri> UploadToContainerAsync(Guid fileId, IFormFile file, bool overwrite = false, Dictionary<string, string>? metadata = null)
     {
-        (Guid conversationUuid, Guid sessionUuid) = ContextAccessorReader.RetrieveCrucialUuid(_httpContextAccessor);
+        //(Guid conversationUuid, Guid sessionUuid) = ContextAccessorReader.RetrieveCrucialUuid(_httpContextAccessor);
+        
+        var conversationUuid = Guid.NewGuid();
+        var sessionUuid = Guid.NewGuid();
 
-        QdrantPipelines qdrantPipelines = new QdrantPipelines();
-        await qdrantPipelines.Add(
-            _testConfig.Kernel,
-            new DocumentStepDto(fileId, file, conversationUuid, sessionUuid) { Overwrite = true }
-            );
+        // file ID must be in metadata
+        if (!string.IsNullOrEmpty(fileId.ToString()))
+            if (metadata != null)
+                metadata["fileId"] = fileId.ToString();
+            else
+                metadata = new Dictionary<string, string> { { "fileId", fileId.ToString() } };
 
-        return serverUri;
+        return await UploadToContainerAsyncImpl(fileId, file, overwrite, metadata);
     }
 
     /// <summary>
