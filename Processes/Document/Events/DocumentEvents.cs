@@ -8,7 +8,7 @@
         public const string Readed = nameof(Readed);
 
         // document summarizer step
-        public const string SummaryGenerated = nameof(SummaryGenerated);
+        public const string Summarized = nameof(Summarized);
 
         // docuent chunker step
         public const string Chunked = nameof(Chunked);
