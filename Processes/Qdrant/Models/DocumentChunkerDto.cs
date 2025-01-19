@@ -13,5 +13,6 @@
         public int EndPosition { get; set; }
         public string Content { get; set; } = string.Empty;
         public Dictionary<string, string> Metadata { get; set; } = new Dictionary<string, string>();
+        public List<string> Tags { get; set; } = new List<string>();
     }
 }
