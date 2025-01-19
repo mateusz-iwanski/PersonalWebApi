@@ -43,34 +43,44 @@ namespace PersonalWebApi.Services.Qdrant.Processes.Steps
             var qdrantService = kernel.GetRequiredService<IQdrantService>();
             var userClaimsPrincipal = httpContextAccessor.HttpContext?.User ?? throw new ArgumentNullException(nameof(httpContextAccessor.HttpContext.User));
 
+            documentStepDto.Events.Add("added to qdrant");
+
             foreach (var chunk in documentStepDto.ChunkerCollection)
             {
                 var metadata = new Dictionary<string, string>();
 
+                metadata["chunk_start_position"] = chunk.StartPosition.ToString();
+                metadata["chunk_end_position"] = chunk.EndPosition.ToString();
+                metadata["last_chunk_end_position"] = documentStepDto.ChunkerCollection.LastOrDefault().EndPosition.ToString();
+                metadata["total_number_of_chunks"] = documentStepDto.ChunkerCollection.Count.ToString();
+
                 // Collect metadata from DocumentStepDto
                 foreach (var kvp in documentStepDto.Metadata)
                 {
-                    metadata[$"SourceDocument{kvp.Key}"] = kvp.Value;
+                    if (kvp.Value != null)
+                        metadata[$"source_document_{kvp.Key.ToLower()}"] = kvp.Value.ToLower();
                 }
 
                 // Collect metadata from each chunk
                 foreach (var kvp in chunk.Metadata)
                 {
-                    metadata[$"Chunk{kvp.Key}"] = kvp.Value;
+                    if (kvp.Value != null)
+                        metadata[$"chunk_{kvp.Key.ToLower()}"] = kvp.Value;
                 }
 
-                foreach (var evnt in documentStepDto.Events)
-                {
-                    metadata[$"SourceDocumentEvent"] = string.Join(";", evnt);
-                }
-
-                // Add content to metadata
-                metadata["ChunkContent"] = chunk.Content;
-                metadata["Uri"] = documentStepDto.Uri.ToString();
+                metadata["source_document_event"] = string.Join(";", documentStepDto.Events).ToLower();
+                metadata["chunk_tags"] = string.Join(", ", chunk.Tags); ;
+                metadata["document_tags"] = string.Join(", ", documentStepDto.Tags);
+                metadata["chunk_content"] = chunk.Content.ToLower();
+                metadata["document_uri"] = documentStepDto.Uri?.ToString() ?? "";
+                metadata["document_summary"] = documentStepDto.Summary?.ToLower() ?? "not available";
+                
 
                 // Call QdrantService.AddAsync for each chunk
                 await qdrantService.AddAsync(chunk.Content, metadata, conversationUuid, documentStepDto.FileId);
             }
+
+            
 
             await context.EmitEventAsync(new() { Id = QdrantEvents.EmbeddingAdded, Data = documentStepDto });
         }
