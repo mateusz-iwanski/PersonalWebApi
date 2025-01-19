@@ -1,5 +1,6 @@
 ﻿using Microsoft.KernelMemory;
 using Microsoft.SemanticKernel;
+using Newtonsoft.Json;
 using OllamaSharp;
 using PersonalWebApi.Services.Services.System;
 using System.ComponentModel;
@@ -10,7 +11,7 @@ namespace PersonalWebApi.Agent.SemanticKernel.Plugins.DataGathererPlugin
     public class TagCollectorPlugin
     {
         private Kernel _kernel { get; set; }
-
+        
         public TagCollectorPlugin() { }
 
         [KernelFunction("generate_tag_for_text_content")]
@@ -18,7 +19,7 @@ namespace PersonalWebApi.Agent.SemanticKernel.Plugins.DataGathererPlugin
         [return: Description("List<string> with tags")]
         public async Task<List<string>> GenerateTags(string textContent, Kernel kernel)
         {
-            var prompts = kernel.CreatePluginFromPromptDirectory(Path.Combine(AppContext.BaseDirectory, "Agent/SemanticKernel/Plugins"));
+            var prompts = kernel.CreatePluginFromPromptDirectory(Path.Combine(AppContext.BaseDirectory, "Agent/SemanticKernel/Plugins/Prompt"));
 
             string completeMessage = string.Empty;
             var result = kernel.InvokeStreamingAsync<StreamingChatMessageContent>(prompts["TagCollectPlugin"], new() { { "textContent", textContent }, });
@@ -28,7 +29,7 @@ namespace PersonalWebApi.Agent.SemanticKernel.Plugins.DataGathererPlugin
                 completeMessage += message;
             }
 
-            return completeMessage.Split(',').ToList();
+            return JsonConvert.DeserializeObject<List<string>>(completeMessage);
         }
     }
 }
