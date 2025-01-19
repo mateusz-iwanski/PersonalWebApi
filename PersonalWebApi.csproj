@@ -10,7 +10,7 @@
 
   <ItemGroup>
     <Content Remove="Agent\config.json" />
-    <Content Remove="Agent\SemanticKernel\Plugins\TagCollectPlugin\config.json" />
+    <Content Remove="Agent\SemanticKernel\Plugins\Prompt\TagCollectPlugin\config.json" />
   </ItemGroup>
 
   <ItemGroup>
@@ -27,10 +27,10 @@
     <EmbeddedResource Include="Agent\Prompts\Complaint\skprompt.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
-    <EmbeddedResource Include="Agent\SemanticKernel\Plugins\TagCollectPlugin\config.json">
+    <EmbeddedResource Include="Agent\SemanticKernel\Plugins\Prompt\TagCollectPlugin\config.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
-    <EmbeddedResource Include="Agent\SemanticKernel\Plugins\TagCollectPlugin\skprompt.txt">
+    <EmbeddedResource Include="Agent\SemanticKernel\Plugins\Prompt\TagCollectPlugin\skprompt.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
   </ItemGroup>
