@@ -1,6 +1,10 @@
-﻿using Microsoft.SemanticKernel;
+﻿using Microsoft.KernelMemory;
+using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
+using PersonalWebApi.Agent.Memory.Observability;
 using PersonalWebApi.Processes.Document.Events;
+using PersonalWebApi.Processes.Document.Models;
+using PersonalWebApi.Processes.Metadata.Events;
 using System.Diagnostics.CodeAnalysis;
 
 namespace PersonalWebApi.Processes.Document.Steps
@@ -14,24 +18,25 @@ namespace PersonalWebApi.Processes.Document.Steps
     public sealed class SummarizeStep : KernelProcessStep
     {
         [KernelFunction(SummarizeStepFunctions.SummarizeText)]
-        public async ValueTask SummarizeTextAsync(KernelProcessStepContext context, Kernel kernel, string content, int maxSummaryCharacters)
+        public async ValueTask SummarizeTextAsync(KernelProcessStepContext context, Kernel kernel, DocumentStepDto documentStepDto)
         {
-            var chat = kernel.GetRequiredService<IChatCompletionService>();
+            var memory = kernel.GetRequiredService<KernelMemoryWrapper>();
+            await memory.ImportDocumentAsync(
+                documentStepDto.Uri.ToString(),
+                documentId: documentStepDto.Id.ToString(),
+                steps: Constants.PipelineOnlySummary
+            );
 
-            var summary = await chat.GetChatMessageContentAsync(
-                $@"""
+            var results = await memory.SearchSummariesAsync(filter: MemoryFilters.ByDocument(documentStepDto.Id.ToString()));
 
-                Summarize the following text in no more than {maxSummaryCharacters} characters for use in a vector database. 
-                The summary must remain in the same language as the original text, focusing on semantic clarity and key ideas that 
-                can aid similarity search. 
-                    
-                <text> 
-                {content}    
-                </text>
+            foreach (var result in results)
+            {
+                documentStepDto.Summary = result.Partitions.First().Text;
+            }
 
-                """);
+            documentStepDto.Events.Add("source content summarized");
 
-            await context.EmitEventAsync(new() { Id = DocumentEvents.SummaryGenerated, Data = summary.Content });
+            await context.EmitEventAsync(new() { Id = DocumentEvents.Summarized, Data = documentStepDto })
         }
     }
 }
