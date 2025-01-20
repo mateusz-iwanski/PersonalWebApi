@@ -9,7 +9,7 @@ namespace PersonalWebApi.Services.Services.Qdrant
     public interface IQdrantService
     {
         Task AddAsync(string chunk, Dictionary<string, string> metadata, Guid conversationUuid, Guid fileId);
-        Task<Guid> AddAsync(IFormFile document, Guid conversationUuid, int maxTokensPerLine, int maxSummaryCharacters);
+        Task<Guid> AddAsync(IFormFile document, Guid conversationUuid);
         Task<List<Dictionary<string, object>>> SearchAsync(List<string> queries, Dictionary<string, string> filter = null, int limit = 5);
     }
 }
