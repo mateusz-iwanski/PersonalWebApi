@@ -87,6 +87,7 @@
   <ItemGroup>
     <Folder Include="Controllers\KernelMemory\" />
     <Folder Include="Processes\Document\Process\" />
+    <Folder Include="Services\Qdrant\Processes\" />
     <Folder Include="Services\Telemetry\" />
     <Folder Include="Services\Document\" />
     <Folder Include="Utilities\Models\" />
