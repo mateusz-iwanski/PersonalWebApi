@@ -28,7 +28,7 @@ namespace PersonalWebApi.Processes.Qdrant.Steps
 
             foreach(var chunk in documentStepDto.ChunkerCollection)
             {
-                var tagsCollectionForChunk = await tagifyPlugin.GenerateTags(chunk.Content, kernel);
+                var tagsCollectionForChunk = await tagifyPlugin.GenerateTagsPluginAsync(chunk.Content, kernel);
                 foreach (var tag in tagsCollectionForChunk)
                     chunk.Tags.Add(tag);
             }
