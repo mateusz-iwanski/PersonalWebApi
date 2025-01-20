@@ -20,6 +20,7 @@ namespace PersonalWebApi.Utilities.Kql
                 throw new SettingsException("Telemetry:ApplicationInsights:KqlClientApiKey not exists in settings");
 
             var credentials = new ApiKeyClientCredentials(apiKey);
+            
             _client = new ApplicationInsightsDataClient(credentials);
         }
 
