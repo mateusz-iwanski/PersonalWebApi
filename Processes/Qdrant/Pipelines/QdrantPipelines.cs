@@ -38,6 +38,8 @@ namespace PersonalWebApi.Processes.Qdrant.Pipelines
             var tagify = process.AddStepFromType<TagifyStep>();
             var tagifyChunk = process.AddStepFromType<TagifyChunksStep>();
             var summarizeDocument = process.AddStepFromType<SummarizeStep>();
+            var setDocType = process.AddStepFromType<SpecifyDocumentTypeStep>();
+            var setDocLanguage = process.AddStepFromType<SpecifyDocumentLanguageStep>();
 
             process.OnInputEvent(QdrantEvents.StartProcess)
                 .SendEventTo(new ProcessFunctionTargetBuilder(fileStorageStep, functionName: FileStorageFunctions.UploadIFormFile));
@@ -49,7 +51,9 @@ namespace PersonalWebApi.Processes.Qdrant.Pipelines
 
             reader.OnEvent(DocumentEvents.Readed)
                 .SendEventTo(new ProcessFunctionTargetBuilder(chunker, functionName: TextChunkerStepFunctions.ChunkText, parameterName: "documentStepDto"))
-                .SendEventTo(new ProcessFunctionTargetBuilder(tagify, functionName: TagifyStepFunctions.GenerateTags, parameterName: "documentStepDto"));
+                .SendEventTo(new ProcessFunctionTargetBuilder(tagify, functionName: TagifyStepFunctions.GenerateTags, parameterName: "documentStepDto"))
+                .SendEventTo(new ProcessFunctionTargetBuilder(setDocType, functionName: DocumentInfoStepFunctions.SpecifyDocumentType, parameterName: "documentStepDto"))
+                .SendEventTo(new ProcessFunctionTargetBuilder(setDocLanguage, functionName: DocumentLanguageStepFunctions.SpecifyDocumentLanguage, parameterName: "documentStepDto"));
             //
             chunker.OnEvent(DocumentEvents.Chunked)
                 .SendEventTo(new ProcessFunctionTargetBuilder(tagifyChunk, functionName: TagifyStepFunctions.GenerateChunksTags, parameterName: "documentStepDto"))
@@ -63,7 +67,7 @@ namespace PersonalWebApi.Processes.Qdrant.Pipelines
                 
 
 
-            // TODO: cos wymyslec, mozliwe ze sam framework dziala nieprawidlowo
+            // TODO: cos wymyslec, mozliwe ze sam framework nie dziala prawidlowo
             // nie dziala poniżej, nie wiem czemu nie moge odczytac OnEvent w tym miejscu z UploadFileProcess.CreateProcess
             // w UploadFileProcess.CreateProcess dziala i eventy sie komunikuja
             // w tym miejscu nie reaguje na zaden onevent wykonany w UploadFileProcess.CreateProcess
