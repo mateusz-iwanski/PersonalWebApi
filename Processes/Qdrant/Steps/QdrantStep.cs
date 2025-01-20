@@ -33,10 +33,7 @@ namespace PersonalWebApi.Services.Qdrant.Processes.Steps
         [KernelFunction(QdrantStepFunctions.AddEmbedding)]
         public async ValueTask AddEmbeddingAsync(KernelProcessStepContext context, Kernel kernel, DocumentStepDto documentStepDto)
         {
-            var configuration = kernel.GetRequiredService<IConfiguration>();
-            var customKernel = new AgentRouter(configuration);
-            kernel = customKernel.AddOpenAIChatCompletion();
-
+ 
             var httpContextAccessor = kernel.GetRequiredService<IHttpContextAccessor>();
             (Guid conversationUuid, Guid sessionUuid) = ContextAccessorReader.RetrieveCrucialUuid(httpContextAccessor);
 
@@ -76,7 +73,7 @@ namespace PersonalWebApi.Services.Qdrant.Processes.Steps
                 metadata["language"] = documentStepDto.Language;
                 metadata["file_type"] = string.Join(", ", documentStepDto.DocumentType);
 
-                metadata["total_chunks"] = documentStepDto.ChunkerCollection.Count.ToString();
+                metadata["total_n_chunks"] = documentStepDto.ChunkerCollection.Count.ToString();
                 metadata["chunk_number"] = documentStepDto.ChunkerCollection.IndexOf(chunk).ToString();
 
                 // Call QdrantService.AddAsync for each chunk
