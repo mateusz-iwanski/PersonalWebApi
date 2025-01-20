@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using OpenAI.Embeddings;
 using OpenAI;
 using static System.Runtime.InteropServices.JavaScript.JSType;
+using PersonalWebApi.Exceptions;
 
 namespace PersonalWebApi.Services.Services.Agent
 {
@@ -13,31 +14,18 @@ namespace PersonalWebApi.Services.Services.Agent
     {
         private EmbeddingClient _client;
 
-        public EmbeddingOpenAi()
+        public EmbeddingOpenAi(IConfiguration configuration)
         {
-        }
+            var model = configuration.GetSection("Qdrant:Container:OpenAiModelEmbedding").Value ??
+                throw new SettingsException("Qdrant:Container:Name can't find in appsettings");
+            var apiKey = configuration.GetSection("Qdrant:Container:ModelEmbeddingApiKey").Value ??
+                throw new SettingsException("Qdrant:Container:ModelEmbeddingApiKey can't find in appsettings");
 
-        /// <summary>
-        /// "text-embedding-3-small";
-        /// "text-embedding-3-large";
-        /// </summary>
-        /// <param name="model"></param>
-        /// <param name="apiKey"></param>
-        public void Setup(string model, string apiKey)
-        {
             _client = new EmbeddingClient(
                 model: model,
                 apiKey: apiKey
             );
-
-            return;
         }
-
-        /// <summary>
-        /// Checks if the client is set up.
-        /// </summary>
-        /// <returns>True if the client is set up, otherwise false.</returns>
-        public bool IsSetup() => _client != default;
 
         /// <summary>
         /// By default, the length of the embedding vector will be 1536 when using the text-embedding-3-small 
