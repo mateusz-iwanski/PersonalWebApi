@@ -10,6 +10,8 @@
 
   <ItemGroup>
     <Content Remove="Agent\config.json" />
+    <Content Remove="Agent\SemanticKernel\Plugins\Prompt\DocumentLanguagePlugin\config.json" />
+    <Content Remove="Agent\SemanticKernel\Plugins\Prompt\DocumentTypePlugin\config.json" />
     <Content Remove="Agent\SemanticKernel\Plugins\Prompt\TagCollectPlugin\config.json" />
   </ItemGroup>
 
@@ -25,6 +27,18 @@
 
   <ItemGroup>
     <EmbeddedResource Include="Agent\Prompts\Complaint\skprompt.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Agent\SemanticKernel\Plugins\Prompt\DocumentLanguagePlugin\config.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Agent\SemanticKernel\Plugins\Prompt\DocumentLanguagePlugin\skprompt.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Agent\SemanticKernel\Plugins\Prompt\DocumentTypePlugin\config.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Agent\SemanticKernel\Plugins\Prompt\DocumentTypePlugin\skprompt.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="Agent\SemanticKernel\Plugins\Prompt\TagCollectPlugin\config.json">
