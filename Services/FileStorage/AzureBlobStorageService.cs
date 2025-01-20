@@ -21,39 +21,26 @@ namespace PersonalWebApi.Services.FileStorage
     /// 
     /// After initialize use SetContainer method to set container name.
     /// </summary>
-    public class AzureBlobStorageService : FileStorageServiceBase
+    public class AzureBlobStorageService : IFileStorageService
     {
-        private readonly IConfiguration _configuration;
-        //private readonly IHttpContextAccessor _httpContextAccessor;
-        private readonly BlobServiceClient _blobServiceClient;
         private string _containerName { get; set; }
-        private BlobContainerClient _blobContainerClient { get; set; }
+        private readonly BlobContainerClient _blobContainerClient;
+        private readonly BlobServiceClient _blobServiceClient;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AzureBlobStorageService"/> class.
         /// </summary>
         /// <param name="configuration">The configuration settings.</param>
-        /// <param name="httpContextAccessor">The HTTP context accessor.</param>
-        /// <param name="assistantHistoryManager">The assistant history manager.</param>
         /// <exception cref="SettingsException">Thrown when required settings are missing.</exception>
-        public AzureBlobStorageService(
-            IConfiguration configuration,
-            IHttpContextAccessor httpContextAccessor,
-            IAssistantHistoryManager assistantHistoryManager
-            )
-            : base(
-                  assistantHistoryManager, 
-                  httpContextAccessor
-                  //qdrantFileService
-                  )
+        public AzureBlobStorageService(IConfiguration configuration)
         {
-            _configuration = configuration;
-            //_httpContextAccessor = httpContextAccessor;
 
-            var blobStorageConnection = _configuration.GetSection("Azure:BlobStorage:Connection").Value ??
+            var blobStorageConnection = configuration.GetSection("Azure:BlobStorage:Connection").Value ??
                 throw new SettingsException("Azure::BlobStorage:Connection doesn't exists in azure appsettings");
 
+            _containerName = configuration.GetSection("Qdrant:Container:Name").Value ?? throw new SettingsException("Qdrant:Container:Name not exists");
             _blobServiceClient = new BlobServiceClient(blobStorageConnection);
+            _blobContainerClient = _blobServiceClient.GetBlobContainerClient(_containerName);
         }
 
         /// <summary>
@@ -61,10 +48,10 @@ namespace PersonalWebApi.Services.FileStorage
         /// </summary>
         /// <param name="fileName">The name of the file to delete.</param>
         /// <exception cref="FileNotFoundException">Thrown when the file does not exist in the container.</exception>
-        protected override async Task RemoveFromContainerImpl(string fileName)
+        public async Task RemoveFromContainer(string fileName)
         {
             ensureContainerIsSet();
-            _blobContainerClient = _blobServiceClient.GetBlobContainerClient(_containerName);
+            
             BlobClient blobClient = _blobContainerClient.GetBlobClient(fileName);
             if (await blobClient.ExistsAsync())
             {
@@ -81,7 +68,7 @@ namespace PersonalWebApi.Services.FileStorage
         /// </summary>
         /// <param name="fileUri">The URI of the file to download.</param>
         /// <returns>A stream containing the file data.</returns>
-        protected override async Task<Stream> DownloadFileAsyncImpl(Uri fileUri)
+        public async Task<Stream> DownloadFileAsync(Uri fileUri)
         {
             BlobClient blobClient = new BlobClient(fileUri);
             BlobDownloadInfo download = await blobClient.DownloadAsync();
@@ -95,7 +82,7 @@ namespace PersonalWebApi.Services.FileStorage
         /// Gets the list of containers in Azure Blob Storage.
         /// </summary>
         /// <returns>A list of blob container items.</returns>
-        protected override async Task<List<BlobContainerItem>> GetContainersAsyncImpl()
+        public async Task<List<BlobContainerItem>> GetContainersAsync()
         {
             var containers = new List<BlobContainerItem>();
             await foreach (var container in _blobServiceClient.GetBlobContainersAsync())
@@ -109,10 +96,10 @@ namespace PersonalWebApi.Services.FileStorage
         /// Gets the list of files with metadata in the specified container.
         /// </summary>
         /// <returns>A list of blob items with metadata.</returns>
-        protected override async Task<List<BlobItem>> GetFilesWithMetadataAsyncImpl()
+        public async Task<List<BlobItem>> GetFilesWithMetadataAsync()
         {
             ensureContainerIsSet();
-            _blobContainerClient = _blobServiceClient.GetBlobContainerClient(_containerName);
+            
             var blobs = new List<BlobItem>();
             await foreach (var blobItem in _blobContainerClient.GetBlobsAsync())
             {
@@ -182,10 +169,10 @@ namespace PersonalWebApi.Services.FileStorage
         /// <param name="fileName">The name of the file.</param>
         /// <returns>The URL of the file.</returns>
         /// <exception cref="FileNotFoundException">Thrown when the file does not exist in the container.</exception>
-        protected override async Task<string> GetFileUrlAsyncImpl(string fileName)
+        public async Task<string> GetFileUrlAsync(string fileName)
         {
             ensureContainerIsSet();
-            _blobContainerClient = _blobServiceClient.GetBlobContainerClient(_containerName);
+            
             BlobClient blobClient = _blobContainerClient.GetBlobClient(fileName);
 
             if (await blobClient.ExistsAsync())
@@ -202,7 +189,7 @@ namespace PersonalWebApi.Services.FileStorage
         /// Sets the name of the container to use.
         /// </summary>
         /// <param name="name">The name of the container.</param>
-        protected override void SetContainerImpl(string name)
+        public void SetContainer(string name)
         {
             validateContainerName(name);
             _containerName = name;
@@ -216,7 +203,7 @@ namespace PersonalWebApi.Services.FileStorage
         /// <param name="overwrite">Whether to overwrite the file if it already exists.</param>
         /// <param name="metadata">The metadata to add to the file.</param>
         /// <returns>The URI of the uploaded file.</returns>
-        protected override async Task<Uri> UploadFromUriAsyncImpl(Guid fileId, string fileUri, string fileName, bool overwrite = false, Dictionary<string, string>? metadata = null)
+        public async Task<Uri> UploadFromUriAsync(Guid fileId, string fileUri, string fileName, bool overwrite = false, Dictionary<string, string>? metadata = null)
         {
             ensureContainerIsSet();
             return await uploadFromUriAsync(fileUri, fileName, _containerName, null, overwrite, metadata);
@@ -230,7 +217,7 @@ namespace PersonalWebApi.Services.FileStorage
         /// <param name="metadata">The metadata to add to the file.</param>
         /// <param name="fileId">The file ID.</param>
         /// <returns>The URI of the uploaded file.</returns>
-        protected override async Task<Uri> UploadToContainerAsyncImpl(Guid fileId, IFormFile file, bool overwrite = false, Dictionary<string, string>? metadata = null)
+        public async Task<Uri> UploadToContainerAsync(Guid fileId, IFormFile file, bool overwrite = false, Dictionary<string, string>? metadata = null)
         {
             ensureContainerIsSet();
             return await uploadAsync(file, null, overwrite, _containerName, metadata);
@@ -291,8 +278,6 @@ namespace PersonalWebApi.Services.FileStorage
         {
             ensureContainerIsSet();
 
-            _blobContainerClient = await getContainerPublicAccessAsync(_containerName, PublicAccessType.Blob);
-
             BlobClient blobClient = _blobContainerClient.GetBlobClient(file.FileName);
 
             Dictionary<string, string>? _metadata = new Dictionary<string, string> { };
@@ -332,25 +317,6 @@ namespace PersonalWebApi.Services.FileStorage
             var fileUrl = await GetFileUrlAsync(file.FileName);
 
             return new Uri(fileUrl);
-        }
-
-        /// <summary>
-        /// Gets the container, if it does not exist, creates it with the specified public access type.
-        /// </summary>
-        /// <param name="containerName">The name of the container.</param>
-        /// <param name="accessType">The public access type for the container.</param>
-        /// <returns>The <see cref="BlobContainerClient"/> for the container.</returns>
-        private async Task<BlobContainerClient> getContainerPublicAccessAsync(string containerName, PublicAccessType accessType)
-        {
-            ensureContainerIsSet();
-
-            BlobContainerClient blobContainerClient = _blobServiceClient.GetBlobContainerClient(containerName);
-            await blobContainerClient.CreateIfNotExistsAsync();
-
-            var publicAccessType = accessType;
-            await blobContainerClient.SetAccessPolicyAsync(publicAccessType);
-
-            return blobContainerClient;
         }
 
         /// <summary>
