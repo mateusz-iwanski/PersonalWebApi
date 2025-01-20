@@ -1,7 +1,7 @@
 ﻿{
   "schema": 1,
-  "type": "collector",
-  "description": "generate tag for text content.",
+  "type": "generate_tag_for_text_content",
+  "description": "generate/collect tag for text content.",
   "execution_settings": {
     "default": {
       "max_tokens": 1000,
