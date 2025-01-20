@@ -43,6 +43,13 @@ namespace PersonalWebApi.Processes.Document.Models
         [JsonProperty("events")]
         public List<string> Events { get; set; } = new List<string>();  // for example uploaded on external server, etc.
 
+        [JsonProperty("type")]
+        public List<string> DocumentType { get; set; } = new List<string>();  // for example [essay, article] 
+
+        [JsonProperty("language")]
+        public string Language { get; set; } = string.Empty;
+
+
         public DocumentStepDto(Guid fileId, IFormFile iFormFile, Guid conversationUuid, Guid sessionUuid)
             : base(conversationUuid, sessionUuid)
         {
