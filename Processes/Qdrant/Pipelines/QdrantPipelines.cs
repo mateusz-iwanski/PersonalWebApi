@@ -1,4 +1,8 @@
-﻿using Microsoft.SemanticKernel;
+﻿using Microsoft.KernelMemory;
+using Microsoft.SemanticKernel;
+using PersonalWebApi.Agent.Memory.Observability;
+using PersonalWebApi.Agent.SemanticKernel.Observability;
+using PersonalWebApi.Exceptions;
 using PersonalWebApi.Processes.Document.Events;
 using PersonalWebApi.Processes.Document.Models;
 using PersonalWebApi.Processes.Document.Steps;
@@ -11,7 +15,17 @@ using PersonalWebApi.Processes.NoSQLDB.Steps;
 using PersonalWebApi.Processes.Qdrant.Events;
 using PersonalWebApi.Processes.Qdrant.Processes;
 using PersonalWebApi.Processes.Qdrant.Steps;
+using PersonalWebApi.Services.Agent;
+using PersonalWebApi.Services.FileStorage;
+using PersonalWebApi.Services.NoSQLDB;
 using PersonalWebApi.Services.Qdrant.Processes.Steps;
+using PersonalWebApi.Services.Services.Agent;
+using PersonalWebApi.Services.Services.History;
+using PersonalWebApi.Services.Services.Qdrant;
+using PersonalWebApi.Services.WebScrapper;
+using PersonalWebApi.Utilities.Utilities.DocumentReaders;
+using PersonalWebApi.Utilities.WebScrapper;
+using PersonalWebApi.Utilities.WebScrappers;
 using System.Diagnostics.CodeAnalysis;
 
 namespace PersonalWebApi.Processes.Qdrant.Pipelines
@@ -26,8 +40,8 @@ namespace PersonalWebApi.Processes.Qdrant.Pipelines
             ProcessBuilder process = new("QdrantPipielineAdd");
 
             // file storage steps
-            var fileStorageStep = process.AddStepFromType<FileStorageStep>();
-            var logFileActionStep = process.AddStepFromType<LogFileActionStep>();
+            var fileStorage = process.AddStepFromType<FileStorageStep>();
+            var logFileAction = process.AddStepFromType<LogFileActionStep>();
 
             // qdrant steps
             var reader = process.AddStepFromType<DocumentReaderStep>();
@@ -42,10 +56,10 @@ namespace PersonalWebApi.Processes.Qdrant.Pipelines
             var setDocLanguage = process.AddStepFromType<SpecifyDocumentLanguageStep>();
 
             process.OnInputEvent(QdrantEvents.StartProcess)
-                .SendEventTo(new ProcessFunctionTargetBuilder(fileStorageStep, functionName: FileStorageFunctions.UploadIFormFile));
+                .SendEventTo(new ProcessFunctionTargetBuilder(fileStorage, functionName: FileStorageFunctions.UploadIFormFile));
             
-            fileStorageStep.OnEvent(FileEvents.Uploaded)                
-                .SendEventTo(new ProcessFunctionTargetBuilder(logFileActionStep, functionName: LogFileActionStepFunctions.SaveActionLog, parameterName: "documentStepDto"))
+            fileStorage.OnEvent(FileEvents.Uploaded)                
+                .SendEventTo(new ProcessFunctionTargetBuilder(logFileAction, functionName: LogFileActionStepFunctions.SaveActionLog, parameterName: "documentStepDto"))
                 .SendEventTo(new ProcessFunctionTargetBuilder(reader, functionName: DocumentReaderStepFunctions.ReadUri, parameterName: "documentStepDto"))
                 .SendEventTo(new ProcessFunctionTargetBuilder(fileMetadataComposer, functionName: FileMetadataComposerFunction.Collect, parameterName: "documentStepDto"));
 
@@ -98,6 +112,59 @@ namespace PersonalWebApi.Processes.Qdrant.Pipelines
                     Data = documentStepDto
                 });
 
+        }
+
+        [Experimental("SKEXP0080")]
+        public static Kernel PrepareKelnerForPipeline(IConfiguration configuration)
+        {
+            var kernelBuilder = Kernel.CreateBuilder();
+
+            var apiKey = configuration.GetSection("OpenAI:Access:ApiKey").Value ??
+                throw new SettingsException("OpenAi ApiKey not exists in appsettings");
+
+            var defaultModelId = configuration.GetSection("OpenAI:DefaultModelId").Value ??
+                throw new SettingsException("OpenAi DefaultModelId not exists in appsettings");
+
+            kernelBuilder.AddOpenAIChatCompletion(
+                defaultModelId,
+                apiKey
+            );
+
+            kernelBuilder.Services.AddLogging(loggingBuilder =>
+            {
+                loggingBuilder.AddConsole();
+            });
+
+            kernelBuilder.Services.AddSingleton<IConfiguration>(configuration);
+            kernelBuilder.Services.AddHttpContextAccessor();
+            kernelBuilder.Services.AddScoped<IEmbedding, EmbeddingOpenAi>();
+            kernelBuilder.Services.AddScoped<IQdrantService, QdrantService>();
+            kernelBuilder.Services.AddScoped<IPersistentChatHistoryService, PersistentChatHistoryService>();
+            kernelBuilder.Services.AddScoped<INoSqlDbService, AzureCosmosDbService>();
+            kernelBuilder.Services.AddScoped<IAssistantHistoryManager, AssistantHistoryManager>();
+            kernelBuilder.Services.AddScoped<IPromptRenderFilter, RenderedPromptFilterHandler>();
+            kernelBuilder.Services.AddScoped<IFileStorageService, AzureBlobStorageService>();
+            kernelBuilder.Services.AddScoped<IDocumentReaderDocx, DocumentReaderDocx>();
+            kernelBuilder.Services.AddScoped<IWebScrapperClient, Firecrawl>();
+            kernelBuilder.Services.AddScoped<IWebScrapperService, WebScrapperService>();
+            kernelBuilder.Services.AddScoped<ITextChunker, SemanticKernelTextChunker>();
+
+            IKernelMemory memory = new KernelMemoryBuilder()
+                .WithOpenAIDefaults(apiKey)
+                .Build<MemoryServerless>();
+
+            kernelBuilder.Services.AddScoped<IKernelMemory>(_ => memory);
+            kernelBuilder.Services.AddScoped<KernelMemoryWrapper>(provider =>
+            {
+                var innerKernelMemory = provider.GetRequiredService<IKernelMemory>();
+                var assistantHistoryManager = provider.GetRequiredService<IAssistantHistoryManager>();
+                var httpContextAccessor = provider.GetRequiredService<IHttpContextAccessor>();
+                var blobStorageConnector = provider.GetRequiredService<IFileStorageService>();
+
+                return new KernelMemoryWrapper(innerKernelMemory, assistantHistoryManager, httpContextAccessor, blobStorageConnector);
+            });
+
+            return kernelBuilder.Build();
         }
     }
 }
