@@ -9,10 +9,18 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace PersonalWebApi.Processes.Document.Steps
 {
-    public static class SummarizeStepFunctions
+    public class SummarizeStepFunctions : IProcessStepFuntion
     {
         public const string SummarizeText = nameof(SummarizeText);
+        public const string AnotherFunction = nameof(AnotherFunction);
+
+        public IEnumerable<string> GetFunctionNames()
+        {
+            yield return SummarizeText;
+            yield return AnotherFunction;
+        }
     }
+
 
     [Experimental("SKEXP0080")]
     public sealed class SummarizeStep : KernelProcessStep
@@ -36,7 +44,7 @@ namespace PersonalWebApi.Processes.Document.Steps
 
             documentStepDto.Events.Add("source content summarized");
 
-            await context.EmitEventAsync(new() { Id = DocumentEvents.Summarized, Data = documentStepDto })
+            await context.EmitEventAsync(new() { Id = DocumentEvents.Summarized, Data = documentStepDto });
         }
     }
 }
