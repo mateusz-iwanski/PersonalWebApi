@@ -1,4 +1,5 @@
 ﻿using Microsoft.SemanticKernel;
+using PersonalWebApi.Agent;
 using PersonalWebApi.Agent.SemanticKernel.Plugins.DataGathererPlugin;
 using PersonalWebApi.Processes.Document.Events;
 using PersonalWebApi.Processes.Document.Models;
@@ -17,9 +18,13 @@ namespace PersonalWebApi.Processes.Document.Steps
         [KernelFunction(DocumentLanguageStepFunctions.SpecifyDocumentLanguage)]
         public async ValueTask SpecifyDocumentLanguageAsync(KernelProcessStepContext context, Kernel kernel, DocumentStepDto documentStepDto)
         {
+            // get kernel by appsettings.StepAgentMappings
+            var config = kernel.GetRequiredService<IConfiguration>();
+            var agent = new AgentRouter(config).GetStepKernel(DocumentLanguageStepFunctions.SpecifyDocumentLanguage);
+
             var documentInfo = new DocumentInfoPlugin();
 
-            var docLanguage = await documentInfo.SpecifyDocumentLanguage(documentStepDto.Content, kernel);
+            var docLanguage = await documentInfo.SpecifyDocumentLanguage(documentStepDto.Content, agent);
 
             documentStepDto.Language = docLanguage;
 
