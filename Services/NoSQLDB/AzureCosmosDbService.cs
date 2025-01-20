@@ -19,13 +19,14 @@ namespace PersonalWebApi.Services.NoSQLDB
                   )
         {
         }
-
         private async Task<Container> getOrCreateContainerAsync(string containerName, string partitionKeyPath)
         {
+            // partitionKeyPath must start with 
             // Ensure the partition key path starts with a leading slash
+
             if (!partitionKeyPath.StartsWith("/"))
             {
-                partitionKeyPath = "/" + partitionKeyPath;
+                throw new ArgumentException("Azure Cosmos DB partition key must start with /. Look on your DTO inheriter from CosmosDbBase.");
             }
 
             var database = await _cosmosClient.CreateDatabaseIfNotExistsAsync(_databaseName);
