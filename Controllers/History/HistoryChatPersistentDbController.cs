@@ -14,17 +14,15 @@ namespace PersonalWebApi.Controllers.History
     public class HistoryChatPersistentDbController : ControllerBase
     {
         private readonly PersistentChatHistoryService _chatHistoryService;
-        private readonly IHttpContextAccessor _httpContextAccessor;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="HistoryChatPersistentDbController"/> class.
         /// </summary>
         /// <param name="chatHistoryService">Service for managing chat history.</param>
         /// <param name="httpContextAccessor">Accessor for HTTP context.</param>
-        public HistoryChatPersistentDbController(PersistentChatHistoryService chatHistoryService, IHttpContextAccessor httpContextAccessor)
+        public HistoryChatPersistentDbController(PersistentChatHistoryService chatHistoryService)
         {
             _chatHistoryService = chatHistoryService;
-            _httpContextAccessor = httpContextAccessor;
         }
 
         /// <summary>
