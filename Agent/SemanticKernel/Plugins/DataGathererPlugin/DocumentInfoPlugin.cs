@@ -1,6 +1,8 @@
 ﻿using Microsoft.SemanticKernel;
 using Newtonsoft.Json;
+using PersonalWebApi.Utilities.Document;
 using System.ComponentModel;
+using System.Text.RegularExpressions;
 
 namespace PersonalWebApi.Agent.SemanticKernel.Plugins.DataGathererPlugin
 {
@@ -20,8 +22,13 @@ namespace PersonalWebApi.Agent.SemanticKernel.Plugins.DataGathererPlugin
                 completeMessage += message;
             }
 
-            return JsonConvert.DeserializeObject<List<string>>(completeMessage);
+            string cleanedMessage = TextFormatter.CleanResponse(completeMessage);
+
+            return JsonConvert.DeserializeObject<List<string>>(cleanedMessage);
         }
+
+       
+
 
         [KernelFunction("specify_document_language")]
         [Description("Specify the language of content (e.g., Polish, English, ...)")]
