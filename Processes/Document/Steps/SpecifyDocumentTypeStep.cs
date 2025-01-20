@@ -1,5 +1,6 @@
 ﻿using Microsoft.KernelMemory;
 using Microsoft.SemanticKernel;
+using PersonalWebApi.Agent;
 using PersonalWebApi.Agent.Memory.Observability;
 using PersonalWebApi.Agent.SemanticKernel.Plugins.DataGathererPlugin;
 using PersonalWebApi.Processes.Document.Events;
@@ -20,9 +21,13 @@ namespace PersonalWebApi.Processes.Document.Steps
         [KernelFunction(DocumentInfoStepFunctions.SpecifyDocumentType)]
         public async ValueTask SpecifyDocumentTypeAsync(KernelProcessStepContext context, Kernel kernel, DocumentStepDto documentStepDto)
         {
+            // get kernel by appsettings.StepAgentMappings
+            var config = kernel.GetRequiredService<IConfiguration>();
+            var agent = new AgentRouter(config).GetStepKernel(DocumentInfoStepFunctions.SpecifyDocumentType);
+
             var documentInfo = new DocumentInfoPlugin();
 
-            var docType = await documentInfo.SpecifyDocumentType(documentStepDto.Content, kernel);
+            var docType = await documentInfo.SpecifyDocumentType(documentStepDto.Content, agent);
 
             foreach (var dType in docType)
             {
