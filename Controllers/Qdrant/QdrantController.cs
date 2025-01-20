@@ -22,8 +22,6 @@ namespace PersonalWebApi.Controllers.Controllers.Qdrant
             _configuration = configuration;
         }
 
-
-
         /// <summary>
         /// Adds a document to the Qdrant collection.
         /// </summary>
@@ -47,12 +45,7 @@ namespace PersonalWebApi.Controllers.Controllers.Qdrant
             var maxSummaryFileCharacters = int.Parse(_configuration.GetSection("Qdrant:MaxSummaryFileCharacters").Value ??
                 throw new SettingsException("Qdrant:MaxSummaryFileCharacters not exists in appsettings"));
 
-            var fileUUID = await _qdrant.AddAsync(
-                document: document,
-                conversationUuid: converationId,
-                maxTokensPerLine: int.Parse(maxTokenFileChunked),
-                maxSummaryCharacters: maxSummaryFileCharacters
-                );
+            var fileUUID = await _qdrant.AddAsync(document: document, conversationUuid: converationId);
 
             return fileUUID.ToString();
         }
