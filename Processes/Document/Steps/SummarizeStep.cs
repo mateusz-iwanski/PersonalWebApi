@@ -1,6 +1,7 @@
 ﻿using Microsoft.KernelMemory;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
+using PersonalWebApi.Agent;
 using PersonalWebApi.Agent.Memory.Observability;
 using PersonalWebApi.Processes.Document.Events;
 using PersonalWebApi.Processes.Document.Models;
@@ -9,7 +10,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace PersonalWebApi.Processes.Document.Steps
 {
-    public class SummarizeStepFunctions : IProcessStepFuntion
+    public class SummarizeStepFunctions
     {
         public const string SummarizeText = nameof(SummarizeText);
         public const string AnotherFunction = nameof(AnotherFunction);
@@ -25,6 +26,13 @@ namespace PersonalWebApi.Processes.Document.Steps
     [Experimental("SKEXP0080")]
     public sealed class SummarizeStep : KernelProcessStep
     {
+        /// <summary>
+        /// Summarize text. For summarizing use Kernel Memory.
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="kernel"></param>
+        /// <param name="documentStepDto"></param>
+        /// <returns></returns>
         [KernelFunction(SummarizeStepFunctions.SummarizeText)]
         public async ValueTask SummarizeTextAsync(KernelProcessStepContext context, Kernel kernel, DocumentStepDto documentStepDto)
         {
