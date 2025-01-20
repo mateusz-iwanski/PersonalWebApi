@@ -16,8 +16,11 @@ namespace PersonalWebApi.Processes.Qdrant.Steps
     [Experimental("SKEXP0080")]
     public sealed class TagifyChunksStep : KernelProcessStep
     {
-        public const string TagifyChunks = nameof(TagifyChunks);
 
+        public static class TagifyStepFunctions
+        {
+            public const string GenerateChunksTags = nameof(GenerateChunksTags);
+        }
         [KernelFunction(TagifyStepFunctions.GenerateChunksTags)]
         public async ValueTask TagifyChunksAsync(KernelProcessStepContext context, Kernel kernel, DocumentStepDto documentStepDto)
         {
