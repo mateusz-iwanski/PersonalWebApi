@@ -21,33 +21,33 @@ namespace PersonalWebApi.Services.Services.System
         /// <exception cref="InvalidUuidException">Thrown when either the conversation UUID or session UUID is missing or invalid.</exception>
         public static (Guid conversationUuid, Guid sessionUuid) RetrieveCrucialUuid(IHttpContextAccessor httpContextAccessor)
         {
-            //var defaultException = new InvalidUuidException("Error when retrieving crucial UUIDs");
+            var defaultException = new InvalidUuidException("Error when retrieving crucial UUIDs");
 
-            //var conversationUuidString = httpContextAccessor.HttpContext?.GetRouteValue("conversationUuid")?.ToString();
-            //if (string.IsNullOrEmpty(conversationUuidString))
-            //{
-            //    conversationUuidString = httpContextAccessor.HttpContext?.Items["conversationUuid"]?.ToString();
-            //}
+            var conversationUuidString = httpContextAccessor.HttpContext?.GetRouteValue("conversationUuid")?.ToString();
+            if (string.IsNullOrEmpty(conversationUuidString))
+            {
+                conversationUuidString = httpContextAccessor.HttpContext?.Items["conversationUuid"]?.ToString();
+            }
 
-            //if (string.IsNullOrEmpty(conversationUuidString) || !Guid.TryParse(conversationUuidString, out var conversationUuid))
-            //{
-            //    throw defaultException;
-            //}
+            if (string.IsNullOrEmpty(conversationUuidString) || !Guid.TryParse(conversationUuidString, out var conversationUuid))
+            {
+                throw defaultException;
+            }
 
-            //var sessionUuidString = httpContextAccessor.HttpContext?.GetRouteValue("sessionUuid")?.ToString();
-            //if (string.IsNullOrEmpty(sessionUuidString))
-            //{
-            //    sessionUuidString = httpContextAccessor.HttpContext?.Items["sessionUuid"]?.ToString();
-            //}
+            var sessionUuidString = httpContextAccessor.HttpContext?.GetRouteValue("sessionUuid")?.ToString();
+            if (string.IsNullOrEmpty(sessionUuidString))
+            {
+                sessionUuidString = httpContextAccessor.HttpContext?.Items["sessionUuid"]?.ToString();
+            }
 
-            //if (string.IsNullOrEmpty(sessionUuidString) || !Guid.TryParse(sessionUuidString, out var sessionUuid))
-            //{
-            //    throw defaultException;
-            //}
+            if (string.IsNullOrEmpty(sessionUuidString) || !Guid.TryParse(sessionUuidString, out var sessionUuid))
+            {
+                throw defaultException;
+            }
 
-            //return (conversationUuid, sessionUuid);
+            return (conversationUuid, sessionUuid);
 
-            return (Guid.Parse("836ce690-ee5a-40e4-827d-d5f34bdeca3e"), Guid.NewGuid());
+            //return (Guid.Parse("836ce690-ee5a-40e4-827d-d5f34bdeca3e"), Guid.NewGuid());
         }
     }
 }
