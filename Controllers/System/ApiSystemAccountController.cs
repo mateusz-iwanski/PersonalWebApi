@@ -140,7 +140,7 @@ namespace PersonalWebApi.Controllers.System
         /// <param name="passwordChange">The new password and its verification.</param>
         /// <returns>An ActionResult indicating the result of the operation.</returns>
         [HttpPost("change-admin-passwords")]
-        [DynamicRoleAuthorize("ChangeAdminPassword")]
+        //[DynamicRoleAuthorize("ChangeAdminPassword")]
         public async Task<ActionResult> ChangeAdminPassword([FromBody] AdminPasswordChange passwordChange)
         {
             await _accountService.ChangeAdminPasswordAsync(passwordChange.NewPassword, passwordChange.PasswordVerification);
@@ -163,8 +163,9 @@ namespace PersonalWebApi.Controllers.System
         [AllowAnonymous]
         public ActionResult Login([FromBody] LoginDto loginDto)
         {
-            string token = _accountService.GenerateJwt(loginDto);
-            return Ok(token);
+            ResponseLoginDto loginResponse = _accountService.GenerateJwt(loginDto);
+            
+            return Ok(loginResponse);
         }
     }
 }
