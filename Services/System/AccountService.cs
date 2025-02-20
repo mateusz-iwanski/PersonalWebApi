@@ -203,7 +203,7 @@ namespace PersonalWebApi.Services.System
         /// <summary>
         /// JWT generation for the user authentication
         /// </summary>
-        public string GenerateJwt(LoginDto loginDto)
+        public ResponseLoginDto GenerateJwt(LoginDto loginDto)
         {
             var user = _context.Users
                 .Include(u => u.Role)
@@ -240,7 +240,15 @@ namespace PersonalWebApi.Services.System
                 );
 
             var tokenHandler = new JwtSecurityTokenHandler();
-            return tokenHandler.WriteToken(token);
+            var tokenSerialize = tokenHandler.WriteToken(token);
+
+            return new ResponseLoginDto
+            {
+                Token = tokenSerialize,
+                ClientId = user.id,
+                TokenExpirationDate = expires
+            };
         }
+
     }
 }
