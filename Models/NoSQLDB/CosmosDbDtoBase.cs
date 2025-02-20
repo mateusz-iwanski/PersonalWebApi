@@ -14,7 +14,7 @@ namespace PersonalWebApi.Models.Models.Azure
         /// <summary>
         /// The user who created the record.
         /// </summary>
-        private string _createdBy { get; set; } = ClaimTypes.Anonymous;
+        private string _createdBy { get; set; }
 
         /// <summary>
         /// Unique identifier for the record.
@@ -91,7 +91,8 @@ namespace PersonalWebApi.Models.Models.Azure
         public abstract string PartitionKeyData();
 
         public virtual void SetUser(ClaimsPrincipal userClaimPrincipal) => 
-            _createdBy = userClaimPrincipal?.FindFirstValue(ClaimTypes.Name) ?? ClaimTypes.Anonymous;
+            _createdBy = userClaimPrincipal?.FindFirstValue(ClaimTypes.Name) ?? 
+            throw new Exception("Can't read user from context claim type");
 
 
         /// <summary>
