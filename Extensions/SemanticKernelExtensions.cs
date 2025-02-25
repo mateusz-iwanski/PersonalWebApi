@@ -15,6 +15,8 @@ using PersonalWebApi.Services.Services.Qdrant;
 using PersonalWebApi.Agent.SemanticKernel.Plugins.DataGathererPlugin;
 using PersonalWebApi.Agent.SemanticKernel.Plugins.KernelMemoryPlugin;
 using PersonalWebApi.Agent.SemanticKernel.Plugins.StoragePlugins.AzureBlob;
+using nopCommerceApiHub.WebApi;
+using PersonalWebApi.Services.NopCommerce;
 
 namespace PersonalWebApi.Extensions
 {
@@ -73,6 +75,17 @@ namespace PersonalWebApi.Extensions
 
                 // Add the RenderedPromptFilterHandler as a service
                 kernelBuilder.Services.AddScoped<IPromptRenderFilter, RenderedPromptFilterHandler>();
+
+                #region nopCommerceApiHub
+
+                // Register service
+
+                builder.Services.Configure<StolargoPLApiSettings>(builder.Configuration.GetSection("NopCommerceStolargoPLApiSettings"));
+                builder.Services.Configure<StolargoPLTokentSettings>(builder.Configuration.GetSection("NopCommerceStolargoPLTokenSettings"));
+
+                kernelBuilder.Services.AddScoped<NopCommerce>();
+
+                #endregion
 
                 // add plugin
                 //kernelBuilder.Plugins.AddFromType<KernelMemoryPlugin>();
