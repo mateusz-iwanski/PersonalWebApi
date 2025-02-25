@@ -12,6 +12,7 @@
     <Content Remove="Agent\config.json" />
     <Content Remove="Agent\SemanticKernel\Plugins\Prompt\DocumentLanguagePlugin\config.json" />
     <Content Remove="Agent\SemanticKernel\Plugins\Prompt\DocumentTypePlugin\config.json" />
+    <Content Remove="Agent\SemanticKernel\Prcocesses\Prompt\NopCommercParaphraseTitle\config.json" />
     <Content Remove="Agent\SemanticKernel\Plugins\Prompt\TagCollectPlugin\config.json" />
   </ItemGroup>
 
@@ -39,6 +40,12 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="Agent\SemanticKernel\Plugins\Prompt\DocumentTypePlugin\skprompt.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Agent\SemanticKernel\Prcocesses\Prompt\NopCommercParaphraseTitle\config.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Agent\SemanticKernel\Prcocesses\Prompt\NopCommercParaphraseTitle\skprompt.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="Agent\SemanticKernel\Plugins\Prompt\TagCollectPlugin\config.json">
@@ -76,7 +83,7 @@
     <PackageReference Include="Microsoft.SemanticKernel.PromptTemplates.Handlebars" Version="1.33.0" />
     <PackageReference Include="Microsoft.SemanticKernel.Yaml" Version="1.33.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-    <PackageReference Include="NLog.Extensions.Logging" Version="5.3.15" />
+    <PackageReference Include="NLog.Extensions.Logging" Version="5.4.0" />
     <PackageReference Include="NLog.Web.AspNetCore" Version="5.3.15" />
     <PackageReference Include="Qdrant.Client" Version="1.12.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="7.2.0" />
@@ -91,6 +98,16 @@
     <Folder Include="Services\Telemetry\" />
     <Folder Include="Services\Document\" />
     <Folder Include="Utilities\Models\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\nopCommerceApiHub\nopCommerceApiHub\nopCommerceApiHub.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Update="appsettings.NopCommerceApi.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
   <ItemGroup>
