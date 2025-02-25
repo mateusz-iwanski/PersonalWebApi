@@ -86,7 +86,7 @@ namespace PersonalWebApi.Controllers.Agent
 
 
 
-        [HttpPost("chat/{conversationUuid}/{id:int}")]
+        [HttpPost("chat/{conversationUuid}")]
         [Experimental("SKEXP0050")]
         [ServiceFilter(typeof(CheckConversationAccessFilter))]
         public async Task<string> Chat([FromBody] MessageRequest request, string conversationUuid)
