@@ -39,6 +39,8 @@ using PersonalWebApi.Services.WebScrapper;
 using PersonalWebApi.Services.FileStorage;
 using PersonalWebApi.Services.NoSQLDB;
 using PersonalWebApi.Services.Agent;
+using nopCommerceApiHub.WebApi;
+using PersonalWebApi.Services.NopCommerce;
 
 namespace PersonalWebApi
 {
@@ -60,6 +62,7 @@ namespace PersonalWebApi
                                  .AddJsonFile("appsettings.Azure.json", optional: true, reloadOnChange: true)
                                  .AddJsonFile("appsettings.FileStorage.json", optional: true, reloadOnChange: true)
                                  .AddJsonFile("appsettings.StepAgentMappings.json", optional: true, reloadOnChange: true)
+                                 .AddJsonFile("appsettings.NopCommerceApi", optional: true, reloadOnChange: true)
                                  //.AddJsonFile("semantickernelsettings.json", optional: true, reloadOnChange: true)
                                  .AddUserSecrets<Program>()
                                  .AddEnvironmentVariables();
@@ -201,6 +204,16 @@ namespace PersonalWebApi
                 builder.Services.AddScoped<IWebScrapperClient, Firecrawl>();
                 builder.Services.AddScoped<IWebScrapperService, WebScrapperService>();
 
+                #region nopCommerceApiHub
+
+                // NopCommrce is inject in kernel extension
+                // Add options to bind to the configuration instance
+                builder.Services.Configure<StolargoPLApiSettings>(builder.Configuration.GetSection("NopCommerceStolargoPLApiSettings"));
+                builder.Services.Configure<StolargoPLTokentSettings>(builder.Configuration.GetSection("NopCommerceStolargoPLTokenSettings"));
+
+
+
+                #endregion
 
                 // Register utils
                 builder.Services.AddScoped<IApiClient, ApiClient>();
