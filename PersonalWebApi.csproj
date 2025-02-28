@@ -12,7 +12,8 @@
     <Content Remove="Agent\config.json" />
     <Content Remove="Agent\SemanticKernel\Plugins\Prompt\DocumentLanguagePlugin\config.json" />
     <Content Remove="Agent\SemanticKernel\Plugins\Prompt\DocumentTypePlugin\config.json" />
-    <Content Remove="Agent\SemanticKernel\Prcocesses\Prompt\NopCommercParaphraseTitle\config.json" />
+    <Content Remove="Agent\SemanticKernel\Plugins\Prompt\NopCommerce\NopCommerceParaphraseDescriptionPlugin\config.json" />
+    <Content Remove="Agent\SemanticKernel\Plugins\Prompt\NopCommerce\NopCommercParaphraseTitlePlugin\config.json" />
     <Content Remove="Agent\SemanticKernel\Plugins\Prompt\TagCollectPlugin\config.json" />
   </ItemGroup>
 
@@ -42,10 +43,16 @@
     <EmbeddedResource Include="Agent\SemanticKernel\Plugins\Prompt\DocumentTypePlugin\skprompt.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
-    <EmbeddedResource Include="Agent\SemanticKernel\Prcocesses\Prompt\NopCommercParaphraseTitle\config.json">
+    <EmbeddedResource Include="Agent\SemanticKernel\Plugins\Prompt\NopCommerce\NopCommerceParaphraseDescriptionPlugin\config.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
-    <EmbeddedResource Include="Agent\SemanticKernel\Prcocesses\Prompt\NopCommercParaphraseTitle\skprompt.txt">
+    <EmbeddedResource Include="Agent\SemanticKernel\Plugins\Prompt\NopCommerce\NopCommerceParaphraseDescriptionPlugin\skprompt.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Agent\SemanticKernel\Plugins\Prompt\NopCommerce\NopCommercParaphraseTitlePlugin\config.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Agent\SemanticKernel\Plugins\Prompt\NopCommerce\NopCommercParaphraseTitlePlugin\skprompt.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="Agent\SemanticKernel\Plugins\Prompt\TagCollectPlugin\config.json">
@@ -92,8 +99,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Agent\SemanticKernel\Prcocesses\Prompt\" />
     <Folder Include="Controllers\KernelMemory\" />
     <Folder Include="Processes\Document\Process\" />
+    <Folder Include="Processes\NopCommerce\Processes\" />
     <Folder Include="Services\Qdrant\Processes\" />
     <Folder Include="Services\Telemetry\" />
     <Folder Include="Services\Document\" />
