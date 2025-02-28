@@ -9,13 +9,14 @@ using PersonalWebApi.Utilities.Document;
 using PersonalWebApi.Processes.NopCommerce.Models;
 using Newtonsoft.Json;
 using PersonalWebApi.Processes.NopCommerce.Events;
+using nopCommerceApiHub.WebApi.DTOs;
 
 namespace PersonalWebApi.Processes.NopCommerce.Steps
 {
     public static class ProductNopFunctions
     {
-        public const string GetTitle = nameof(GetTitle);
-        public const string ParaphraseTitle = nameof(ParaphraseTitle);
+        public const string GetProduct = nameof(GetProduct);
+        public const string GetCategory = nameof(GetCategory);
     }
 
     /// <summary>
@@ -27,7 +28,7 @@ namespace PersonalWebApi.Processes.NopCommerce.Steps
     {
         public string Title { get; set; }
 
-        [KernelFunction(ProductNopFunctions.GetTitle)]
+        [KernelFunction(ProductNopFunctions.GetProduct)]
         public async ValueTask GetProductAsync(KernelProcessStepContext context, Kernel kernel, ProductCollectNopStepDto productNopStep)
         {
             // get kernel by appsettings.StepAgentMappings
@@ -35,36 +36,36 @@ namespace PersonalWebApi.Processes.NopCommerce.Steps
             var product = await NopCommerce.Product.GetBySkuAsync(productNopStep.Sku);
             productNopStep.Product = product;
 
-            await context.EmitEventAsync(new() { Id = ProductNopEvents.Readed, Data = productNopStep });
+            await context.EmitEventAsync(new() { Id = ProductNopEvents.ReadedProduct, Data = productNopStep });
         }
 
-        [KernelFunction(ProductNopFunctions.ParaphraseTitle)]
-        public async ValueTask ParaphraseTitleAsync(KernelProcessStepContext context, Kernel kernel, ProductCollectNopStepDto productDetail)
+        /// <summary>
+        /// Get product category from nopCommerce.
+        /// Category -> mapping cattegory - > product
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="kernel"></param>
+        /// <param name="productNopStep"></param>
+        /// <returns></returns>
+        [KernelFunction(ProductNopFunctions.GetCategory)]
+        public async ValueTask GetCategoryAsync(KernelProcessStepContext context, Kernel kernel, ProductCollectNopStepDto productNopStep)
         {
-            var config = kernel.GetRequiredService<IConfiguration>();
-            var agent = new AgentRouter(config).GetStepKernel(ProductNopFunctions.ParaphraseTitle);
+            var productCategories = new List<CategoryDto>();
 
-            var prompts = kernel.CreatePluginFromPromptDirectory(Path.Combine(AppContext.BaseDirectory, "Agent/SemanticKernel/Prcocesses/Prompt"));
-            string completeMessage = string.Empty;
+            var NopCommerce = kernel.GetRequiredService<PersonalWebApi.Services.NopCommerce.NopCommerce>();
+            var categoryMapping = await NopCommerce.ProductCategoryMapping.GetByProductIdAsync(productNopStep.Product.Id);
 
-            await foreach (var message in kernel.InvokeStreamingAsync<StreamingChatMessageContent>
-                (
-                    prompts["NopCommercParaphraseTitle"], new() 
-                        { 
-                            { "title", productDetail.Product.Name },
-                            { "description", productDetail.Product.FullDescription }
-                        })
-                )
+            foreach (var categoryMap in categoryMapping)
             {
-                completeMessage += message;
+                var category = await NopCommerce.Category.GetByIdAsync(categoryMap.CategoryId);
+                productCategories.Add(category);
             }
+            
+            productNopStep.Category = productCategories;
 
-
-            var newTtitle = TextFormatter.CleanResponse(completeMessage);
-
-            Title = newTtitle;
-
-            await context.EmitEventAsync(new() { Id = ProductNopEvents.Paraphrased, Data = completeMessage });
+            await context.EmitEventAsync(new() { Id = ProductNopEvents.ReadedCategory, Data = productNopStep });
         }
+
+
     }
 }
