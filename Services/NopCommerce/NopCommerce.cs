@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Options;
 using nopCommerceApiHub.ApiClient.Token;
 using nopCommerceApiHub.WebApi;
+using nopCommerceApiHub.WebApi.DTOs;
 using nopCommerceApiHub.WebApi.Services;
 
 namespace PersonalWebApi.Services.NopCommerce
@@ -20,6 +21,8 @@ namespace PersonalWebApi.Services.NopCommerce
         public ManufacturerNopCommerceService Manufacturer { get; set; }
         public ProductManufaturerMappingNopCommerceService ProductManufaturerMapping { get; set; }
         public DeliveryDateNopCommerceService DeliveryDate { get; set; }
+        public ProductCategoryMappingNopCommerceService ProductCategoryMapping { get; set; }
+        public CategoryNopCommerceService Category { get; set; }
 
         #endregion
 
@@ -40,6 +43,8 @@ namespace PersonalWebApi.Services.NopCommerce
             Manufacturer = new ManufacturerNopCommerceService(nopCommerceStolargoPLService);
             ProductManufaturerMapping = new ProductManufaturerMappingNopCommerceService(nopCommerceStolargoPLService);
             DeliveryDate = new DeliveryDateNopCommerceService(nopCommerceStolargoPLService);
+            ProductCategoryMapping = new ProductCategoryMappingNopCommerceService(nopCommerceStolargoPLService);
+            Category = new CategoryNopCommerceService(nopCommerceStolargoPLService);
         }
 
         private IToken getPageToken()
