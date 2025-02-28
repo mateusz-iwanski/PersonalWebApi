@@ -1,0 +1,44 @@
+# Prompt: Rewrite Product Description for E-Commerce (Result in Polish)
+
+**Objective:**  
+Rewrite the provided product description in **Polish** to make it SEO-friendly, engaging, and human-readable. The new description should include relevant keywords, proper HTML formatting (e.g., headings, bullet points, bold text), and maintain a persuasive tone to encourage conversions. The target audience includes **Hobbyist Furniture Carpenters, Cabinetmakers, Professional Furniture Carpenters, as well as individuals looking for decorative products** such as garden lamps, home lamps, furniture handles, etc.
+
+---
+
+### Input:  
+- **Old Description:** [Insert the old product description here]  
+- **Target Audience:** Hobbyist furniture carpenters, professional carpenters, cabinetmakers, and individuals seeking decorative products like garden lamps, home lamps, furniture handles, etc.  
+- **Primary Keywords:** [List 2-3 primary keywords to include, e.g., ""narzêdzia stolarskie,"" ""lampy ogrodowe,"" ""uchwyty meblowe,"" ""dekoracje do domu""]  
+- **Tone:** Professional yet approachable, with persuasive elements to encourage purchases.  
+
+---
+
+### Output Requirements:  
+1. **SEO Optimization:**  
+    - Include primary keywords naturally in the text.  
+    - Use HTML tags like `<h2>`, `<p>`, `<ul>`, `<li>`, and `<strong>` for structure and emphasis.  
+    - Add meta-description suggestions (optional).  
+
+2. **Readability:**  
+    - Break content into short paragraphs and use bullet points for easy scanning.  
+    - Write in a conversational yet professional tone.  
+    - Highlight key features and benefits.  
+
+3. **Call-to-Action (CTA):**  
+    - Include a persuasive CTA, e.g., ""Zamów teraz,"" ""Doskona³y wybór dla profesjonalistów,"" ""Zadbaj o swój warsztat ju¿ dziœ,"" ""Dodaj stylu swojemu domowi.""  
+
+---
+
+### Example Output:  
+```html
+<h2>Eleganckie Lampy Ogrodowe dla Twojego Domu</h2>  
+<p>Nasze <strong>[Nazwa Produktu]</strong> to po³¹czenie funkcjonalnoœci i stylu, idealne dla osób, które chc¹ dodaæ wyj¹tkowego charakteru swojemu ogrodowi lub wnêtrzu. Wykonane z trwa³ych materia³ów, odporne na warunki atmosferyczne, te lampy bêd¹ s³u¿yæ przez lata.</p>  
+
+<h3>G³ówne Zalety:</h3>  
+<ul>  
+    <li><strong>Design:</strong> Nowoczesny i elegancki, pasuj¹cy do ka¿dego stylu aran¿acji.</li>  
+    <li><strong>Trwa³oœæ:</strong> Wykonane z wysokiej jakoœci metalu i szk³a, odporne na wilgoæ i promieniowanie UV.</li>  
+    <li><strong>£atwoœæ monta¿u:</strong> Prosty system instalacji, który poradzi sobie nawet amator.</li>  
+</ul>  
+
+<p>Nie czekaj! <strong>Zamów ju¿ dziœ</strong> i dodaj wyj¹tkowego blasku swojemu ogrodowi lub wnêtrzu. Doskona³y wybór dla mi³oœników designu i praktycznych rozwi¹zañ.</p>  
