@@ -13,6 +13,7 @@ using MongoDB.Bson;
 using PersonalWebApi.ActionFilters;
 using PersonalWebApi.Agent;
 using PersonalWebApi.Agent.Memory.Observability;
+using PersonalWebApi.Agent.SemanticKernel.Plugins.NopCommerce;
 using PersonalWebApi.Controllers.Controllers.Qdrant;
 using PersonalWebApi.Exceptions;
 using PersonalWebApi.Extensions;
@@ -95,6 +96,10 @@ namespace PersonalWebApi.Controllers.Agent
             var conversationId = Guid.Parse(conversationUuid);
             AgentRouter agentRouter = new(_configuration);
             var agent = agentRouter.GetStepKernel("MainConversation");
+            
+            agent.Plugins.AddFromType<NopCommercePlugin>();
+            OpenAIPromptExecutionSettings settings = new() { FunctionChoiceBehavior = FunctionChoiceBehavior.Auto() };
+            
 
             // talk with assistant
             var chatCompletionService = agent.GetRequiredService<IChatCompletionService>();
@@ -103,6 +108,7 @@ namespace PersonalWebApi.Controllers.Agent
 
             ChatMessageContent resuslts = await chatCompletionService.GetChatMessageContentAsync(
                 history,
+                settings,
                 kernel: agent
             );
 
