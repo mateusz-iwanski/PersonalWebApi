@@ -182,7 +182,10 @@ namespace PersonalWebApi
                     .AddKernelMemoryServices();
 
                 builder.Services.AddHttpContextAccessor();
-                
+
+                builder.Services.Configure<StolargoPLApiSettings>(builder.Configuration.GetSection("NopCommerceStolargoPLApiSettings"));
+                builder.Services.Configure<StolargoPLTokentSettings>(builder.Configuration.GetSection("NopCommerceStolargoPLTokenSettings"));
+
                 builder.Services.AddScoped<CheckConversationAccessFilter>(); // Register the action filter
 
                 // Register Seeder
@@ -208,8 +211,8 @@ namespace PersonalWebApi
 
                 // NopCommrce is inject in kernel extension
                 // Add options to bind to the configuration instance
-                builder.Services.Configure<StolargoPLApiSettings>(builder.Configuration.GetSection("NopCommerceStolargoPLApiSettings"));
-                builder.Services.Configure<StolargoPLTokentSettings>(builder.Configuration.GetSection("NopCommerceStolargoPLTokenSettings"));
+                //builder.Services.Configure<StolargoPLApiSettings>(builder.Configuration.GetSection("NopCommerceStolargoPLApiSettings"));
+                //builder.Services.Configure<StolargoPLTokentSettings>(builder.Configuration.GetSection("NopCommerceStolargoPLTokenSettings"));
 
 
 
