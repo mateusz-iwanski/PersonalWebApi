@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using PersonalWebApi.Exceptions;
 using System.Diagnostics.CodeAnalysis;
 using PersonalWebApi.Agent.SemanticKernel.Plugins.DataGathererPlugin;
+using PersonalWebApi.Extensions;
 
 namespace PersonalWebApi.Agent
 {
@@ -69,10 +70,16 @@ namespace PersonalWebApi.Agent
         private Kernel AddOpenAIChatCompletion(string modelId)
         {
             var apiKey = _configuration["OpenAI:Access:ApiKey"] ?? throw new SettingsException("OpenAI:Access:ApiKey not exists");
-            var kernelBuilder = Kernel.CreateBuilder().AddOpenAIChatCompletion(modelId, apiKey).Build();
-            AddBasicPlugins(kernelBuilder);
-            
-            return kernelBuilder;
+           
+            var kernelBuilder = Kernel.CreateBuilder();
+            kernelBuilder.AddOpenAIChatCompletion(modelId, apiKey);
+            SemanticKernelExtensions.RegisteKernelMainServices(kernelBuilder, _configuration);
+
+            var kernel = kernelBuilder.Build();
+            AddBasicPlugins(kernel);
+
+
+            return kernel;
         }
 
         private Kernel AddAnotherAgent(string modelId)
