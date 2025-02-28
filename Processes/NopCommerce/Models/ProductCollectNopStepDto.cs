@@ -8,6 +8,6 @@ namespace PersonalWebApi.Processes.NopCommerce.Models
         [Required]
         public string Sku { get; set; }
         public ProductDto Product { get; set; }
-        public CategoryDto Category { get; set; }
+        public List<CategoryDto> Category { get; set; }
     }
 }
