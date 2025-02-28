@@ -41,7 +41,10 @@ namespace PersonalWebApi.Processes.FileStorage.Processes
             var nopProductSteps = process.AddStepFromType<ProductNopStep>();
 
             process.OnInputEvent(ProductNopEvents.StartProcess).SendEventTo(
-                new ProcessFunctionTargetBuilder(nopProductSteps, functionName: ProductNopFunctions.GetTitle, parameterName: "productNopStep"));
+                new ProcessFunctionTargetBuilder(nopProductSteps, functionName: ProductNopFunctions.GetProduct, parameterName: "productNopStep"));
+
+            nopProductSteps.OnEvent(ProductNopEvents.ReadedProduct).SendEventTo(
+                new ProcessFunctionTargetBuilder(nopProductSteps, functionName: ProductNopFunctions.GetCategory, parameterName: "productNopStep"));
 
             var kernelProcess = process.Build();
 
