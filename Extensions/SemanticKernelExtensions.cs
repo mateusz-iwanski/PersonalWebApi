@@ -35,6 +35,45 @@ namespace PersonalWebApi.Extensions
         /// </summary>
         public delegate Task KernelSetupHook(IServiceProvider sp, Kernel kernel);
 
+        public static void RegisteKernelMainServices(IKernelBuilder kernelBuilder, IConfiguration configuration)
+        {
+            // Use the correct method to add logging
+            kernelBuilder.Services.AddLogging(loggingBuilder =>
+            {
+                loggingBuilder.AddConsole();
+            });
+
+            kernelBuilder.Services.AddSingleton<IConfiguration>(configuration);
+
+            kernelBuilder.Services.AddHttpContextAccessor();
+
+            // register services
+            kernelBuilder.Services.AddScoped<IQdrantService, QdrantService>();
+            kernelBuilder.Services.AddScoped<IFileStorageService, AzureBlobStorageService>();
+            kernelBuilder.Services.AddScoped<IDocumentReaderDocx, DocumentReaderDocx>();
+            kernelBuilder.Services.AddScoped<INoSqlDbService, AzureCosmosDbService>();
+            kernelBuilder.Services.AddScoped<IAssistantHistoryManager, AssistantHistoryManager>();
+
+            // Add the RenderedPromptFilterHandler as a service
+            kernelBuilder.Services.AddScoped<IPromptRenderFilter, RenderedPromptFilterHandler>();
+
+            #region nopCommerceApiHub
+
+            // Register service
+
+            kernelBuilder.Services.Configure<StolargoPLApiSettings>(configuration.GetSection("NopCommerceStolargoPLApiSettings"));
+            kernelBuilder.Services.Configure<StolargoPLTokentSettings>(configuration.GetSection("NopCommerceStolargoPLTokenSettings"));
+
+            kernelBuilder.Services.AddScoped<NopCommerce>();
+
+            #endregion
+
+            // add plugin
+            //kernelBuilder.Plugins.AddFromType<KernelMemoryPlugin>();
+            //kernelBuilder.Plugins.AddFromType<AzureBlobPlugin>();
+            //kernelBuilder.Plugins.AddFromType<TagCollectorPlugin>();
+        }
+
         /// <summary>
         /// AddAsync Semantic Kernel services
         /// </summary>
@@ -62,30 +101,32 @@ namespace PersonalWebApi.Extensions
                     loggingBuilder.AddConsole();
                 });
 
-                kernelBuilder.Services.AddSingleton<IConfiguration>(builder.Configuration);
+                SemanticKernelExtensions.RegisteKernelMainServices(kernelBuilder, builder.Configuration);
 
-                kernelBuilder.Services.AddHttpContextAccessor();
+                //kernelBuilder.Services.AddSingleton<IConfiguration>(builder.Configuration);
 
-                // register services
-                kernelBuilder.Services.AddScoped<IQdrantService, QdrantService>();
-                kernelBuilder.Services.AddScoped<IFileStorageService, AzureBlobStorageService>();
-                kernelBuilder.Services.AddScoped<IDocumentReaderDocx, DocumentReaderDocx>();
-                kernelBuilder.Services.AddScoped<INoSqlDbService, AzureCosmosDbService>();
-                kernelBuilder.Services.AddScoped<IAssistantHistoryManager, AssistantHistoryManager>();
+                //kernelBuilder.Services.AddHttpContextAccessor();
 
-                // Add the RenderedPromptFilterHandler as a service
-                kernelBuilder.Services.AddScoped<IPromptRenderFilter, RenderedPromptFilterHandler>();
+                //// register services
+                //kernelBuilder.Services.AddScoped<IQdrantService, QdrantService>();
+                //kernelBuilder.Services.AddScoped<IFileStorageService, AzureBlobStorageService>();
+                //kernelBuilder.Services.AddScoped<IDocumentReaderDocx, DocumentReaderDocx>();
+                //kernelBuilder.Services.AddScoped<INoSqlDbService, AzureCosmosDbService>();
+                //kernelBuilder.Services.AddScoped<IAssistantHistoryManager, AssistantHistoryManager>();
 
-                #region nopCommerceApiHub
+                //// Add the RenderedPromptFilterHandler as a service
+                //kernelBuilder.Services.AddScoped<IPromptRenderFilter, RenderedPromptFilterHandler>();
 
-                // Register service
+                //#region nopCommerceApiHub
 
-                builder.Services.Configure<StolargoPLApiSettings>(builder.Configuration.GetSection("NopCommerceStolargoPLApiSettings"));
-                builder.Services.Configure<StolargoPLTokentSettings>(builder.Configuration.GetSection("NopCommerceStolargoPLTokenSettings"));
+                //// Register service
 
-                kernelBuilder.Services.AddScoped<NopCommerce>();
+                //kernelBuilder.Services.Configure<StolargoPLApiSettings>(builder.Configuration.GetSection("NopCommerceStolargoPLApiSettings"));
+                //kernelBuilder.Services.Configure<StolargoPLTokentSettings>(builder.Configuration.GetSection("NopCommerceStolargoPLTokenSettings"));
 
-                #endregion
+                //kernelBuilder.Services.AddScoped<NopCommerce>();
+
+                //#endregion
 
                 // add plugin
                 //kernelBuilder.Plugins.AddFromType<KernelMemoryPlugin>();
